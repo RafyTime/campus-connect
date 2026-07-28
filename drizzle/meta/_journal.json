@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1785238903967,
+      "tag": "0000_flowery_eternals",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1785239068586,
+      "tag": "0001_workable_princess_powerful",
+      "breakpoints": true
+    }
+  ]
+}
