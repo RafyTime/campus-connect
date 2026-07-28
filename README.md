@@ -1,42 +1,41 @@
-# sv
+# Campus Connect
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Campus Connect is an IU Project: Java & Web Development course project. The product scope is pending Phase 1 tutor approval.
 
-## Creating a project
+## Stack
 
-If you're seeing this, you've probably already done this step. Congrats!
+SvelteKit, TypeScript, Tailwind CSS, Drizzle ORM with SQLite, Better Auth, and Bun.
 
-```sh
-# create a new project
-npx sv create my-app
-```
+## Local setup
 
-To recreate this project with the same configuration:
+Prerequisites: [Bun](https://bun.sh/) 1.3.14 or later.
 
 ```sh
-# recreate this project
-bun x sv@0.16.6 create --template minimal --types ts --add prettier eslint vitest="usages:unit,component" playwright tailwindcss="plugins:none" sveltekit-adapter="adapter:auto" drizzle="database:sqlite+sqlite:libsql" better-auth="demo:password" --install bun ./
+bun install
+Copy-Item .env.example .env
+bun run db:migrate
+bun run dev
 ```
 
-## Developing
+Fill in `BETTER_AUTH_SECRET` in `.env` before using authentication. Keep `.env` out of version control.
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Quality checks
 
 ```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+bun run check
+bun run lint
+bun run test:install # one-time Chromium download
+bun run test
 ```
 
-## Building
-
-To create a production version of your app:
+## Database
 
 ```sh
-npm run build
+bun run db:generate # create migrations after schema changes
+bun run db:migrate  # apply migrations
+bun run db:studio   # inspect local data
 ```
 
-You can preview the production build with `npm run preview`.
+## Repository notes
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+Use Bun for dependency management and scripts. The project is not deployed yet; Railway configuration and CI will be added before feature development begins.
