@@ -1,4 +1,4 @@
-name: Continuous integration
+name: CI
 
 on:
   push:
@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   ci:
-    name: Lint, check, and test
+    name: 💚Quality Checks
     runs-on: ubuntu-latest
     env:
       # Values are used only to load the server during build and test. Production values live in Railway.
