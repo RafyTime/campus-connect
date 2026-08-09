@@ -1,6 +1,6 @@
 # Campus Connect
 
-Campus Connect is an IU Project: Java & Web Development course project. The product scope is pending Phase 1 tutor approval.
+Campus Connect is an IU Project: Java & Web Development course project. Phase 1 conception docs can be foubnd under [docs/phase-1](docs/phase-1-conception.md). Tutor feedback on the submitted conception work is pending.
 
 ## Stack
 
@@ -28,6 +28,8 @@ bun run test:install # one-time Chromium download
 bun run test
 ```
 
+The GitHub Actions workflow runs these checks for pull requests and every push.
+
 ## Database
 
 ```sh
@@ -38,4 +40,4 @@ bun run db:studio   # inspect local data
 
 ## Repository notes
 
-Use Bun for dependency management and scripts. The project is not deployed yet; Railway configuration and CI will be added before feature development begins.
+Bun is used for dependency management and scripts instead of node. Deployment preparation and Railway delivery instructions are in [docs/deployment.md](docs/deployment.md). A Railway project, production secrets, persistent volume, and media storage are intentionally not configured yet.
