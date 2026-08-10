@@ -27,13 +27,13 @@ This is lifecycle-safe dependency initialization, not an in-memory or temporary-
 
 ## Alternatives considered
 
-| Option | Result | Why not chosen |
-| --- | --- | --- |
-| Change Railway volume/build/deploy settings | Cannot work | Railway explicitly does not mount volumes during build or pre-deploy. |
-| Override the build command with `DATABASE_URL=file:/tmp/...` | Can make this build pass | It hides an import-time side effect behind Railway-only configuration and uses a different, empty database at build time. |
-| Use an in-memory build database | Can make this build pass | Same lifecycle mismatch, with an unnecessary fake database. |
-| Create a separate SQLite/libSQL service | Changes the architecture | It adds a networked database service and does not make import-time connections during a SvelteKit build a sound pattern. |
-| Defer DB/auth initialization until runtime | Works with the real `/data` database | Small, platform-neutral, and aligned with both documented lifecycles. |
+| Option                                                       | Result                               | Why not chosen                                                                                                            |
+| ------------------------------------------------------------ | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| Change Railway volume/build/deploy settings                  | Cannot work                          | Railway explicitly does not mount volumes during build or pre-deploy.                                                     |
+| Override the build command with `DATABASE_URL=file:/tmp/...` | Can make this build pass             | It hides an import-time side effect behind Railway-only configuration and uses a different, empty database at build time. |
+| Use an in-memory build database                              | Can make this build pass             | Same lifecycle mismatch, with an unnecessary fake database.                                                               |
+| Create a separate SQLite/libSQL service                      | Changes the architecture             | It adds a networked database service and does not make import-time connections during a SvelteKit build a sound pattern.  |
+| Defer DB/auth initialization until runtime                   | Works with the real `/data` database | Small, platform-neutral, and aligned with both documented lifecycles.                                                     |
 
 ## Migration implication
 
