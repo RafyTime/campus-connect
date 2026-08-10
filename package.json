@@ -24,13 +24,15 @@
 		"db:studio": "drizzle-kit studio",
 		"auth:schema": "better-auth generate --config src/lib/server/auth.ts --output src/lib/server/db/auth.schema.ts --yes"
 	},
+	"dependencies": {
+		"@libsql/client": "^0.17.3"
+	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
 		"@fontsource-variable/dm-sans": "^5.3.0",
 		"@fontsource-variable/geist": "^5.3.0",
 		"@hugeicons/core-free-icons": "^4.2.3",
 		"@hugeicons/svelte": "^1.1.4",
-		"@libsql/client": "^0.17.3",
 		"@playwright/test": "^1.60.0",
 		"@sveltejs/adapter-node": "^5.5.7",
 		"@sveltejs/kit": "^2.63.0",
