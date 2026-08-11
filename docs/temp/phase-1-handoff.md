@@ -4,7 +4,9 @@
 
 Phase 1 (conception) for IU course `Project: Java & Web Development (DLBCSPJWD01)` has been completed and uploaded. Tutor feedback on the submitted revision is pending.
 
-The next session should support repository setup and implementation planning, then begin implementation once the tutor feedback is available.
+The Phase 1 presentation has been transcribed into [`docs/phase-1-conception.md`](../phase-1-conception.md), which is the repository-local source of truth for the agreed conception scope. The original PowerPoint remains outside the repository.
+
+The GitHub repository and SvelteKit/Bun skeleton now exist. Phase 2 may begin with the data model and authentication foundations, while preserving the scope and rules below.
 
 ## Product definition
 
@@ -36,7 +38,7 @@ Comments, direct messages, payments, email invitations, video uploads, calendar 
 - Authentication: Better Auth, email/password only.
 - Persistence: Drizzle ORM + SQLite.
 - Runtime/tooling: Bun, ESLint, Prettier.
-- Deployment: Railway. SQLite needs a persistent Railway volume.
+- Deployment: Railway. The app uses SvelteKit's Node adapter and Railway needs a persistent volume for SQLite.
 - Media: local `uploads/` directory in development; Railway Storage Bucket in deployment. Store only media metadata/storage keys in SQLite, not BLOBs. Use a storage abstraction so local and bucket adapters share one interface.
 - Maps: Leaflet loads OpenStreetMap tiles in the browser with attribution. SvelteKit calls Nominatim only after an explicit search request. A Google Maps directions link may be generated from stored coordinates; no Google Maps API.
 
@@ -87,16 +89,23 @@ The final deck was revised after review. If presentation work resumes, verify th
 
 ## Recommended implementation order
 
-1. Create the GitHub repository and initialise the SvelteKit/Bun/TypeScript project.
-2. Configure linting, formatting, environment example, and README skeleton before features.
-3. Define Drizzle schema and migrations for Better Auth plus the core entities.
-4. Implement authentication and an authorization helper for group/event permissions.
-5. Seed users, groups, tags, campus locations, posts, and events for repeatable demos/tests.
-6. Implement the event feed, server-side filters, event detail view, and RSVP/capacity flow.
-7. Add groups/posts/notifications, then private-event invitations/share links.
-8. Add media storage abstraction and map/geocoding integration.
-9. Add tests, responsive checks, deployment configuration, and documentation.
+1. Review the current Better Auth and Drizzle starter schema/migrations, then define the complete core-domain schema and migrations.
+2. Implement authentication and an authorization helper for group/event permissions.
+3. Seed users, groups, tags, campus locations, posts, and events for repeatable demos/tests.
+4. Implement the event feed, server-side filters, event detail view, and RSVP/capacity flow.
+5. Add groups/posts/notifications, then private-event invitations/share links.
+6. Add the media-storage abstraction and map/geocoding integration.
+7. Add feature-specific tests, responsive checks, and deployment configuration.
 
 ## Notes
 
-No repository has been created yet at the time of this handoff. Do not create deployment credentials, API keys, or paid resources until the user explicitly asks.
+### Repository baseline (August 2026)
+
+- Repository: `campus-connect` with a SvelteKit/Svelte 5/TypeScript/Tailwind skeleton and Bun `1.3.14` lockfile.
+- Tooling: ESLint, Prettier, Svelte type checking, Vitest, and Playwright are installed. The existing tests are scaffold examples, not MVP acceptance tests.
+- Server foundation: Better Auth, Drizzle ORM, libSQL/SQLite configuration, initial generated auth schema, and two initial migrations are present. They must be reviewed before creating the final MVP data model.
+- Environment: `.env.example` contains `DATABASE_URL`, `ORIGIN`, and `BETTER_AUTH_SECRET`; never commit `.env` files.
+- CI: [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) runs linting, Svelte/TypeScript checks, and unit/end-to-end tests for pull requests and every push.
+- Delivery: [`docs/deployment.md`](../deployment.md) documents the Railway connection, persistent SQLite volume, required production environment variables, and the **Wait for CI** setting. Railway credentials, a project/service, storage bucket, and production secrets have not been created.
+
+Do not create deployment credentials, API keys, or paid resources until the user explicitly asks.
