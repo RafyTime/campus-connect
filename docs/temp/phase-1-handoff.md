@@ -1,12 +1,40 @@
-# Campus Connect Phase 1 - Handoff
+# Campus Connect — Phase 1 Handoff
 
-## Current status
+## Current Status (Before Phase 2)
 
-Phase 1 (conception) for IU course `Project: Java & Web Development (DLBCSPJWD01)` has been completed and uploaded. Tutor feedback on the submitted revision is pending.
+Phase 1 (conception) for IU course `Project: Java & Web Development (DLBCSPJWD01)` is complete, submitted, and approved. Tutor Christian confirmed that the concept fits the requirements, the benefits/target groups/technology are appropriate, and development may continue. The tutor also noted that a revised conception document may be submitted with the final project.
 
-The Phase 1 presentation has been transcribed into [`docs/phase-1-conception.md`](../phase-1-conception.md), which is the repository-local source of truth for the agreed conception scope. The original PowerPoint remains outside the repository.
+The repository now has a verified, deployed Phase 2 baseline. It is deliberately a skeleton: its infrastructure and authentication foundation work, but the Campus Connect domain features remain to be implemented.
 
-The GitHub repository and SvelteKit/Bun skeleton now exist. Phase 2 may begin with the data model and authentication foundations, while preserving the scope and rules below.
+The repository-local source of truth for the agreed product scope is [Phase 1: Conceptual Design Specification](../phase-1/conception-phase.md). The original PowerPoint remains outside the repository.
+
+## Completed baseline
+
+### Application and quality tooling
+
+- SvelteKit with the Node adapter, Svelte 5, TypeScript, Tailwind CSS, shadcn-svelte, and Bun `1.3.14` are configured.
+- ESLint, Prettier, Svelte/TypeScript checking, Vitest, and Playwright are configured with scripts in `package.json`.
+- GitHub Actions in `[.github/workflows/ci.yml](../../.github/workflows/ci.yml)` runs formatting/linting, Svelte/TypeScript checks, and unit/end-to-end tests on every push, pull requests to `main`, and manual runs.
+- Existing tests are primarily scaffold/regression coverage. Phase 2 must add feature-specific acceptance and business-rule tests.
+
+### Authentication and database
+
+- Better Auth is configured for email/password authentication.
+- Drizzle ORM uses SQLite through libSQL. The current schema exports only Better Auth's generated tables.
+- [The initial auth-only migration](../../drizzle/0000_auth_baseline.sql) creates `user`, `session`, `account`, and `verification`. The earlier sample `task` table and its migration were removed before any production data existed.
+- The migration was tested against a fresh local SQLite database and successfully applied once to the production database.
+- `getDb()` and `getAuth()` lazily initialise singleton instances at runtime. This prevents Railway builds from trying to open the runtime-only SQLite volume. Keep this lifecycle-safe design.
+
+### Railway deployment
+
+- Railway is connected to the GitHub repository and deploys the `main` branch in **EU West**.
+- Railway **Wait for CI** is enabled.
+- The application is publicly deployed, sleeps after inactivity, and resumes promptly.
+- The service has a persistent volume mounted at `/data`; production SQLite uses `DATABASE_URL=file:/data/campus-connect.db`.
+- Railway production variables include `DATABASE_URL`, `ORIGIN` (the full public HTTPS URL), and `BETTER_AUTH_SECRET`. Do not record or commit their values.
+- The current production database contains only the initial Better Auth tables and Drizzle's migration ledger.
+
+See [deployment.md](../deployment.md) for the current operating procedure and [the Railway lifecycle research](../research/railway-sveltekit-sqlite-build-lifecycle.md) for the rationale behind the lazy runtime initialisation.
 
 ## Product definition
 
@@ -31,20 +59,19 @@ The MVP is an event-first feed. Authenticated users can create personal events, 
 
 Comments, direct messages, payments, email invitations, video uploads, calendar synchronisation, and real-time push notifications are out of scope.
 
-## Technical decisions
+## Technical decisions to preserve
 
-- Frontend: Svelte 5, TypeScript, Tailwind CSS, shadcn-svelte.
-- Full-stack server: SvelteKit with remote functions. The server validates input, authorises actions, and is the only route to external geocoding.
-- Authentication: Better Auth, email/password only.
-- Persistence: Drizzle ORM + SQLite.
-- Runtime/tooling: Bun, ESLint, Prettier.
-- Deployment: Railway. The app uses SvelteKit's Node adapter and Railway needs a persistent volume for SQLite.
-- Media: local `uploads/` directory in development; Railway Storage Bucket in deployment. Store only media metadata/storage keys in SQLite, not BLOBs. Use a storage abstraction so local and bucket adapters share one interface.
-- Maps: Leaflet loads OpenStreetMap tiles in the browser with attribution. SvelteKit calls Nominatim only after an explicit search request. A Google Maps directions link may be generated from stored coordinates; no Google Maps API.
+- **Frontend:** Svelte 5, TypeScript, Tailwind CSS, shadcn-svelte.
+- **Full-stack server:** SvelteKit with remote functions. The server validates input, authorises actions, and is the only route to external geocoding.
+- **Authentication:** Better Auth, email/password only.
+- **Persistence:** Drizzle ORM + SQLite. Use committed Drizzle migrations for schema changes; never `db:push` in production.
+- **Deployment:** Railway with SvelteKit's Node adapter and a persistent SQLite volume at `/data`.
+- **Media:** local `uploads/` directory in development; Railway Storage Bucket in deployment. Store only media metadata/storage keys in SQLite, not BLOBs. Implement a storage abstraction before enabling uploads.
+- **Maps:** Leaflet loads OpenStreetMap tiles in the browser with attribution. SvelteKit calls Nominatim only after an explicit search request. A Google Maps directions link may be generated from stored coordinates; no Google Maps API.
 
-## Domain/data model
+## Planned domain/data model
 
-Core entities: `User`, `MediaAsset`, `Group`, `GroupMembership`, `Post`, `Event`, `Location`, `Tag`, `EventTag`, `EventParticipation`, `EventInvitation`, and `Notification`.
+The production database currently has **only authentication tables**. The following Campus Connect tables are planned Phase 2 work, not already implemented: `MediaAsset`, `Group`, `GroupMembership`, `Post`, `Event`, `Location`, `Tag`, `EventTag`, `EventParticipation`, `EventInvitation`, and `Notification`.
 
 Important rules:
 
@@ -56,56 +83,28 @@ Important rules:
 - `MediaAsset` contains the storage key and file metadata. It is referenced by user, group, and post records.
 - The group flag should be named `isCampusChannel` or `isCampusWide`; do not use the unclear name `hasPriority`.
 
+## Development and deployment rules
+
+- Use `.env.example` to create a local `.env`; never commit `.env` or production secrets.
+- `ORIGIN` must be the full public HTTPS Railway domain in production because Better Auth uses it as its base URL.
+- Railway volumes are unavailable during build and pre-deploy. Keep database/auth initialization lazy, and do not use an in-memory build database or a second SQLite service.
+- For each future production migration: generate and commit it, deploy it after CI, then run `bun run db:migrate` once in the running Railway service console. The initial migration has already been applied this way.
+- Do not configure restrictive Railway watch paths for this single-service repository; migrations, dependencies, configuration, and assets can require deployment.
+
+## Recommended Phase 2 implementation order
+
+1. Define the core Campus Connect domain schema, generate reviewed migrations, and seed repeatable demo/test data.
+2. Implement the profile and authorization helpers for group/event permissions.
+3. Implement groups, posts, the event feed, server-side filters, and the event detail view.
+4. Implement RSVP/interest/capacity handling with concurrency-safe validation.
+5. Add notifications, private-event invitations, and share links.
+6. Add the media-storage abstraction, Railway bucket integration, map display, and backend Nominatim integration.
+7. Add feature-specific tests, responsive evidence, screenshots, screencast material, and design-change notes required for Phase 2.
+
 ## Assignment constraints to preserve
 
 - The web frontend must be responsive and communicate with a developed backend.
 - Include at least two JavaScript-driven dynamic frontend/backend interactions; Campus Connect has several: filtered event retrieval, creation/editing, follow actions, RSVP/capacity changes, and notification reads.
-- External APIs must be consumed by the backend before data reaches the frontend; maintain this for Nominatim.
-- Phase 2 will require GitHub, screenshots, a 1-2 minute desktop/responsive screencast, changed-design notes, and test cases.
+- External API data must be consumed by the backend before data reaches the frontend; maintain this for Nominatim.
+- Phase 2 requires GitHub evidence, screenshots, a 1–2 minute desktop/responsive screencast, changed-design notes, and test cases.
 - Phase 3 requires a documented, runnable repository with README installation/run instructions and a final abstract/making-of presentation section.
-
-## Submitted Phase 1 artefacts
-
-The final submission contained a title slide and five content slides:
-
-1. Purpose and scope/problem context.
-2. User roles and outcomes.
-3. Functional requirements and constraints.
-4. Technical architecture.
-5. Data model and business rules.
-
-The half-page PebblePad abstract uses `Problem` and `Solution Approach` headings. It states the application is a concrete implementation plan, not a speculative startup pitch.
-
-## Recent presentation-review corrections
-
-The final deck was revised after review. If presentation work resumes, verify that it:
-
-- Names the app explicitly on the title slide: `Campus Connect - Conceptual Design Specification`.
-- Uses specification language such as "the system will", "users can", and "the backend enforces".
-- Shows Nominatim as a backend integration and OpenStreetMap tiles as a browser/Leaflet integration.
-- Shows Railway bucket media storage and persistent SQLite storage in the architecture.
-- Shows `GroupMembership.role` in the ERD.
-- Uses consistent naming: `TypeScript`, `shadcn-svelte`, `Bun`, `OpenStreetMap`, and `isCampusChannel`.
-
-## Recommended implementation order
-
-1. Review the current Better Auth and Drizzle starter schema/migrations, then define the complete core-domain schema and migrations.
-2. Implement authentication and an authorization helper for group/event permissions.
-3. Seed users, groups, tags, campus locations, posts, and events for repeatable demos/tests.
-4. Implement the event feed, server-side filters, event detail view, and RSVP/capacity flow.
-5. Add groups/posts/notifications, then private-event invitations/share links.
-6. Add the media-storage abstraction and map/geocoding integration.
-7. Add feature-specific tests, responsive checks, and deployment configuration.
-
-## Notes
-
-### Repository baseline (August 2026)
-
-- Repository: `campus-connect` with a SvelteKit/Svelte 5/TypeScript/Tailwind skeleton and Bun `1.3.14` lockfile.
-- Tooling: ESLint, Prettier, Svelte type checking, Vitest, and Playwright are installed. The existing tests are scaffold examples, not MVP acceptance tests.
-- Server foundation: Better Auth, Drizzle ORM, libSQL/SQLite configuration, initial generated auth schema, and two initial migrations are present. They must be reviewed before creating the final MVP data model.
-- Environment: `.env.example` contains `DATABASE_URL`, `ORIGIN`, and `BETTER_AUTH_SECRET`; never commit `.env` files.
-- CI: [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) runs linting, Svelte/TypeScript checks, and unit/end-to-end tests for pull requests and every push.
-- Delivery: [`docs/deployment.md`](../deployment.md) documents the Railway connection, persistent SQLite volume, required production environment variables, and the **Wait for CI** setting. Railway credentials, a project/service, storage bucket, and production secrets have not been created.
-
-Do not create deployment credentials, API keys, or paid resources until the user explicitly asks.

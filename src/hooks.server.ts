@@ -4,6 +4,7 @@ import { getAuth } from '$lib/server/auth';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 
 const handleBetterAuth: Handle = async ({ event, resolve }) => {
+	// ADR 0001 (docs/adr/0001-lazy-runtime-initialization.md): build analysis must not access the runtime-only volume.
 	if (building) return resolve(event);
 
 	const auth = getAuth();

@@ -14,5 +14,6 @@ function createDb() {
 }
 
 export function getDb() {
+	// ADR 0001 (docs/adr/0001-lazy-runtime-initialization.md): Railway's volume is runtime-only.
 	return (db ??= createDb());
 }

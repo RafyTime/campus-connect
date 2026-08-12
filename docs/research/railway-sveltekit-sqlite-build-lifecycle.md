@@ -37,7 +37,9 @@ This is lifecycle-safe dependency initialization, not an in-memory or temporary-
 
 ## Migration implication
 
-Database migration must also occur after the service starts, because Railway makes the volume available then, not at build or pre-deploy time. When migrations are added, make them an explicit runtime-start step (with an idempotent migration strategy) before accepting traffic; do not run them in `bun run build` or a Railway pre-deploy command.
+Database migration must also occur after the service starts, because Railway makes the volume available then, not at build or pre-deploy time. The auth-only baseline migration was successfully applied to production from the running service console with `bun run db:migrate`.
+
+For each future migration, generate and commit it, deploy it after CI succeeds, then run `bun run db:migrate` once from the running service console. Drizzle records applied migrations, making the command idempotent. Do not run migrations in `bun run build` or a Railway pre-deploy command.
 
 ## Source links
 

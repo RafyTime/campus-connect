@@ -20,5 +20,6 @@ function createAuth() {
 }
 
 export function getAuth() {
+	// ADR 0001 (docs/adr/0001-lazy-runtime-initialization.md): creation opens the lazy SQLite dependency.
 	return (auth ??= createAuth());
 }
