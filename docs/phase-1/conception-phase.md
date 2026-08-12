@@ -57,6 +57,8 @@ Campus Connect uses a server-centred architecture to protect data and control in
 
 The selected technologies are lightweight and support rapid, type-safe development, quick prototyping, responsive performance, and straightforward scaling.
 
+![Architecture Diagram](./diagrams/diagram-architecture.png)
+
 ## 5. Data model and business rules
 
 The relational model separates feed content, event-specific information, group permissions, and participation records. This keeps the application extensible while enforcing MVP rules.
@@ -67,6 +69,8 @@ The relational model separates feed content, event-specific information, group p
 - **Event access:** `EventInvitation` supports named in-app recipients or hashed, revocable tokens for private events.
 - **Locations and tags:** `Location` stores display labels and coordinates. `EventTag` provides a normalised many-to-many relation for filtering.
 - **Media:** `MediaAsset` stores file metadata and storage keys, referencing externally stored assets instead of image data in SQLite.
+
+![Data Model Diagram](./diagrams/diagram-data-model.png)
 
 ## Implementation commitments
 
