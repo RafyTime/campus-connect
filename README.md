@@ -36,13 +36,11 @@ Replace the example `BETTER_AUTH_SECRET` in `.env` before using authentication. 
 ## Quality checks
 
 ```sh
-bun run check
-bun run lint
 bun run test:install # one-time Chromium download
-bun run test
+bun run quality
 ```
 
-The GitHub Actions workflow runs the same checks for every push and for pull requests targeting `main`.
+The quality command checks formatting, linting, Svelte and TypeScript, runs the automated tests, and creates a production build. GitHub Actions runs the same command for every push and for pull requests targeting `main`.
 
 ## Database
 

@@ -18,6 +18,7 @@
 		"test:install": "playwright install chromium",
 		"test:e2e": "playwright test",
 		"test": "bun run test:unit -- --run && bun run test:e2e",
+		"quality": "bun run lint && bun run check && bun run test && bun run build",
 		"db:push": "drizzle-kit push",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
