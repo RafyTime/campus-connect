@@ -5,15 +5,17 @@ import { env } from '$env/dynamic/private';
 
 let db: ReturnType<typeof createDb> | undefined;
 
-function createDb() {
-	if (!env.DATABASE_URL) throw new Error('DATABASE_URL is not set');
-
-	const client = createClient({ url: env.DATABASE_URL });
+export function createDb(url: string) {
+	const client = createClient({ url });
 
 	return drizzle(client, { schema });
 }
 
+export type Database = ReturnType<typeof createDb>;
+
 export function getDb() {
 	// ADR 0001 (docs/adr/0001-lazy-runtime-initialization.md): Railway's volume is runtime-only.
-	return (db ??= createDb());
+	if (!env.DATABASE_URL) throw new Error('DATABASE_URL is not set');
+
+	return (db ??= createDb(env.DATABASE_URL));
 }

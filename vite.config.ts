@@ -31,6 +31,11 @@ export default defineConfig({
 	],
 	test: {
 		expect: { requireAssertions: true },
+		env: {
+			DATABASE_URL: 'file::memory:',
+			ORIGIN: 'http://127.0.0.1:4173',
+			BETTER_AUTH_SECRET: 'test-only-secret-that-is-at-least-32-chars'
+		},
 		projects: [
 			{
 				extends: './vite.config.ts',
