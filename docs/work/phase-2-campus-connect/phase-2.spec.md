@@ -373,3 +373,5 @@ The committed release includes public personal and group Events, all three respo
 - If geocoding ships, public Nominatim remains suitable only while the application stays within its published usage policy. Keep the provider replaceable and preserve the committed plain-text fallback.
 - Railway SQLite requires one running application instance and deliberate runtime migrations. This specification does not override the accepted lazy initialization ADR.
 - No new ADR is required. The Phase 2 scope and delivery choices are reversible and unsurprising within a university development phase.
+- When working in frontend, always prioritize using shadcn-svelte components with minimal style overrides.
+- For client-server interactions prioritize using remote functions & async over load functions & server actions.
