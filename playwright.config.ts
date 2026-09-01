@@ -15,6 +15,7 @@ export default defineConfig({
 	webServer: {
 		command: 'bun run db:migrate && bun run build && bun run preview',
 		port: 4173,
+		timeout: 180_000,
 		env: {
 			...(process.env as Record<string, string>),
 			DATABASE_URL: testDatabaseUrl,
