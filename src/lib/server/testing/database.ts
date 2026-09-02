@@ -1,6 +1,5 @@
-import { resolve } from 'node:path';
-import { migrate } from 'drizzle-orm/libsql/migrator';
 import { createDb, type Database } from '$lib/server/db';
+import { applyMigrations } from '$lib/server/db/migrate';
 
 export interface TestDatabase extends Disposable {
 	db: Database;
@@ -9,7 +8,7 @@ export interface TestDatabase extends Disposable {
 export async function createTestDatabase(): Promise<TestDatabase> {
 	const db = createDb('file::memory:');
 
-	await migrate(db, { migrationsFolder: resolve('drizzle') });
+	await applyMigrations(db);
 
 	return {
 		db,
