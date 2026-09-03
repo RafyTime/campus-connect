@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import HostAvatar from '$lib/components/host-avatar.svelte';
+	import { capacityStateIcon, eventStatusIcon } from '$lib/event-icons';
 	import { eventStatusLabel, responseModeLabel } from '$lib/event-labels';
 	import { loadPublicEvent } from '$lib/events.remote';
 
@@ -16,13 +19,30 @@
 
 <article class="mx-auto flex w-full max-w-2xl flex-col gap-6">
 	<p>
-		<Button href={resolve('/')} variant="ghost" class="min-h-11 px-3">Back to Discover</Button>
+		<Button href={resolve('/')} variant="ghost" class="min-h-11 px-3">
+			<HugeiconsIcon icon={ArrowLeft01Icon} data-icon="inline-start" size={16} />
+			Back to Discover
+		</Button>
 	</p>
 
 	<header class="flex flex-col gap-3">
 		<div class="flex flex-wrap gap-1.5">
-			<Badge variant="secondary">{eventStatusLabel(event.status)}</Badge>
-			<Badge variant="outline">{event.capacityState}</Badge>
+			<Badge variant="secondary">
+				<HugeiconsIcon
+					icon={eventStatusIcon(event.status)}
+					data-icon="inline-start"
+					size={12}
+				/>
+				{eventStatusLabel(event.status)}
+			</Badge>
+			<Badge variant="outline">
+				<HugeiconsIcon
+					icon={capacityStateIcon(event.responseMode, event.capacityState)}
+					data-icon="inline-start"
+					size={12}
+				/>
+				{event.capacityState}
+			</Badge>
 		</div>
 		<h1 class="font-heading text-2xl font-medium tracking-tight">{event.title}</h1>
 		<p class="text-muted-foreground">

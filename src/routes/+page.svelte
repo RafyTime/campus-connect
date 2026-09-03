@@ -23,7 +23,7 @@
 	{:else}
 		<ul class="grid list-none gap-4 p-0 md:grid-cols-2">
 			{#each events as event (event.id)}
-				<li>
+				<li class="h-full">
 					<EventCard {event} />
 				</li>
 			{/each}

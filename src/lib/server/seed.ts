@@ -1,6 +1,6 @@
 import type { Clock } from './clock';
 import type { Database } from './db/client';
-import { missingWikimediaAvatarUrl, wikimediaHostPortraitUrl } from './application/remote-images';
+import { missingWikimediaAvatarUrl } from './application/remote-images';
 import { location, tag } from './db/schema';
 import { insertPublicPersonalEvent } from './fixtures';
 
@@ -62,7 +62,7 @@ const authors = {
 		id: 'user-lena',
 		name: 'Lena Hartmann',
 		email: 'lena.hartmann@example.com',
-		image: wikimediaHostPortraitUrl
+		image: null
 	},
 	jonas: {
 		id: 'user-jonas',

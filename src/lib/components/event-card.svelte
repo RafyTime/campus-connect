@@ -11,9 +11,9 @@
 
 <a
 	href={resolve('/events/[eventId]', { eventId: event.id })}
-	class="block rounded-[min(var(--radius-4xl),24px)] focus-visible:ring-3 focus-visible:ring-ring/30"
+	class="block h-full rounded-[min(var(--radius-4xl),24px)] focus-visible:ring-3 focus-visible:ring-ring/30"
 >
-	<Card.Root class="h-full">
+	<Card.Root class="flex h-full flex-col">
 		<Card.Header>
 			<Card.Title>
 				<h2 class="font-heading text-base font-medium">{event.title}</h2>
@@ -22,7 +22,7 @@
 				<time datetime={event.startsAt.toISOString()}>{event.scheduleLabel}</time>
 			</Card.Description>
 		</Card.Header>
-		<Card.Content class="flex flex-col gap-3">
+		<Card.Content class="flex flex-1 flex-col gap-3">
 			<div class="flex items-center gap-2 text-sm">
 				<HostAvatar
 					displayName={event.host.displayName}
@@ -38,7 +38,7 @@
 					</p>
 				</div>
 			</div>
-			<div class="flex flex-wrap gap-1.5">
+			<div class="mt-auto flex min-h-12 flex-wrap content-start gap-1.5">
 				<Badge variant="secondary">{responseModeLabel(event.responseMode)}</Badge>
 				<Badge variant="outline">{event.capacityState}</Badge>
 				{#each event.tags as tag (tag.id)}
