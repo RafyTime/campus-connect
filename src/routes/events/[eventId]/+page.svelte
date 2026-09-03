@@ -28,11 +28,7 @@
 	<header class="flex flex-col gap-3">
 		<div class="flex flex-wrap gap-1.5">
 			<Badge variant="secondary">
-				<HugeiconsIcon
-					icon={eventStatusIcon(event.status)}
-					data-icon="inline-start"
-					size={12}
-				/>
+				<HugeiconsIcon icon={eventStatusIcon(event.status)} data-icon="inline-start" size={12} />
 				{eventStatusLabel(event.status)}
 			</Badge>
 			<Badge variant="outline">
