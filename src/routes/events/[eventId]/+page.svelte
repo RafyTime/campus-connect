@@ -56,7 +56,22 @@
 				initials={event.host.initials}
 				size="lg"
 			/>
-			<p class="font-medium">{event.host.displayName}</p>
+			<div class="min-w-0">
+				{#if event.host.type === 'group'}
+					<p>
+						<Button
+							href={resolve('/groups/[groupId]', { groupId: event.host.id })}
+							variant="link"
+							class="min-h-11 px-0"
+						>
+							{event.host.displayName}
+						</Button>
+					</p>
+					<p class="text-sm text-muted-foreground">Group</p>
+				{:else}
+					<p class="font-medium">{event.host.displayName}</p>
+				{/if}
+			</div>
 		</div>
 		{#if event.host.imageAttribution}
 			<p class="text-xs text-muted-foreground">{event.host.imageAttribution}</p>

@@ -39,6 +39,9 @@
 				</div>
 			</div>
 			<div class="mt-auto flex min-h-12 flex-wrap content-start gap-1.5">
+				{#if event.host.type === 'group'}
+					<Badge variant="outline">Group</Badge>
+				{/if}
 				<Badge variant="secondary">{responseModeLabel(event.responseMode)}</Badge>
 				<Badge variant="outline">{event.capacityState}</Badge>
 				{#each event.tags as tag (tag.id)}
