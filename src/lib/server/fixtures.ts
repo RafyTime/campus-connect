@@ -1,7 +1,8 @@
 import { eq } from 'drizzle-orm';
 import type { Clock } from './clock';
 import type { Database } from './db/client';
-import { event, eventTag, location, post, tag, user } from './db/schema';
+import type { GroupMembershipRole } from './db/domain.schema';
+import { event, eventTag, group, groupMembership, location, post, tag, user } from './db/schema';
 
 export type ResponseMode = 'announcement' | 'interest' | 'registration';
 export type EventStatus = 'scheduled' | 'cancelled';
@@ -25,6 +26,17 @@ export type TagFixture = {
 	name: string;
 };
 
+export type GroupFixture = {
+	id: string;
+	name: string;
+	description: string;
+	imageUrl?: string | null;
+	systemManaged?: boolean;
+	owner: AuthorFixture;
+	representative?: AuthorFixture;
+	subscribers?: AuthorFixture[];
+};
+
 export type PublicPersonalEventFixture = {
 	id: string;
 	title: string;
@@ -37,6 +49,11 @@ export type PublicPersonalEventFixture = {
 	responseMode?: ResponseMode;
 	capacity?: number | null;
 	status?: EventStatus;
+};
+
+export type PublicGroupEventFixture = PublicPersonalEventFixture & {
+	groupId: string;
+	author: AuthorFixture;
 };
 
 const defaultAuthor: AuthorFixture = {
@@ -54,10 +71,109 @@ const defaultTags: TagFixture[] = [{ id: 'tag-fixture-social', name: 'Social' }]
 
 const defaultDescription = 'A campus Event for students and teachers at IU Campus Bad Honnef.';
 
+export async function insertUser(db: Database, clock: Clock, fixture: AuthorFixture) {
+	const now = clock.now();
+
+	await db
+		.insert(user)
+		.values({
+			id: fixture.id,
+			name: fixture.name,
+			email: fixture.email,
+			image: fixture.image ?? null
+		})
+		.onConflictDoUpdate({
+			target: user.id,
+			set: {
+				name: fixture.name,
+				email: fixture.email,
+				image: fixture.image ?? null,
+				updatedAt: now
+			}
+		});
+}
+
+export async function insertGroup(db: Database, clock: Clock, fixture: GroupFixture) {
+	const now = clock.now();
+	const subscribers = fixture.subscribers ?? [];
+
+	await insertUser(db, clock, fixture.owner);
+	if (fixture.representative) {
+		await insertUser(db, clock, fixture.representative);
+	}
+	for (const subscriber of subscribers) {
+		await insertUser(db, clock, subscriber);
+	}
+
+	await db
+		.insert(group)
+		.values({
+			id: fixture.id,
+			name: fixture.name,
+			description: fixture.description,
+			imageUrl: fixture.imageUrl ?? null,
+			systemManaged: fixture.systemManaged ?? false,
+			createdAt: now,
+			updatedAt: now
+		})
+		.onConflictDoUpdate({
+			target: group.id,
+			set: {
+				name: fixture.name,
+				description: fixture.description,
+				imageUrl: fixture.imageUrl ?? null,
+				systemManaged: fixture.systemManaged ?? false,
+				updatedAt: now
+			}
+		});
+
+	await db.delete(groupMembership).where(eq(groupMembership.groupId, fixture.id));
+
+	const memberships: {
+		userId: string;
+		groupId: string;
+		role: GroupMembershipRole;
+	}[] = [{ userId: fixture.owner.id, groupId: fixture.id, role: 'owner' }];
+
+	if (fixture.representative) {
+		memberships.push({
+			userId: fixture.representative.id,
+			groupId: fixture.id,
+			role: 'representative'
+		});
+	}
+
+	for (const subscriber of subscribers) {
+		memberships.push({
+			userId: subscriber.id,
+			groupId: fixture.id,
+			role: 'subscriber'
+		});
+	}
+
+	await db.insert(groupMembership).values(memberships);
+}
+
 export async function insertPublicPersonalEvent(
 	db: Database,
 	clock: Clock,
 	fixture: PublicPersonalEventFixture
+) {
+	await insertPublicEvent(db, clock, fixture);
+}
+
+export async function insertPublicGroupEvent(
+	db: Database,
+	clock: Clock,
+	fixture: PublicGroupEventFixture
+) {
+	await insertPublicEvent(db, clock, fixture);
+}
+
+async function insertPublicEvent(
+	db: Database,
+	clock: Clock,
+	fixture: PublicPersonalEventFixture & { groupId?: string }
 ) {
 	const now = clock.now();
 	const author = fixture.author ?? defaultAuthor;
@@ -68,24 +184,9 @@ export async function insertPublicPersonalEvent(
 	const capacity = responseMode === 'registration' ? (fixture.capacity ?? 12) : null;
 	const status = fixture.status ?? 'scheduled';
 	const postId = `post-${fixture.id}`;
+	const groupId = fixture.groupId ?? null;
 
-	await db
-		.insert(user)
-		.values({
-			id: author.id,
-			name: author.name,
-			email: author.email,
-			image: author.image ?? null
-		})
-		.onConflictDoUpdate({
-			target: user.id,
-			set: {
-				name: author.name,
-				email: author.email,
-				image: author.image ?? null,
-				updatedAt: now
-			}
-		});
+	await insertUser(db, clock, author);
 
 	await db
 		.insert(location)
@@ -123,6 +224,7 @@ export async function insertPublicPersonalEvent(
 			id: postId,
 			title: fixture.title,
 			authorId: author.id,
+			groupId,
 			createdAt: now,
 			updatedAt: now
 		})
@@ -131,6 +233,7 @@ export async function insertPublicPersonalEvent(
 			set: {
 				title: fixture.title,
 				authorId: author.id,
+				groupId,
 				updatedAt: now
 			}
 		});

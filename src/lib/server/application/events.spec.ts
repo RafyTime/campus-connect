@@ -70,6 +70,7 @@ describe('public Event discovery', () => {
 				endsAt: new Date('2026-09-01T14:00:00.000Z'),
 				scheduleLabel: 'Tue, 1 Sept 2026, 14:00–16:00',
 				host: {
+					type: 'personal',
 					id: 'user-lena',
 					displayName: 'Lena Hartmann',
 					imageUrl: null,
@@ -156,6 +157,7 @@ describe('public Event detail', () => {
 			exactTimeLabel: 'Tue, 1 Sept 2026, 14:00–16:00 CEST',
 			description,
 			host: {
+				type: 'personal',
 				id: 'user-lena',
 				displayName: 'Lena Hartmann',
 				imageUrl: null,
@@ -240,6 +242,7 @@ describe('public Event detail', () => {
 			getPublicEvent(database.db, clock, 'event-attributed-host')
 		).resolves.toMatchObject({
 			host: {
+				type: 'personal',
 				displayName: 'Mira Okonkwo',
 				imageUrl: wikimediaPortrait,
 				imageAttribution: 'Man silhouette by Liftarn, CC BY-SA 2.5, via Wikimedia Commons',
@@ -248,6 +251,7 @@ describe('public Event detail', () => {
 		});
 		await expect(getPublicEvent(database.db, clock, 'event-blocked-host')).resolves.toMatchObject({
 			host: {
+				type: 'personal',
 				displayName: 'Jonas Weber',
 				imageUrl: null,
 				imageAttribution: null,

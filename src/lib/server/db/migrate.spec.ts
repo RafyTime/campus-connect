@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createDb } from './client';
 import { applyMigrations } from './migrate';
-import { event } from './schema';
+import { event, group } from './schema';
 
 describe('applyMigrations', () => {
 	it('applies committed migrations to an empty database', async () => {
@@ -10,6 +10,7 @@ describe('applyMigrations', () => {
 		try {
 			await applyMigrations(db);
 			expect(await db.select({ id: event.id }).from(event)).toEqual([]);
+			expect(await db.select({ id: group.id }).from(group)).toEqual([]);
 		} finally {
 			db.$client.close();
 		}

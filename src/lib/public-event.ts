@@ -1,4 +1,7 @@
+export type PublicHostType = 'personal' | 'group';
+
 export type PublicEventHost = {
+	type: PublicHostType;
 	id: string;
 	displayName: string;
 	imageUrl: string | null;

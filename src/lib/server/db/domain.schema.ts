@@ -1,14 +1,23 @@
-import { relations, sql } from 'drizzle-orm';
+import { relations, sql, type SQL } from 'drizzle-orm';
 import {
+	type AnySQLiteColumn,
 	check,
 	index,
 	integer,
 	primaryKey,
 	real,
 	sqliteTable,
-	text
+	text,
+	uniqueIndex
 } from 'drizzle-orm/sqlite-core';
 import { user } from './auth.schema';
+
+export const groupMembershipRoles = ['owner', 'representative', 'subscriber'] as const;
+export type GroupMembershipRole = (typeof groupMembershipRoles)[number];
+
+function lower(column: AnySQLiteColumn): SQL {
+	return sql`lower(${column})`;
+}
 
 export const tag = sqliteTable('tag', {
 	id: text('id').primaryKey(),
@@ -22,6 +31,41 @@ export const location = sqliteTable('location', {
 	longitude: real('longitude')
 });
 
+export const group = sqliteTable(
+	'campus_group',
+	{
+		id: text('id').primaryKey(),
+		name: text('name').notNull(),
+		description: text('description').notNull(),
+		imageUrl: text('image_url'),
+		systemManaged: integer('system_managed', { mode: 'boolean' }).notNull().default(false),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+		updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull()
+	},
+	(table) => [uniqueIndex('group_name_ci_unique').on(lower(table.name))]
+);
+
+export const groupMembership = sqliteTable(
+	'group_membership',
+	{
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id),
+		groupId: text('group_id')
+			.notNull()
+			.references(() => group.id),
+		role: text('role', { enum: groupMembershipRoles }).notNull()
+	},
+	(table) => [
+		primaryKey({ columns: [table.userId, table.groupId] }),
+		index('group_membership_groupId_idx').on(table.groupId),
+		uniqueIndex('group_membership_one_owner')
+			.on(table.groupId)
+			.where(sql`${table.role} = 'owner'`),
+		check('group_membership_role', sql`${table.role} in ('owner', 'representative', 'subscriber')`)
+	]
+);
+
 export const post = sqliteTable(
 	'post',
 	{
@@ -30,10 +74,14 @@ export const post = sqliteTable(
 		authorId: text('author_id')
 			.notNull()
 			.references(() => user.id),
+		groupId: text('group_id').references(() => group.id),
 		createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
 		updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull()
 	},
-	(table) => [index('post_authorId_idx').on(table.authorId)]
+	(table) => [
+		index('post_authorId_idx').on(table.authorId),
+		index('post_groupId_idx').on(table.groupId)
+	]
 );
 
 export const event = sqliteTable(
@@ -91,10 +139,30 @@ export const eventTag = sqliteTable(
 	]
 );
 
+export const groupRelations = relations(group, ({ many }) => ({
+	memberships: many(groupMembership),
+	posts: many(post)
+}));
+
+export const groupMembershipRelations = relations(groupMembership, ({ one }) => ({
+	group: one(group, {
+		fields: [groupMembership.groupId],
+		references: [group.id]
+	}),
+	user: one(user, {
+		fields: [groupMembership.userId],
+		references: [user.id]
+	})
+}));
+
 export const postRelations = relations(post, ({ one }) => ({
 	author: one(user, {
 		fields: [post.authorId],
 		references: [user.id]
+	}),
+	group: one(group, {
+		fields: [post.groupId],
+		references: [group.id]
 	}),
 	event: one(event)
 }));

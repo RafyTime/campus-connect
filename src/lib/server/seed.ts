@@ -1,8 +1,8 @@
 import type { Clock } from './clock';
 import type { Database } from './db/client';
-import { missingWikimediaAvatarUrl } from './application/remote-images';
+import { missingWikimediaAvatarUrl, wikimediaHostPortraitUrl } from './application/remote-images';
 import { location, tag } from './db/schema';
-import { insertPublicPersonalEvent } from './fixtures';
+import { insertGroup, insertPublicGroupEvent, insertPublicPersonalEvent } from './fixtures';
 
 const hour = 60 * 60 * 1000;
 
@@ -75,8 +75,22 @@ const authors = {
 		name: 'Mira Okonkwo',
 		email: 'mira.okonkwo@example.com',
 		image: missingWikimediaAvatarUrl
+	},
+	campusOffice: {
+		id: 'user-campus-office',
+		name: 'Campus Office',
+		email: 'campus.office@example.com',
+		image: null
+	},
+	sofia: {
+		id: 'user-sofia',
+		name: 'Sofia Klein',
+		email: 'sofia.klein@example.com',
+		image: null
 	}
 } as const;
+
+export const campusUpdatesGroupId = 'group-campus-updates';
 
 function at(clock: Clock, hoursFromNow: number) {
 	return new Date(clock.now().getTime() + hoursFromNow * hour);
@@ -203,4 +217,112 @@ export async function seedPublicPersonalEvents(db: Database, clock: Clock) {
 		responseMode: 'interest',
 		status: 'cancelled'
 	});
+}
+
+export async function seedGroupsAndPublicGroupEvents(db: Database, clock: Clock) {
+	await insertGroup(db, clock, {
+		id: campusUpdatesGroupId,
+		name: 'Campus Updates',
+		description:
+			'Official campus-wide information for IU Campus Bad Honnef. Readable without a Group membership.',
+		systemManaged: true,
+		owner: authors.campusOffice,
+		subscribers: [authors.sofia, authors.jonas]
+	});
+
+	await insertGroup(db, clock, {
+		id: 'group-film-society',
+		name: 'Film Society',
+		description:
+			'Weekly screenings and discussion for students and teachers at IU Campus Bad Honnef.',
+		imageUrl: wikimediaHostPortraitUrl,
+		owner: authors.lena,
+		representative: authors.jonas,
+		subscribers: [authors.sofia]
+	});
+
+	await insertGroup(db, clock, {
+		id: 'group-campus-runners',
+		name: 'Campus Runners',
+		description: 'Easy campus loops and race training from the sports field.',
+		imageUrl: missingWikimediaAvatarUrl,
+		owner: authors.mira,
+		subscribers: [authors.lena]
+	});
+
+	await insertPublicGroupEvent(db, clock, {
+		id: 'event-campus-briefing',
+		title: 'Campus week briefing',
+		description:
+			'A public summary of this week’s campus notices, room changes, and visitor information.',
+		startsAt: at(clock, 12),
+		endsAt: at(clock, 13),
+		groupId: campusUpdatesGroupId,
+		author: authors.campusOffice,
+		location: locations['location-foyer'],
+		tags: [tags['tag-social']],
+		responseMode: 'announcement'
+	});
+
+	await insertPublicGroupEvent(db, clock, {
+		id: 'event-film-night',
+		title: 'Campus film night',
+		description:
+			'The Film Society screens a campus favourite in the cafeteria. Bring a jumper; the room runs cold.',
+		startsAt: at(clock, 30),
+		endsAt: at(clock, 33),
+		groupId: 'group-film-society',
+		author: authors.jonas,
+		location: locations['location-cafeteria'],
+		tags: [tags['tag-arts'], tags['tag-social']],
+		responseMode: 'interest'
+	});
+
+	await insertPublicGroupEvent(db, clock, {
+		id: 'event-group-run',
+		title: 'Sunday campus run',
+		description:
+			'A paced 5 km from the sports field. Twelve places keep the group small enough to stay together.',
+		startsAt: at(clock, 80),
+		endsAt: at(clock, 82),
+		groupId: 'group-campus-runners',
+		author: authors.mira,
+		location: locations['location-sports'],
+		tags: [tags['tag-sports'], tags['tag-wellness']],
+		responseMode: 'registration',
+		capacity: 12
+	});
+
+	await insertPublicGroupEvent(db, clock, {
+		id: 'event-ended-film-meetup',
+		title: 'Welcome-week screening',
+		description: 'A completed Film Society introduction screening for new arrivals.',
+		startsAt: at(clock, -36),
+		endsAt: at(clock, -34),
+		groupId: 'group-film-society',
+		author: authors.lena,
+		location: locations['location-cafeteria'],
+		tags: [tags['tag-arts']],
+		responseMode: 'announcement'
+	});
+
+	await insertPublicGroupEvent(db, clock, {
+		id: 'event-cancelled-group-screening',
+		title: 'Outdoor Rhine screening',
+		description:
+			'This outdoor screening will not take place. Watch the Group page for the indoor replacement.',
+		startsAt: at(clock, 140),
+		endsAt: at(clock, 143),
+		groupId: 'group-film-society',
+		author: authors.lena,
+		location: locations['location-town'],
+		tags: [tags['tag-arts'], tags['tag-outdoors']],
+		responseMode: 'interest',
+		status: 'cancelled'
+	});
+}
+
+export async function seedCampusConnect(db: Database, clock: Clock) {
+	await seedPublicPersonalEvents(db, clock);
+	await seedGroupsAndPublicGroupEvents(db, clock);
 }

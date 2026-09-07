@@ -15,6 +15,13 @@
       "when": 1788280770571,
       "tag": "0001_public_personal_events",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1788779948277,
+      "tag": "0002_groups_and_public_group_events",
+      "breakpoints": true
     }
   ]
 }

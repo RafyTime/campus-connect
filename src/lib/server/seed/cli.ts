@@ -1,6 +1,6 @@
 import { createDb } from '../db/client';
 import { systemClock } from '../clock';
-import { seedPublicPersonalEvents } from '../seed';
+import { seedCampusConnect } from '../seed';
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -10,6 +10,6 @@ if (!databaseUrl) {
 
 const db = createDb(databaseUrl);
 
-await seedPublicPersonalEvents(db, systemClock);
+await seedCampusConnect(db, systemClock);
 db.$client.close();
-console.info('Seeded public personal Events.');
+console.info('Seeded public Events and Groups.');

@@ -18,11 +18,12 @@ export type {
 	PublicEventStatus,
 	PublicEventSummary,
 	PublicEventTag,
+	PublicHostType,
 	PublicResponseMode
 } from '$lib/public-event';
 
 const discoverWith = {
-	post: { with: { author: true } },
+	post: { with: { author: true, group: true } },
 	location: true,
 	eventTags: { with: { tag: true } }
 } as const;
@@ -60,6 +61,15 @@ export async function getPublicEvent(
 	return toDetail(row, clock.now());
 }
 
+export async function discoverPublicEventsForGroup(
+	db: Database,
+	clock: Clock,
+	groupId: string
+): Promise<PublicEventSummary[]> {
+	const events = await discoverPublicEvents(db, clock);
+	return events.filter((event) => event.host.type === 'group' && event.host.id === groupId);
+}
+
 type LoadedEvent = {
 	id: string;
 	startsAt: Date;
@@ -71,27 +81,46 @@ type LoadedEvent = {
 	post: {
 		title: string;
 		author: { id: string; name: string; image: string | null };
+		group: { id: string; name: string; imageUrl: string | null } | null;
 	};
 	location: { label: string };
 	eventTags: { tag: { id: string; name: string } }[];
 };
 
-function toSummary(row: LoadedEvent, now: Date): PublicEventSummary {
+function toHost(row: LoadedEvent): PublicEventSummary['host'] {
+	if (row.post.group) {
+		const imageUrl = publicImageUrl(row.post.group.imageUrl);
+
+		return {
+			type: 'group',
+			id: row.post.group.id,
+			displayName: row.post.group.name,
+			imageUrl,
+			imageAttribution: imageAttribution(imageUrl),
+			initials: displayInitials(row.post.group.name)
+		};
+	}
+
 	const imageUrl = publicImageUrl(row.post.author.image);
 
+	return {
+		type: 'personal',
+		id: row.post.author.id,
+		displayName: row.post.author.name,
+		imageUrl,
+		imageAttribution: imageAttribution(imageUrl),
+		initials: displayInitials(row.post.author.name)
+	};
+}
+
+function toSummary(row: LoadedEvent, now: Date): PublicEventSummary {
 	return {
 		id: row.id,
 		title: row.post.title,
 		startsAt: row.startsAt,
 		endsAt: row.endsAt,
 		scheduleLabel: formatCampusSchedule(row.startsAt, row.endsAt),
-		host: {
-			id: row.post.author.id,
-			displayName: row.post.author.name,
-			imageUrl,
-			imageAttribution: imageAttribution(imageUrl),
-			initials: displayInitials(row.post.author.name)
-		},
+		host: toHost(row),
 		locationLabel: row.location.label,
 		tags: row.eventTags
 			.map((eventTag) => ({ id: eventTag.tag.id, name: eventTag.tag.name }))
