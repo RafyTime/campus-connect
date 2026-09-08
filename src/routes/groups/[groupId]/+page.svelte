@@ -10,8 +10,11 @@
 	import * as Empty from '$lib/components/ui/empty';
 	import { subscriberCountLabel } from '$lib/group-labels';
 	import { loadPublicGroup } from '$lib/groups.remote';
+	import ProtectedActionDialog from '$lib/components/protected-action-dialog.svelte';
 
 	const group = $derived(await loadPublicGroup(page.params.groupId ?? ''));
+	const user = $derived(page.data.user);
+	let promptOpen = $state(false);
 </script>
 
 <svelte:head>
@@ -58,6 +61,18 @@
 			Subscribers
 		</h2>
 		<p>{subscriberCountLabel(group.subscriberCount)}</p>
+		{#if !group.systemManaged}
+			<p>
+				<Button
+					class="min-h-11"
+					onclick={() => {
+						if (!user) promptOpen = true;
+					}}
+				>
+					Follow
+				</Button>
+			</p>
+		{/if}
 	</section>
 
 	<section class="flex flex-col gap-4" aria-labelledby="group-events-heading">
@@ -86,3 +101,5 @@
 		{/if}
 	</section>
 </article>
+
+<ProtectedActionDialog bind:open={promptOpen} />

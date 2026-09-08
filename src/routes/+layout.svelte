@@ -3,7 +3,7 @@
 	import AppShell from '$lib/components/app-shell.svelte';
 	import './layout.css';
 
-	let { children } = $props();
+	let { children, data } = $props();
 </script>
 
 <svelte:head>
@@ -11,6 +11,6 @@
 	<title>Campus Connect</title>
 </svelte:head>
 
-<AppShell>
+<AppShell user={data.user}>
 	{@render children()}
 </AppShell>

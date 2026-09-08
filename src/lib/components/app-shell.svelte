@@ -7,12 +7,21 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { accountDestinations, isCurrentDestination, primaryDestinations } from '$lib/navigation';
+	import {
+		accountDestinations,
+		isCurrentDestination,
+		primaryDestinations,
+		signedInAccountDestinations
+	} from '$lib/navigation';
+	import type { SessionUser } from '$lib/session-user';
 
-	let { children }: { children: Snippet } = $props();
+	let { children, user }: { children: Snippet; user: SessionUser | null } = $props();
 
 	const pathname = $derived(page.url.pathname);
 	const isNavigating = $derived(Boolean(navigating.to));
+	const currentAccountDestinations = $derived(
+		user ? signedInAccountDestinations : accountDestinations
+	);
 
 	const primaryIcons = {
 		'/': CompassIcon,
@@ -52,11 +61,13 @@
 			</nav>
 
 			<nav aria-label="Account" class="ml-auto flex items-center gap-2">
-				{#each accountDestinations as destination (destination.href)}
+				{#each currentAccountDestinations as destination (destination.href)}
 					{@const current = isCurrentDestination(pathname, destination.href)}
 					<Button
 						href={resolve(destination.href)}
-						variant={destination.href === '/register' ? 'default' : 'outline'}
+						variant={destination.href === '/register' || destination.href === '/account'
+							? 'default'
+							: 'outline'}
 						class="min-h-11 min-w-11 px-3"
 						aria-current={current ? 'page' : undefined}
 					>
