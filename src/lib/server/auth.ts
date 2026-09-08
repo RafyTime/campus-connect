@@ -12,7 +12,18 @@ function createAuth() {
 		baseURL: env.ORIGIN,
 		secret: env.BETTER_AUTH_SECRET,
 		database: drizzleAdapter(getDb(), { provider: 'sqlite' }),
-		emailAndPassword: { enabled: true },
+		emailAndPassword: {
+			enabled: true,
+			minPasswordLength: 8,
+			requireEmailVerification: false
+		},
+		user: {
+			changeEmail: { enabled: false },
+			deleteUser: { enabled: false }
+		},
+		rateLimit: {
+			enabled: env.AUTH_RATE_LIMIT !== 'off'
+		},
 		plugins: [
 			sveltekitCookies(getRequestEvent) // make sure this is the last plugin in the array
 		]
