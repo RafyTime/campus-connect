@@ -21,23 +21,23 @@ A user who discovers groups, posts, or events and may follow or participate. Exp
 _Avoid_: Attendee account
 
 **Group**:
-A named campus community that publishes posts and group events through its members.
-_Avoid_: Club, channel
+A named campus community that publishes posts and group events. Club and society name the same concept; group is the generic term, club and society are more specific names for a student organisation of this kind.
+_Avoid_: Channel
 
 **Group membership**:
-The relationship between a user and a group, with exactly one of the roles owner, representative, or subscriber.
+The relationship between a user and a group, with exactly one of the roles owner, representative, or subscriber. In campus speech, membership usually means the subscriber relationship.
 _Avoid_: Group user
 
 **Owner**:
-A group's sole controlling member. The user who creates a group becomes its owner.
+A group's sole controlling user. The user who creates a group becomes its owner.
 _Avoid_: Admin
 
 **Representative**:
-A group member appointed by the owner to manage the group's posts and events.
+A user appointed by the owner to manage the group's posts and events. Also called a rep.
 _Avoid_: Moderator
 
 **Subscriber**:
-A group member who follows the group's posts and events without managing them.
+A user who follows a group's posts and events without managing them. Also called a member; member, membership, and subscriber name this same follow relationship.
 _Avoid_: Follower
 
 **Campus Updates**:
@@ -109,7 +109,7 @@ _Avoid_: Privacy level
 An event visible to visitors and users without a relationship to its creator or group.
 
 **Subscriber-only event**:
-A group event discoverable by current group members and visible to users who joined it while they were members.
+A group event discoverable by anyone with a current group membership and visible to users who joined it while they had one.
 _Avoid_: Followers-only event
 
 **Invite-only event**:
