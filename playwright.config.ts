@@ -21,7 +21,8 @@ export default defineConfig({
 			...(process.env as Record<string, string>),
 			DATABASE_URL: testDatabaseUrl,
 			ORIGIN: 'http://127.0.0.1:4173',
-			BETTER_AUTH_SECRET: 'test-only-secret-that-is-at-least-32-chars'
+			BETTER_AUTH_SECRET: 'test-only-secret-that-is-at-least-32-chars',
+			AUTH_RATE_LIMIT: 'off'
 		}
 	},
 	testMatch: '**/*.e2e.{ts,js}'
