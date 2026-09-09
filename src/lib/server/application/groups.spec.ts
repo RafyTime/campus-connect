@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
 	assertGroupMutable,
+	followGroup,
 	getPublicGroup,
 	listPublicGroups,
-	recordGroupMembership
+	recordGroupMembership,
+	unfollowGroup
 } from './groups';
 import { getPublicEvent } from './events';
 import { createTestClock } from '$lib/server/testing/clock';
@@ -403,6 +405,206 @@ describe('Campus Updates protection', () => {
 		await expect(assertGroupMutable(database.db, 'group-missing')).resolves.toEqual({
 			ok: false,
 			reason: 'not-found'
+		});
+	});
+});
+
+describe('follow and unfollow Groups', () => {
+	it('creates one subscriber membership for the acting User and Group', async () => {
+		using database = await createTestDatabase();
+		const clock = createTestClock(campusNow);
+
+		await insertGroup(database.db, clock, {
+			...filmSociety,
+			owner: lena,
+			representative: jonas,
+			subscribers: [sofia]
+		});
+		await insertUser(database.db, clock, {
+			id: 'user-mira',
+			name: 'Mira Okonkwo',
+			email: 'mira.okonkwo@example.com'
+		});
+
+		await expect(followGroup(database.db, { id: 'user-mira' }, filmSociety.id)).resolves.toEqual({
+			ok: true,
+			following: true,
+			subscriberCount: 2
+		});
+
+		const detail = await getPublicGroup(database.db, clock, filmSociety.id, 'user-mira');
+		expect(detail).toMatchObject({
+			subscriberCount: 2,
+			viewerRole: 'subscriber'
+		});
+	});
+
+	it('removes the subscriber membership without deleting the Group or other members', async () => {
+		using database = await createTestDatabase();
+		const clock = createTestClock(campusNow);
+
+		await insertGroup(database.db, clock, {
+			...filmSociety,
+			owner: lena,
+			representative: jonas,
+			subscribers: [sofia]
+		});
+
+		await expect(unfollowGroup(database.db, sofia, filmSociety.id)).resolves.toEqual({
+			ok: true,
+			following: false,
+			subscriberCount: 0
+		});
+
+		const detail = await getPublicGroup(database.db, clock, filmSociety.id, sofia.id);
+		expect(detail).toMatchObject({
+			id: filmSociety.id,
+			owner: { id: lena.id, displayName: lena.name },
+			subscriberCount: 0,
+			viewerRole: null
+		});
+		await expect(
+			getPublicGroup(database.db, clock, filmSociety.id, jonas.id)
+		).resolves.toMatchObject({
+			viewerRole: 'representative'
+		});
+	});
+
+	it('returns the resulting follow state for repeated follow and unfollow requests', async () => {
+		using database = await createTestDatabase();
+		const clock = createTestClock(campusNow);
+
+		await insertGroup(database.db, clock, {
+			...filmSociety,
+			owner: lena,
+			subscribers: [sofia]
+		});
+
+		await expect(followGroup(database.db, sofia, filmSociety.id)).resolves.toEqual({
+			ok: true,
+			following: true,
+			subscriberCount: 1
+		});
+		await expect(unfollowGroup(database.db, { id: 'user-mira' }, filmSociety.id)).resolves.toEqual({
+			ok: true,
+			following: false,
+			subscriberCount: 1
+		});
+
+		const afterRepeatedFollow = await getPublicGroup(database.db, clock, filmSociety.id);
+		expect(afterRepeatedFollow?.subscriberCount).toBe(1);
+	});
+
+	it('rejects follow and unfollow by the Group owner or representative', async () => {
+		using database = await createTestDatabase();
+		const clock = createTestClock(campusNow);
+
+		await insertGroup(database.db, clock, {
+			...filmSociety,
+			owner: lena,
+			representative: jonas,
+			subscribers: [sofia]
+		});
+
+		await expect(followGroup(database.db, lena, filmSociety.id)).resolves.toEqual({
+			ok: false,
+			reason: 'role-restricted'
+		});
+		await expect(unfollowGroup(database.db, lena, filmSociety.id)).resolves.toEqual({
+			ok: false,
+			reason: 'role-restricted'
+		});
+		await expect(followGroup(database.db, jonas, filmSociety.id)).resolves.toEqual({
+			ok: false,
+			reason: 'role-restricted'
+		});
+		await expect(unfollowGroup(database.db, jonas, filmSociety.id)).resolves.toEqual({
+			ok: false,
+			reason: 'role-restricted'
+		});
+
+		const detail = await getPublicGroup(database.db, clock, filmSociety.id);
+		expect(detail).toMatchObject({
+			subscriberCount: 1,
+			owner: { id: lena.id }
+		});
+		await expect(
+			getPublicGroup(database.db, clock, filmSociety.id, lena.id)
+		).resolves.toMatchObject({
+			viewerRole: 'owner'
+		});
+	});
+
+	it('rejects unauthenticated follow and unfollow without changing memberships', async () => {
+		using database = await createTestDatabase();
+		const clock = createTestClock(campusNow);
+
+		await insertGroup(database.db, clock, {
+			...filmSociety,
+			owner: lena,
+			subscribers: [sofia]
+		});
+
+		await expect(followGroup(database.db, null, filmSociety.id)).resolves.toEqual({
+			ok: false,
+			reason: 'unauthenticated'
+		});
+		await expect(unfollowGroup(database.db, null, filmSociety.id)).resolves.toEqual({
+			ok: false,
+			reason: 'unauthenticated'
+		});
+
+		await expect(getPublicGroup(database.db, clock, filmSociety.id)).resolves.toMatchObject({
+			subscriberCount: 1,
+			viewerRole: null
+		});
+	});
+
+	it('returns not-found when the Group does not exist', async () => {
+		using database = await createTestDatabase();
+
+		await expect(followGroup(database.db, sofia, 'group-missing')).resolves.toEqual({
+			ok: false,
+			reason: 'not-found'
+		});
+		await expect(unfollowGroup(database.db, sofia, 'group-missing')).resolves.toEqual({
+			ok: false,
+			reason: 'not-found'
+		});
+	});
+
+	it('changes follow state and subscriber count only', async () => {
+		using database = await createTestDatabase();
+		const clock = createTestClock(campusNow);
+
+		await insertGroup(database.db, clock, {
+			...filmSociety,
+			owner: lena
+		});
+		await insertPublicGroupEvent(database.db, clock, {
+			id: 'event-film-night',
+			title: 'Campus film night',
+			startsAt: new Date('2026-09-02T18:00:00.000Z'),
+			endsAt: new Date('2026-09-02T20:00:00.000Z'),
+			groupId: filmSociety.id,
+			author: lena
+		});
+		await insertUser(database.db, clock, sofia);
+
+		const before = await getPublicGroup(database.db, clock, filmSociety.id);
+		await expect(followGroup(database.db, sofia, filmSociety.id)).resolves.toEqual({
+			ok: true,
+			following: true,
+			subscriberCount: 1
+		});
+		const afterFollow = await getPublicGroup(database.db, clock, filmSociety.id, sofia.id);
+
+		expect(afterFollow?.upcomingEvents.map((event) => event.id)).toEqual(
+			before?.upcomingEvents.map((event) => event.id)
+		);
+		expect(afterFollow).toMatchObject({
+			subscriberCount: 1,
+			viewerRole: 'subscriber'
 		});
 	});
 });

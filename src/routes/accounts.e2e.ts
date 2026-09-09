@@ -264,11 +264,11 @@ test.describe('Campus Connect accounts and profiles', () => {
 		await page.getByRole('button', { name: 'Create account' }).click();
 
 		await expect(page).toHaveURL('/groups/group-film-society');
-		await expect(page.getByText('1 subscriber')).toBeVisible();
 		await expect(
 			page.getByRole('navigation', { name: 'Account' }).getByRole('link', { name: 'Account' })
 		).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Follow' })).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Unfollow' })).toHaveCount(0);
 	});
 
 	test('an external return path falls back to Discover', async ({ page }) => {

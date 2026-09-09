@@ -19,6 +19,7 @@ export type PublicGroupSummary = {
 
 export type PublicGroupDetail = PublicGroupSummary & {
 	upcomingEvents: PublicEventSummary[];
+	viewerRole: 'owner' | 'representative' | 'subscriber' | null;
 };
 
 export type GroupMutationAccess =
@@ -26,3 +27,10 @@ export type GroupMutationAccess =
 
 export type GroupMembershipRecordResult =
 	{ ok: true } | { ok: false; reason: 'duplicate-membership' | 'owner-exists' };
+
+export type GroupFollowResult =
+	| { ok: true; following: boolean; subscriberCount: number }
+	| {
+			ok: false;
+			reason: 'unauthenticated' | 'not-found' | 'role-restricted' | 'unavailable';
+	  };

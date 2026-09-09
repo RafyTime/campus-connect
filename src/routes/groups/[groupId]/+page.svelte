@@ -8,6 +8,7 @@
 	import EventCard from '$lib/components/event-card.svelte';
 	import HostAvatar from '$lib/components/host-avatar.svelte';
 	import * as Empty from '$lib/components/ui/empty';
+	import GroupFollowControls from '$lib/components/group-follow-controls.svelte';
 	import { subscriberCountLabel } from '$lib/group-labels';
 	import { loadPublicGroup } from '$lib/groups.remote';
 	import ProtectedActionDialog from '$lib/components/protected-action-dialog.svelte';
@@ -62,16 +63,7 @@
 		</h2>
 		<p>{subscriberCountLabel(group.subscriberCount)}</p>
 		{#if !group.systemManaged}
-			<p>
-				<Button
-					class="min-h-11"
-					onclick={() => {
-						if (!user) promptOpen = true;
-					}}
-				>
-					Follow
-				</Button>
-			</p>
+			<GroupFollowControls {group} {user} onUnauthenticated={() => (promptOpen = true)} />
 		{/if}
 	</section>
 
