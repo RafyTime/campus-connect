@@ -26,6 +26,107 @@ const groupWithMemberships = {
 	memberships: { with: { user: true } }
 } as const;
 
+export type GroupDetails = { name: string; description: string };
+export type GroupFieldErrors = Partial<Record<keyof GroupDetails, string>>;
+export type GroupSaveResult =
+	| { ok: true; groupId: string }
+	| {
+			ok: false;
+			reason:
+				| 'unauthenticated'
+				| 'invalid'
+				| 'name-taken'
+				| 'unavailable'
+				| 'not-found'
+				| 'system-managed'
+				| 'forbidden';
+			fieldErrors?: GroupFieldErrors;
+	  };
+
+export function parseGroupDetails(
+	input: unknown
+): { ok: true; value: GroupDetails } | { ok: false; fieldErrors: GroupFieldErrors } {
+	const data =
+		typeof input === 'object' && input !== null ? (input as Record<string, unknown>) : {};
+	const name = typeof data.name === 'string' ? data.name.trim() : '';
+	const description = typeof data.description === 'string' ? data.description.trim() : '';
+	const fieldErrors: GroupFieldErrors = {};
+	if (name.length < 2 || name.length > 80) {
+		fieldErrors.name = 'Enter a Group name between 2 and 80 characters.';
+	}
+	if (description.length < 10 || description.length > 300) {
+		fieldErrors.description = 'Enter a description between 10 and 300 characters.';
+	}
+	return Object.keys(fieldErrors).length
+		? { ok: false, fieldErrors }
+		: { ok: true, value: { name, description } };
+}
+
+export async function createGroup(
+	db: Database,
+	clock: Clock,
+	actor: { id: string } | null,
+	input: unknown
+): Promise<GroupSaveResult> {
+	if (!actor) return { ok: false, reason: 'unauthenticated' };
+	const parsed = parseGroupDetails(input);
+	if (!parsed.ok) return { ok: false, reason: 'invalid', fieldErrors: parsed.fieldErrors };
+	const groupId = crypto.randomUUID();
+	try {
+		return await runInTransaction(db, async () => {
+			const now = clock.now();
+			await db.insert(group).values({
+				id: groupId,
+				...parsed.value,
+				imageUrl: null,
+				systemManaged: false,
+				createdAt: now,
+				updatedAt: now
+			});
+			await db.insert(groupMembership).values({ userId: actor.id, groupId, role: 'owner' });
+			return { ok: true, groupId };
+		});
+	} catch (error) {
+		return { ok: false, reason: isUniqueConstraint(error) ? 'name-taken' : 'unavailable' };
+	}
+}
+
+export async function editGroup(
+	db: Database,
+	clock: Clock,
+	actor: { id: string } | null,
+	groupId: string,
+	input: unknown
+): Promise<GroupSaveResult> {
+	if (!actor) return { ok: false, reason: 'unauthenticated' };
+	try {
+		return await runInTransaction(db, async () => {
+			const row = await db.query.group.findFirst({
+				where: eq(group.id, groupId),
+				with: { memberships: true }
+			});
+			if (!row) return { ok: false, reason: 'not-found' };
+			if (row.systemManaged) return { ok: false, reason: 'system-managed' };
+			if (
+				!row.memberships.some(
+					(membership) => membership.userId === actor.id && membership.role === 'owner'
+				)
+			) {
+				return { ok: false, reason: 'forbidden' };
+			}
+			const parsed = parseGroupDetails(input);
+			if (!parsed.ok) return { ok: false, reason: 'invalid', fieldErrors: parsed.fieldErrors };
+			await db
+				.update(group)
+				.set({ ...parsed.value, updatedAt: clock.now() })
+				.where(eq(group.id, groupId));
+			return { ok: true, groupId };
+		});
+	} catch (error) {
+		return { ok: false, reason: isUniqueConstraint(error) ? 'name-taken' : 'unavailable' };
+	}
+}
+
 export async function listPublicGroups(db: Database): Promise<PublicGroupSummary[]> {
 	const rows = await db.query.group.findMany({
 		with: groupWithMemberships,

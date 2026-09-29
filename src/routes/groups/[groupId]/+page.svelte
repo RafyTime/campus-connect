@@ -50,6 +50,13 @@
 			<p class="text-xs text-muted-foreground">{group.imageAttribution}</p>
 		{/if}
 		<p class="whitespace-pre-wrap">{group.description}</p>
+		{#if group.viewerRole === 'owner' && !group.systemManaged}
+			<p>
+				<Button href={`/groups/${group.id}/edit`} variant="outline" class="min-h-11"
+					>Edit Group</Button
+				>
+			</p>
+		{/if}
 	</header>
 
 	<section class="flex flex-col gap-2" aria-labelledby="group-owner-heading">

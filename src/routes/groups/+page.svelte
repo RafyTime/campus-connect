@@ -2,6 +2,8 @@
 	import GroupCard from '$lib/components/group-card.svelte';
 	import GroupsEmpty from '$lib/components/groups-empty.svelte';
 	import { listPublicGroups } from '$lib/groups.remote';
+	import { Button } from '$lib/components/ui/button';
+	import { page } from '$app/state';
 
 	const groups = await listPublicGroups();
 </script>
@@ -18,6 +20,9 @@
 			upcoming Events.
 		</p>
 	</header>
+	{#if page.data.user}
+		<p><Button href="/groups/new" class="min-h-11">Create a Group</Button></p>
+	{/if}
 
 	{#if groups.length === 0}
 		<GroupsEmpty />

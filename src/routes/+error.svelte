@@ -7,11 +7,16 @@
 	import * as Empty from '$lib/components/ui/empty';
 
 	const isNotFound = $derived(page.status === 404);
-	const title = $derived(isNotFound ? 'Page not found' : 'Something went wrong');
+	const isForbidden = $derived(page.status === 403);
+	const title = $derived(
+		isNotFound ? 'Page not found' : isForbidden ? 'Access denied' : 'Something went wrong'
+	);
 	const description = $derived(
 		isNotFound
 			? 'That address is not a Campus Connect destination. Return to Discover to continue browsing.'
-			: 'Campus Connect could not complete this request. Return to Discover and try again.'
+			: isForbidden
+				? (page.error?.message ?? 'You do not have access to this page.')
+				: 'Campus Connect could not complete this request. Return to Discover and try again.'
 	);
 	const icon = $derived(isNotFound ? Search01Icon : AlertCircleIcon);
 </script>

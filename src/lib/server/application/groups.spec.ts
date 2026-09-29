@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
 	assertGroupMutable,
+	createGroup,
+	editGroup,
 	followGroup,
 	getPublicGroup,
 	listPublicGroups,
@@ -405,6 +407,161 @@ describe('Campus Updates protection', () => {
 		await expect(assertGroupMutable(database.db, 'group-missing')).resolves.toEqual({
 			ok: false,
 			reason: 'not-found'
+		});
+	});
+});
+
+describe('create and edit Groups', () => {
+	it('creates a public Group with exactly one owner membership', async () => {
+		using database = await createTestDatabase();
+		const clock = createTestClock(campusNow);
+		await insertUser(database.db, clock, lena);
+
+		const created = await createGroup(database.db, clock, lena, {
+			name: '  New Students Club  ',
+			description: '  A place for new students to meet.  '
+		});
+
+		expect(created).toMatchObject({ ok: true });
+		if (!created.ok) return;
+		const detail = await getPublicGroup(database.db, clock, created.groupId, lena.id);
+		expect(detail).toMatchObject({
+			name: 'New Students Club',
+			description: 'A place for new students to meet.',
+			owner: { id: lena.id },
+			viewerRole: 'owner',
+			subscriberCount: 0
+		});
+		expect(await database.db.select().from(groupMembership)).toEqual([
+			{ groupId: created.groupId, userId: lena.id, role: 'owner' }
+		]);
+	});
+
+	it('rejects case-insensitive name conflicts on creation and editing', async () => {
+		using database = await createTestDatabase();
+		const clock = createTestClock(campusNow);
+		await insertGroup(database.db, clock, { ...filmSociety, owner: lena });
+		await insertUser(database.db, clock, jonas);
+
+		await expect(
+			createGroup(database.db, clock, jonas, {
+				name: 'film society',
+				description: 'A different campus film community.'
+			})
+		).resolves.toEqual({ ok: false, reason: 'name-taken' });
+		const created = await createGroup(database.db, clock, jonas, {
+			name: 'Writers Club',
+			description: 'A place to share writing on campus.'
+		});
+		if (!created.ok) throw new Error('Expected Group creation to succeed');
+		await expect(
+			editGroup(database.db, clock, jonas, created.groupId, {
+				name: 'FILM SOCIETY',
+				description: 'A place to share writing on campus.'
+			})
+		).resolves.toEqual({ ok: false, reason: 'name-taken' });
+		expect((await getPublicGroup(database.db, clock, created.groupId))?.name).toBe('Writers Club');
+	});
+
+	it('rolls back Group creation when the owner membership cannot be inserted', async () => {
+		using database = await createTestDatabase();
+		const clock = createTestClock(campusNow);
+		await expect(
+			createGroup(
+				database.db,
+				clock,
+				{ id: 'missing-user' },
+				{
+					name: 'Unowned Group',
+					description: 'This Group must never become public.'
+				}
+			)
+		).resolves.toEqual({ ok: false, reason: 'unavailable' });
+		expect(await listPublicGroups(database.db)).toEqual([]);
+		expect(await database.db.select().from(group)).toEqual([]);
+	});
+
+	it('rejects invalid details and unauthenticated creation', async () => {
+		using database = await createTestDatabase();
+		const clock = createTestClock(campusNow);
+		await expect(createGroup(database.db, clock, null, {})).resolves.toEqual({
+			ok: false,
+			reason: 'unauthenticated'
+		});
+		await expect(
+			createGroup(database.db, clock, lena, { name: 'A', description: 'short' })
+		).resolves.toMatchObject({
+			ok: false,
+			reason: 'invalid',
+			fieldErrors: { name: expect.any(String), description: expect.any(String) }
+		});
+		expect(await database.db.select().from(group)).toEqual([]);
+	});
+
+	it('lets only the owner edit public details without changing image or memberships', async () => {
+		using database = await createTestDatabase();
+		const clock = createTestClock(campusNow);
+		await insertGroup(database.db, clock, {
+			...filmSociety,
+			imageUrl: 'https://example.com/seed.jpg',
+			owner: lena,
+			representative: jonas,
+			subscribers: [sofia]
+		});
+		await insertUser(database.db, clock, {
+			id: 'user-outsider',
+			name: 'Outsider',
+			email: 'outsider@example.com'
+		});
+		for (const actor of [null, jonas, sofia, { id: 'user-outsider' }]) {
+			await expect(
+				editGroup(database.db, clock, actor, filmSociety.id, {
+					name: 'Changed by outsider',
+					description: 'This edit must never take effect.'
+				})
+			).resolves.toEqual({ ok: false, reason: actor ? 'forbidden' : 'unauthenticated' });
+		}
+		await expect(
+			editGroup(database.db, clock, lena, filmSociety.id, {
+				name: 'Film & Stories',
+				description: 'Screenings and discussion open to everyone.',
+				imageUrl: 'https://example.com/untrusted.jpg'
+			})
+		).resolves.toEqual({ ok: true, groupId: filmSociety.id });
+		const detail = await getPublicGroup(database.db, clock, filmSociety.id, lena.id);
+		expect(detail).toMatchObject({
+			name: 'Film & Stories',
+			description: 'Screenings and discussion open to everyone.',
+			owner: { id: lena.id },
+			viewerRole: 'owner',
+			subscriberCount: 1
+		});
+		expect((await database.db.select().from(group))[0]?.imageUrl).toBe(
+			'https://example.com/seed.jpg'
+		);
+		expect(await database.db.select().from(groupMembership)).toHaveLength(3);
+	});
+
+	it('returns explicit results for missing and system-managed Groups', async () => {
+		using database = await createTestDatabase();
+		const clock = createTestClock(campusNow);
+		await insertGroup(database.db, clock, {
+			id: 'group-campus-updates',
+			name: 'Campus Updates',
+			description: 'Campus news for everyone.',
+			systemManaged: true,
+			owner: lena
+		});
+		const input = { name: 'Changed Group', description: 'A description that is long enough.' };
+		await expect(editGroup(database.db, clock, lena, 'group-missing', input)).resolves.toEqual({
+			ok: false,
+			reason: 'not-found'
+		});
+		await expect(
+			editGroup(database.db, clock, lena, 'group-campus-updates', input)
+		).resolves.toEqual({
+			ok: false,
+			reason: 'system-managed'
 		});
 	});
 });
