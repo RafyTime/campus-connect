@@ -73,9 +73,9 @@ export async function createGroup(
 	if (!parsed.ok) return { ok: false, reason: 'invalid', fieldErrors: parsed.fieldErrors };
 	const groupId = crypto.randomUUID();
 	try {
-		return await runInTransaction(db, async () => {
+		return await db.withTransaction(async (tx) => {
 			const now = clock.now();
-			await db.insert(group).values({
+			await tx.insert(group).values({
 				id: groupId,
 				...parsed.value,
 				imageUrl: null,
@@ -83,7 +83,7 @@ export async function createGroup(
 				createdAt: now,
 				updatedAt: now
 			});
-			await db.insert(groupMembership).values({ userId: actor.id, groupId, role: 'owner' });
+			await tx.insert(groupMembership).values({ userId: actor.id, groupId, role: 'owner' });
 			return { ok: true, groupId };
 		});
 	} catch (error) {
@@ -100,8 +100,8 @@ export async function editGroup(
 ): Promise<GroupSaveResult> {
 	if (!actor) return { ok: false, reason: 'unauthenticated' };
 	try {
-		return await runInTransaction(db, async () => {
-			const row = await db.query.group.findFirst({
+		return await db.withTransaction(async (tx) => {
+			const row = await tx.query.group.findFirst({
 				where: eq(group.id, groupId),
 				with: { memberships: true }
 			});
@@ -116,7 +116,7 @@ export async function editGroup(
 			}
 			const parsed = parseGroupDetails(input);
 			if (!parsed.ok) return { ok: false, reason: 'invalid', fieldErrors: parsed.fieldErrors };
-			await db
+			await tx
 				.update(group)
 				.set({ ...parsed.value, updatedAt: clock.now() })
 				.where(eq(group.id, groupId));
@@ -214,8 +214,8 @@ async function applyGroupFollow(
 	}
 
 	try {
-		return await runInTransaction(db, async () => {
-			const row = await db.query.group.findFirst({
+		return await db.withTransaction(async (tx) => {
+			const row = await tx.query.group.findFirst({
 				where: eq(group.id, groupId),
 				with: { memberships: true }
 			});
@@ -236,7 +236,7 @@ async function applyGroupFollow(
 
 			if (intent === 'follow') {
 				if (!existing) {
-					await db.insert(groupMembership).values({
+					await tx.insert(groupMembership).values({
 						userId: actor.id,
 						groupId,
 						role: 'subscriber'
@@ -251,7 +251,7 @@ async function applyGroupFollow(
 			}
 
 			if (existing?.role === 'subscriber') {
-				await db
+				await tx
 					.delete(groupMembership)
 					.where(
 						and(
@@ -308,24 +308,6 @@ function isUniqueConstraint(error: unknown): boolean {
 	const cause = error instanceof Error && error.cause instanceof Error ? error.cause.message : '';
 	const message = error instanceof Error ? `${error.message}\n${cause}` : String(error);
 	return /UNIQUE/i.test(message);
-}
-
-async function runInTransaction<T>(db: Database, work: () => Promise<T>): Promise<T> {
-	// libsql's client.transaction() uses a separate in-memory connection, so Drizzle
-	// transactions cannot see the migrated schema in disposable test databases.
-	await db.$client.execute('BEGIN IMMEDIATE');
-	try {
-		const result = await work();
-		await db.$client.execute('COMMIT');
-		return result;
-	} catch (error) {
-		try {
-			await db.$client.execute('ROLLBACK');
-		} catch {
-			// The original error is the useful one if rollback also fails.
-		}
-		throw error;
-	}
 }
 
 export async function assertGroupMutable(
