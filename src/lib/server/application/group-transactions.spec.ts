@@ -113,6 +113,28 @@ async function testDatabase(storage: 'memory' | 'file') {
 describe.each(['memory', 'file'] as const)(
 	'Group transaction isolation with %s SQLite',
 	(storage) => {
+		it('persists exactly one Group for simultaneous Unicode-equivalent creations', async () => {
+			await using database = await testDatabase(storage);
+			await insertUser(database.db, clock, owner);
+			const results = await Promise.all(
+				['München Club', 'MÜNCHEN Club', 'MU\u0308NCHEN Club'].map((name) =>
+					createGroup(database.db, clock, owner, { ...details, name })
+				)
+			);
+			expect(results.filter((result) => result.ok)).toHaveLength(1);
+			expect(results.filter((result) => !result.ok)).toEqual([
+				{ ok: false, reason: 'name-taken' },
+				{ ok: false, reason: 'name-taken' }
+			]);
+			await expect(listPublicGroups(database.db)).resolves.toEqual([
+				expect.objectContaining({
+					name: 'München Club',
+					owner: { id: owner.id, displayName: owner.name }
+				})
+			]);
+			expect(await database.db.select().from(groupMembership)).toHaveLength(1);
+		});
+
 		it('keeps concurrent public directory and detail reads consistent during creation', async () => {
 			await using database = await testDatabase(storage);
 			await insertUser(database.db, clock, owner);

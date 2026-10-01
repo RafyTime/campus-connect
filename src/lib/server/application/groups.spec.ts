@@ -175,6 +175,7 @@ describe('Group membership invariants', () => {
 				database.db.insert(group).values({
 					id: 'group-film-society-copy',
 					name: 'film society',
+					nameKey: 'film society',
 					description: 'A colliding name.',
 					imageUrl: null,
 					systemManaged: false,
@@ -412,6 +413,105 @@ describe('Campus Updates protection', () => {
 });
 
 describe('create and edit Groups', () => {
+	it.each(['MÜNCHEN Club', 'MU\u0308NCHEN Club'])(
+		'rejects Unicode-equivalent editing: %s',
+		async (name) => {
+			using database = await createTestDatabase();
+			const clock = createTestClock(campusNow);
+			await insertGroup(database.db, clock, { ...filmSociety, name: 'München Club', owner: lena });
+			await insertGroup(database.db, clock, {
+				...filmSociety,
+				id: 'writers',
+				name: 'Writers Club',
+				owner: jonas
+			});
+			await expect(
+				editGroup(database.db, clock, jonas, 'writers', {
+					name,
+					description: filmSociety.description
+				})
+			).resolves.toEqual({ ok: false, reason: 'name-taken' });
+			await expect(getPublicGroup(database.db, clock, 'writers')).resolves.toMatchObject({
+				name: 'Writers Club'
+			});
+		}
+	);
+
+	it('preserves display spelling through unchanged and capitalization-only edits', async () => {
+		using database = await createTestDatabase();
+		const clock = createTestClock(campusNow);
+		await insertUser(database.db, clock, lena);
+		const created = await createGroup(database.db, clock, lena, {
+			name: '  Mu\u0308nchen Club  ',
+			description: filmSociety.description
+		});
+		if (!created.ok) throw new Error('Expected Group creation');
+		for (const name of ['Mu\u0308nchen Club', 'MÜNCHEN Club']) {
+			await expect(
+				editGroup(database.db, clock, lena, created.groupId, {
+					name: `  ${name}  `,
+					description: filmSociety.description
+				})
+			).resolves.toEqual({ ok: true, groupId: created.groupId });
+			await expect(getPublicGroup(database.db, clock, created.groupId)).resolves.toMatchObject({
+				name,
+				owner: { id: lena.id }
+			});
+		}
+		await expect(
+			createGroup(database.db, clock, lena, {
+				name: 'München Club',
+				description: filmSociety.description
+			})
+		).resolves.toEqual({ ok: false, reason: 'name-taken' });
+	});
+
+	it('uses the same trimmed Unicode key when fixtures insert and update Groups', async () => {
+		using database = await createTestDatabase();
+		const clock = createTestClock(campusNow);
+		await insertGroup(database.db, clock, {
+			...filmSociety,
+			name: '  München Club  ',
+			owner: lena
+		});
+		await expect(
+			createGroup(database.db, clock, lena, {
+				name: 'MÜNCHEN Club',
+				description: filmSociety.description
+			})
+		).resolves.toEqual({ ok: false, reason: 'name-taken' });
+		await insertGroup(database.db, clock, { ...filmSociety, name: '  Köln Club  ', owner: lena });
+		await expect(
+			createGroup(database.db, clock, lena, {
+				name: 'KÖLN Club',
+				description: filmSociety.description
+			})
+		).resolves.toEqual({ ok: false, reason: 'name-taken' });
+		await expect(getPublicGroup(database.db, clock, filmSociety.id)).resolves.toMatchObject({
+			name: 'Köln Club'
+		});
+		await expect(
+			createGroup(database.db, clock, lena, {
+				name: 'München Club',
+				description: filmSociety.description
+			})
+		).resolves.toMatchObject({ ok: true });
+	});
+
+	it.each(['MÜNCHEN Club', 'MU\u0308NCHEN Club'])(
+		'rejects Unicode-equivalent creation: %s',
+		async (name) => {
+			using database = await createTestDatabase();
+			const clock = createTestClock(campusNow);
+			await insertGroup(database.db, clock, { ...filmSociety, name: 'München Club', owner: lena });
+			await insertUser(database.db, clock, jonas);
+			await expect(
+				createGroup(database.db, clock, jonas, { name, description: filmSociety.description })
+			).resolves.toEqual({ ok: false, reason: 'name-taken' });
+			await expect(listPublicGroups(database.db)).resolves.toHaveLength(1);
+		}
+	);
+
 	it('creates a public Group with exactly one owner membership', async () => {
 		using database = await createTestDatabase();
 		const clock = createTestClock(campusNow);

@@ -3,6 +3,7 @@ import type { Clock } from './clock';
 import type { Database } from './db/client';
 import type { GroupMembershipRole } from './db/domain.schema';
 import { event, eventTag, group, groupMembership, location, post, tag, user } from './db/schema';
+import { groupNameKey } from './group-name';
 
 export type ResponseMode = 'announcement' | 'interest' | 'registration';
 export type EventStatus = 'scheduled' | 'cancelled';
@@ -109,7 +110,8 @@ export async function insertGroup(db: Database, clock: Clock, fixture: GroupFixt
 		.insert(group)
 		.values({
 			id: fixture.id,
-			name: fixture.name,
+			name: fixture.name.trim(),
+			nameKey: groupNameKey(fixture.name),
 			description: fixture.description,
 			imageUrl: fixture.imageUrl ?? null,
 			systemManaged: fixture.systemManaged ?? false,
@@ -119,7 +121,8 @@ export async function insertGroup(db: Database, clock: Clock, fixture: GroupFixt
 		.onConflictDoUpdate({
 			target: group.id,
 			set: {
-				name: fixture.name,
+				name: fixture.name.trim(),
+				nameKey: groupNameKey(fixture.name),
 				description: fixture.description,
 				imageUrl: fixture.imageUrl ?? null,
 				systemManaged: fixture.systemManaged ?? false,

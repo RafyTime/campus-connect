@@ -29,3 +29,5 @@
 - [ ] Update the acceptance-to-evidence matrix with test references and planned production and screencast checks.
 
 ## Comments
+
+Unicode name uniqueness follow-up [02](../../group-authoring-fixes/issues/02-enforce-unicode-group-name-uniqueness.md) was completed and verified locally on 2026-10-01. The Group name key now has a database unique index and a documented normalization policy, with regression coverage for Unicode authoring conflicts, concurrent requests, capitalization-only edits, migration collision reports and safe backfill. CORE-07 in [acceptance evidence](../acceptance-evidence.md) records the verified server and browser results. Final Railway checks and media remain in the existing evidence plan.

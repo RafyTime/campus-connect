@@ -20,6 +20,51 @@ async function fillDetails(page: Page, name: string, description: string) {
 	await page.getByLabel('Short description').fill(description);
 }
 
+test('Unicode name conflicts preserve create and edit values and allow correction', async ({
+	page
+}) => {
+	await register(page, 'Unicode Group Owner');
+	const suffix = crypto.randomUUID().slice(0, 8);
+	const name = `München Club ${suffix}`;
+	const uppercase = `MÜNCHEN Club ${suffix}`;
+	const decomposed = `MU\u0308NCHEN Club ${suffix}`;
+	const description = 'Students exploring Munich together from campus.';
+	await page.goto('/groups/new');
+	await fillDetails(page, `  ${name}  `, description);
+	await page.getByRole('button', { name: 'Create Group' }).click();
+	await expect(page.getByRole('heading', { name, level: 1 })).toBeVisible();
+	for (const editName of [name, uppercase]) {
+		await page.getByRole('link', { name: 'Edit Group' }).click();
+		await fillDetails(page, editName, description);
+		await page.getByRole('button', { name: 'Save changes' }).click();
+		await expect(page.getByRole('heading', { name: editName, level: 1 })).toBeVisible();
+	}
+	await page.goto('/groups/new');
+	await fillDetails(page, decomposed, description);
+	await page.getByRole('button', { name: 'Create Group' }).click();
+	await expect(page.getByText('A Group already uses this name.')).toBeVisible();
+	await expect(page.getByLabel('Group name')).toHaveValue(decomposed);
+	await expect(page.getByLabel('Short description')).toHaveValue(description);
+	await expect(page.getByRole('button', { name: 'Create Group' })).toBeEnabled();
+	const otherName = `Writers Club ${suffix}`;
+	await page.getByLabel('Group name').fill(otherName);
+	await page.getByRole('button', { name: 'Create Group' }).click();
+	await expect(page.getByRole('heading', { name: otherName, level: 1 })).toBeVisible();
+	await page.getByRole('link', { name: 'Edit Group' }).click();
+	await fillDetails(page, name, description);
+	await page.getByRole('button', { name: 'Save changes' }).click();
+	await expect(page.getByText('A Group already uses this name.')).toBeVisible();
+	await expect(page.getByLabel('Group name')).toHaveValue(name);
+	await expect(page.getByLabel('Short description')).toHaveValue(description);
+	await expect(page.getByRole('button', { name: 'Save changes' })).toBeEnabled();
+	const corrected = `Poetry Club ${suffix}`;
+	await page.getByLabel('Group name').fill(corrected);
+	await page.getByRole('button', { name: 'Save changes' }).click();
+	await expect(page.getByRole('heading', { name: corrected, level: 1 })).toBeVisible();
+	await page.reload();
+	await expect(page.getByRole('heading', { name: corrected, level: 1 })).toBeVisible();
+});
+
 test('a User creates a Group, becomes its owner, and edits only public details', async ({
 	page
 }) => {

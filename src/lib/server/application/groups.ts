@@ -12,6 +12,7 @@ import type {
 } from '$lib/public-group';
 import { displayInitials, imageAttribution, publicImageUrl } from './remote-images';
 import { discoverPublicEventsForGroup } from './events';
+import { groupNameKey } from '$lib/server/group-name';
 
 export type {
 	GroupFollowResult,
@@ -78,6 +79,7 @@ export async function createGroup(
 			await tx.insert(group).values({
 				id: groupId,
 				...parsed.value,
+				nameKey: groupNameKey(parsed.value.name),
 				imageUrl: null,
 				systemManaged: false,
 				createdAt: now,
@@ -118,7 +120,7 @@ export async function editGroup(
 			if (!parsed.ok) return { ok: false, reason: 'invalid', fieldErrors: parsed.fieldErrors };
 			await tx
 				.update(group)
-				.set({ ...parsed.value, updatedAt: clock.now() })
+				.set({ ...parsed.value, nameKey: groupNameKey(parsed.value.name), updatedAt: clock.now() })
 				.where(eq(group.id, groupId));
 			return { ok: true, groupId };
 		});

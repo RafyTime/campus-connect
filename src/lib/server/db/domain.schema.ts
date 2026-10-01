@@ -1,6 +1,5 @@
-import { relations, sql, type SQL } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
-	type AnySQLiteColumn,
 	check,
 	index,
 	integer,
@@ -14,10 +13,6 @@ import { user } from './auth.schema';
 
 export const groupMembershipRoles = ['owner', 'representative', 'subscriber'] as const;
 export type GroupMembershipRole = (typeof groupMembershipRoles)[number];
-
-function lower(column: AnySQLiteColumn): SQL {
-	return sql`lower(${column})`;
-}
 
 export const tag = sqliteTable('tag', {
 	id: text('id').primaryKey(),
@@ -36,13 +31,14 @@ export const group = sqliteTable(
 	{
 		id: text('id').primaryKey(),
 		name: text('name').notNull(),
+		nameKey: text('name_key').notNull(),
 		description: text('description').notNull(),
 		imageUrl: text('image_url'),
 		systemManaged: integer('system_managed', { mode: 'boolean' }).notNull().default(false),
 		createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
 		updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull()
 	},
-	(table) => [uniqueIndex('group_name_ci_unique').on(lower(table.name))]
+	(table) => [uniqueIndex('group_name_key_unique').on(table.nameKey)]
 );
 
 export const groupMembership = sqliteTable(
