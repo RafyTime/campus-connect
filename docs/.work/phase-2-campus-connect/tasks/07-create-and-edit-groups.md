@@ -4,30 +4,33 @@
 
 **Blocked by:** 04: Browse Groups and public group Events; 05: Complete accounts, profiles, and protected actions.
 
-**Status:** ready
+**Status:** completed
 
 ## Acceptance criteria
 
-- [ ] Group creation requires a case-insensitively unique name and a valid short description.
-- [ ] Creating a Group and its owner membership succeeds or fails as one transaction.
-- [ ] A newly created Group has exactly one owner and no duplicate membership for that User.
-- [ ] The owner can edit the Group's supported basic public fields.
-- [ ] Representatives, subscribers, unrelated Users, and visitors cannot edit Group details.
-- [ ] Representative management, ownership transfer, additional owners, Group deletion, image uploads, and arbitrary image URLs have no controls.
-- [ ] Validation conflicts and authorization failures return explicit, usable results rather than generic server errors.
-- [ ] Create and edit forms work at representative phone, tablet, and desktop sizes with accessible labels, focus, pending state, and inline errors.
-- [ ] Automated tests cover uniqueness, transactional ownership, role authorization, validation, responsive forms, and failures.
-- [ ] The acceptance-to-evidence matrix records the tests and planned Group-creation evidence.
+- [x] Group creation requires a case-insensitively unique name and a valid short description.
+- [x] Creating a Group and its owner membership succeeds or fails as one transaction.
+- [x] A newly created Group has exactly one owner and no duplicate membership for that User.
+- [x] The owner can edit the Group's supported basic public fields.
+- [x] Representatives, subscribers, unrelated Users, and visitors cannot edit Group details.
+- [x] Representative management, ownership transfer, additional owners, Group deletion, image uploads, and arbitrary image URLs have no controls.
+- [x] Validation conflicts and authorization failures return explicit, usable results rather than generic server errors.
+- [x] Create and edit forms work at representative phone, tablet, and desktop sizes with accessible labels, focus, pending state, and inline errors.
+- [x] Automated tests cover uniqueness, transactional ownership, role authorization, validation, responsive forms, and failures.
+- [x] The acceptance-to-evidence matrix records the tests and planned Group-creation evidence.
 
 ## Implementation tasks
 
-- [ ] Add transaction-backed Group creation and owner membership operations.
-- [ ] Add owner-authorized basic Group editing without adding deferred administration controls.
-- [ ] Build responsive create and edit forms with server-enforced validation and explicit failure results.
-- [ ] Extend Group fixtures and seed helpers only as needed to prove uniqueness and authorization cases.
-- [ ] Add server and browser tests for the accepted creation and editing behavior.
-- [ ] Update the acceptance-to-evidence matrix with test references and planned production and screencast checks.
+- [x] Add transaction-backed Group creation and owner membership operations.
+- [x] Add owner-authorized basic Group editing without adding deferred administration controls.
+- [x] Build responsive create and edit forms with server-enforced validation and explicit failure results.
+- [x] Extend Group fixtures and seed helpers only as needed to prove uniqueness and authorization cases.
+- [x] Add server and browser tests for the accepted creation and editing behavior.
+- [x] Update the acceptance-to-evidence matrix with test references and planned production and screencast checks.
 
 ## Comments
 
 Unicode name uniqueness follow-up [02](../../group-authoring-fixes/tasks/02-enforce-unicode-group-name-uniqueness.md) was completed and verified locally on 2026-10-01. The Group name key now has a database unique index and a documented normalization policy, with regression coverage for Unicode authoring conflicts, concurrent requests, capitalization-only edits, migration collision reports and safe backfill. CORE-07 in [acceptance evidence](../acceptance-evidence.md) records the verified server and browser results. Final Railway checks and media remain in the existing evidence plan.
+
+- 2026-10-10: Final Standards and Spec review found no actionable issues. Both Group authoring follow-ups are completed, and all acceptance criteria and implementation tasks are satisfied. Fresh local checks passed: lint, Svelte/TypeScript with zero errors or warnings, and all 82 server tests. The existing evidence record includes 41 passing browser tests; browser tests were not rerun during this final review.
+- 2026-10-10: Leo reported testing the implementation in production successfully. This is user-reported verification; the deployed commit was not supplied. Final Railway evidence recording and screenshot/screencast capture remain in the existing evidence plan and are not required to close this implementation ticket.
