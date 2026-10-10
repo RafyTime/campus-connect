@@ -2,7 +2,7 @@
 
 **What to build:** Let visitors and Users browse Groups while another User creates one without seeing incomplete ownership or receiving a server error. Group creation and its sole owner membership must remain atomic, with each request's transaction isolated from other requests.
 
-**Parent:** [07: Create and edit Groups](../../phase-2-campus-connect/issues/07-create-and-edit-groups.md)
+**Parent:** [07: Create and edit Groups](../../phase-2-campus-connect/tasks/07-create-and-edit-groups.md)
 
 **Blocked by:** None (can start immediately). The Group creation implementation already exists; completing the parent ticket is not a prerequisite for this fix.
 

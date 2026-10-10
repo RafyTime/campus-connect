@@ -2,7 +2,7 @@
 
 **What to build:** Reject case-equivalent Group names consistently during creation and editing, including German letters, with the existing usable inline name-conflict error. Keep the User's chosen capitalization for public display and enforce uniqueness in the database under concurrent requests.
 
-**Parent:** [07: Create and edit Groups](../../phase-2-campus-connect/issues/07-create-and-edit-groups.md)
+**Parent:** [07: Create and edit Groups](../../phase-2-campus-connect/tasks/07-create-and-edit-groups.md)
 
 **Blocked by:** None (can start immediately). This fix is independent of ticket 01; the Group creation and editing implementation already exists.
 

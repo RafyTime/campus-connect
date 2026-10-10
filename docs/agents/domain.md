@@ -1,10 +1,10 @@
 # Domain docs
 
-Read the repository's domain documentation before exploring or changing code.
+Read the repository's domain documentation before exploring or updating docs.
 
 ## Required context
 
-- Read the root `CONTEXT.md`.
+- Read the root `GLOSSARY.md`.
 - Read ADRs under `docs/adr/` that affect the area being changed.
 - If a file does not exist, continue without flagging its absence.
 
@@ -14,7 +14,7 @@ This is a single-context repository:
 
 ```text
 /
-├── CONTEXT.md
+├── GLOSSARY.md
 ├── docs/
 │   └── adr/
 └── src/
@@ -22,7 +22,7 @@ This is a single-context repository:
 
 ## Vocabulary
 
-Use the terms defined in `CONTEXT.md` in issue titles, specifications, tests, and code.
+Use the terms defined in `GLOSSARY.md` in issue titles, specifications, tests, and docs.
 
 Do not replace defined terms with synonyms that the glossary tells you to avoid. If a needed concept is missing, note it for later domain-modeling work.
 
