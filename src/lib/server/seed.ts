@@ -1,56 +1,18 @@
+import { campusTags, campusLocations } from './campus-catalog';
 import type { Clock } from './clock';
 import type { Database } from './db/client';
 import { missingWikimediaAvatarUrl, wikimediaHostPortraitUrl } from './application/remote-images';
-import { location, tag } from './db/schema';
-import { insertGroup, insertPublicGroupEvent, insertPublicPersonalEvent } from './fixtures';
+import {
+	insertGroup,
+	insertLocation,
+	insertTag,
+	insertPublicGroupEvent,
+	insertPublicPersonalEvent
+} from './fixtures';
 
 const hour = 60 * 60 * 1000;
 
-export const campusTags = [
-	{ id: 'tag-arts', name: 'Arts' },
-	{ id: 'tag-food', name: 'Food' },
-	{ id: 'tag-language', name: 'Language' },
-	{ id: 'tag-music', name: 'Music' },
-	{ id: 'tag-outdoors', name: 'Outdoors' },
-	{ id: 'tag-social', name: 'Social' },
-	{ id: 'tag-sports', name: 'Sports' },
-	{ id: 'tag-study', name: 'Study' },
-	{ id: 'tag-tech', name: 'Tech' },
-	{ id: 'tag-wellness', name: 'Wellness' }
-] as const;
-
-export const campusLocations = [
-	{
-		id: 'location-foyer',
-		label: 'Main building foyer',
-		latitude: 50.6444,
-		longitude: 7.2272
-	},
-	{
-		id: 'location-library',
-		label: 'Campus Library',
-		latitude: 50.6443,
-		longitude: 7.2274
-	},
-	{
-		id: 'location-cafeteria',
-		label: 'Campus Cafeteria',
-		latitude: 50.6445,
-		longitude: 7.227
-	},
-	{
-		id: 'location-sports',
-		label: 'Sports field',
-		latitude: 50.6438,
-		longitude: 7.2265
-	},
-	{
-		id: 'location-town',
-		label: 'Bad Honnef town centre',
-		latitude: null,
-		longitude: null
-	}
-] as const;
+export { campusTags, campusLocations } from './campus-catalog';
 
 const tags = Object.fromEntries(campusTags.map((campusTag) => [campusTag.id, campusTag]));
 const locations = Object.fromEntries(
@@ -96,30 +58,18 @@ function at(clock: Clock, hoursFromNow: number) {
 	return new Date(clock.now().getTime() + hoursFromNow * hour);
 }
 
-export async function seedPublicPersonalEvents(db: Database, clock: Clock) {
+export async function seedEventAuthoringOptions(db: Database) {
 	for (const campusTag of campusTags) {
-		await db
-			.insert(tag)
-			.values(campusTag)
-			.onConflictDoUpdate({
-				target: tag.id,
-				set: { name: campusTag.name }
-			});
+		await insertTag(db, campusTag);
 	}
 
 	for (const campusLocation of campusLocations) {
-		await db
-			.insert(location)
-			.values(campusLocation)
-			.onConflictDoUpdate({
-				target: location.id,
-				set: {
-					label: campusLocation.label,
-					latitude: campusLocation.latitude,
-					longitude: campusLocation.longitude
-				}
-			});
+		await insertLocation(db, campusLocation);
 	}
+}
+
+export async function seedPublicPersonalEvents(db: Database, clock: Clock) {
+	await seedEventAuthoringOptions(db);
 
 	await insertPublicPersonalEvent(db, clock, {
 		id: 'event-board-game-evening',

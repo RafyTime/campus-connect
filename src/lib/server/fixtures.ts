@@ -94,6 +94,25 @@ export async function insertUser(db: Database, clock: Clock, fixture: AuthorFixt
 		});
 }
 
+export async function insertTag(db: Database, fixture: TagFixture) {
+	await db
+		.insert(tag)
+		.values(fixture)
+		.onConflictDoUpdate({ target: tag.id, set: { name: fixture.name } });
+}
+
+export async function insertLocation(db: Database, fixture: LocationFixture) {
+	const values = {
+		label: fixture.label,
+		latitude: fixture.latitude ?? null,
+		longitude: fixture.longitude ?? null
+	};
+	await db
+		.insert(location)
+		.values({ id: fixture.id, ...values })
+		.onConflictDoUpdate({ target: location.id, set: values });
+}
+
 export async function insertGroup(db: Database, clock: Clock, fixture: GroupFixture) {
 	const now = clock.now();
 	const subscribers = fixture.subscribers ?? [];
@@ -191,34 +210,10 @@ async function insertPublicEvent(
 
 	await insertUser(db, clock, author);
 
-	await db
-		.insert(location)
-		.values({
-			id: eventLocation.id,
-			label: eventLocation.label,
-			latitude: eventLocation.latitude ?? null,
-			longitude: eventLocation.longitude ?? null
-		})
-		.onConflictDoUpdate({
-			target: location.id,
-			set: {
-				label: eventLocation.label,
-				latitude: eventLocation.latitude ?? null,
-				longitude: eventLocation.longitude ?? null
-			}
-		});
+	await insertLocation(db, eventLocation);
 
 	for (const tagValue of tags) {
-		await db
-			.insert(tag)
-			.values({
-				id: tagValue.id,
-				name: tagValue.name
-			})
-			.onConflictDoUpdate({
-				target: tag.id,
-				set: { name: tagValue.name }
-			});
+		await insertTag(db, tagValue);
 	}
 
 	await db

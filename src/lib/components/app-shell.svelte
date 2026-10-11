@@ -2,7 +2,12 @@
 	import type { Snippet } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { navigating, page } from '$app/state';
-	import { CompassIcon, UserGroupIcon } from '@hugeicons/core-free-icons';
+	import {
+		Add01Icon,
+		Calendar03Icon,
+		CompassIcon,
+		UserGroupIcon
+	} from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Skeleton } from '$lib/components/ui/skeleton';
@@ -11,13 +16,17 @@
 		accountDestinations,
 		isCurrentDestination,
 		primaryDestinations,
-		signedInAccountDestinations
+		signedInAccountDestinations,
+		signedInPrimaryDestinations
 	} from '$lib/navigation';
 	import type { SessionUser } from '$lib/session-user';
 
 	let { children, user }: { children: Snippet; user: SessionUser | null } = $props();
 
 	const pathname = $derived(page.url.pathname);
+	const currentPrimaryDestinations = $derived(
+		user ? signedInPrimaryDestinations : primaryDestinations
+	);
 	const isNavigating = $derived(Boolean(navigating.to));
 	const currentAccountDestinations = $derived(
 		user ? signedInAccountDestinations : accountDestinations
@@ -25,7 +34,9 @@
 
 	const primaryIcons = {
 		'/': CompassIcon,
-		'/groups': UserGroupIcon
+		'/groups': UserGroupIcon,
+		'/create': Add01Icon,
+		'/my-events': Calendar03Icon
 	} as const;
 </script>
 
@@ -47,7 +58,7 @@
 			</a>
 
 			<nav aria-label="Primary" class="hidden min-w-0 flex-1 items-center gap-1 md:flex">
-				{#each primaryDestinations as destination (destination.href)}
+				{#each currentPrimaryDestinations as destination (destination.href)}
 					{@const current = isCurrentDestination(pathname, destination.href)}
 					<Button
 						href={resolve(destination.href)}
@@ -104,7 +115,7 @@
 		class="fixed inset-x-0 bottom-0 z-10 border-t bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
 	>
 		<div class="flex items-stretch gap-1 px-2 py-1">
-			{#each primaryDestinations as destination (destination.href)}
+			{#each currentPrimaryDestinations as destination (destination.href)}
 				{@const current = isCurrentDestination(pathname, destination.href)}
 				<Button
 					href={resolve(destination.href)}

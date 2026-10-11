@@ -34,4 +34,5 @@ export type PublicEventSummary = {
 export type PublicEventDetail = PublicEventSummary & {
 	description: string;
 	exactTimeLabel: string;
+	location: { label: string; latitude: number | null; longitude: number | null };
 };

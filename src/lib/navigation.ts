@@ -13,6 +13,12 @@ export const accountDestinations = [
 	{ href: '/register', label: 'Register' }
 ] as const satisfies readonly ShellDestination[];
 
+export const signedInPrimaryDestinations = [
+	...primaryDestinations,
+	{ href: '/create', label: 'Create' },
+	{ href: '/my-events', label: 'My events' }
+] as const satisfies readonly ShellDestination[];
+
 export const signedInAccountDestinations = [
 	{ href: '/account', label: 'Account' }
 ] as const satisfies readonly ShellDestination[];

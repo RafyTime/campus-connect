@@ -1,4 +1,6 @@
-export const CAMPUS_TIME_ZONE = 'Europe/Berlin';
+import { campusTimeZone } from '$lib/event-authoring';
+
+export const CAMPUS_TIME_ZONE = campusTimeZone;
 
 const dateFormatter = new Intl.DateTimeFormat('en-GB', {
 	timeZone: CAMPUS_TIME_ZONE,
@@ -21,13 +23,29 @@ const timeZoneFormatter = new Intl.DateTimeFormat('en-GB', {
 });
 
 export function formatCampusSchedule(startsAt: Date, endsAt: Date): string {
-	return `${dateFormatter.format(startsAt)}, ${timeFormatter.format(startsAt)}–${timeFormatter.format(endsAt)}`;
+	const endDate =
+		dateFormatter.format(startsAt) === dateFormatter.format(endsAt)
+			? ''
+			: `${dateFormatter.format(endsAt)}, `;
+	return `${dateFormatter.format(startsAt)}, ${timeFormatter.format(startsAt)}–${endDate}${timeFormatter.format(endsAt)}`;
 }
 
 export function formatCampusExactTime(startsAt: Date, endsAt: Date): string {
-	const timeZoneName =
-		timeZoneFormatter.formatToParts(startsAt).find((part) => part.type === 'timeZoneName')?.value ??
-		CAMPUS_TIME_ZONE;
+	const startZone = timeZoneName(startsAt);
+	const endZone = timeZoneName(endsAt);
+	if (startZone !== endZone) {
+		const endDate =
+			dateFormatter.format(startsAt) === dateFormatter.format(endsAt)
+				? ''
+				: `${dateFormatter.format(endsAt)}, `;
+		return `${dateFormatter.format(startsAt)}, ${timeFormatter.format(startsAt)} ${startZone}–${endDate}${timeFormatter.format(endsAt)} ${endZone}`;
+	}
+	return `${formatCampusSchedule(startsAt, endsAt)} ${startZone}`;
+}
 
-	return `${formatCampusSchedule(startsAt, endsAt)} ${timeZoneName}`;
+function timeZoneName(date: Date): string {
+	return (
+		timeZoneFormatter.formatToParts(date).find((part) => part.type === 'timeZoneName')?.value ??
+		CAMPUS_TIME_ZONE
+	);
 }

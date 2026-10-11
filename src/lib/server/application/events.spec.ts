@@ -165,6 +165,7 @@ describe('public Event detail', () => {
 				initials: 'LH'
 			},
 			locationLabel: 'Main building foyer',
+			location: { label: 'Main building foyer', latitude: null, longitude: null },
 			tags: [{ id: 'tag-outdoors', name: 'Outdoors' }],
 			responseMode: 'announcement',
 			capacityState: 'Announcement',

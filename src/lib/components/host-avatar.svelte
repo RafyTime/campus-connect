@@ -20,7 +20,7 @@
 	{#if imageUrl}
 		<Avatar.Image src={imageUrl} alt={displayName} title={imageAttribution ?? undefined} />
 	{/if}
-	<Avatar.Fallback>{initials}</Avatar.Fallback>
+	<Avatar.Fallback class="text-foreground">{initials}</Avatar.Fallback>
 </Avatar.Root>
 {#if imageAttribution}
 	<span class="sr-only">Image credit: {imageAttribution}</span>

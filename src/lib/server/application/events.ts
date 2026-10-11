@@ -83,7 +83,7 @@ type LoadedEvent = {
 		author: { id: string; name: string; image: string | null };
 		group: { id: string; name: string; imageUrl: string | null } | null;
 	};
-	location: { label: string };
+	location: PublicEventDetail['location'];
 	eventTags: { tag: { id: string; name: string } }[];
 };
 
@@ -134,6 +134,11 @@ function toSummary(row: LoadedEvent, now: Date): PublicEventSummary {
 function toDetail(row: LoadedEvent, now: Date): PublicEventDetail {
 	return {
 		...toSummary(row, now),
+		location: {
+			label: row.location.label,
+			latitude: row.location.latitude,
+			longitude: row.location.longitude
+		},
 		description: row.description,
 		exactTimeLabel: formatCampusExactTime(row.startsAt, row.endsAt)
 	};
