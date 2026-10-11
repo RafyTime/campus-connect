@@ -10,7 +10,7 @@ The application remains a development skeleton; media-bucket integration and Cam
 
 ## Continuous integration
 
-The workflow in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs on every push, pull requests targeting `main`, and manual dispatches. It uses Bun `1.3.14` to run:
+The workflow in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs on every push, pull requests targeting `main`, and manual dispatches. It uses Bun `1.4.3` to run:
 
 1. formatting and linting;
 2. Svelte and TypeScript checks;

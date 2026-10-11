@@ -23,7 +23,7 @@ SvelteKit with the Node adapter, Svelte 5, TypeScript, Tailwind CSS, shadcn-svel
 
 ## Local setup
 
-Prerequisites: [Bun](https://bun.sh/) 1.3.14 and Node.js 24.19.0 or a newer supported Vite+ runtime.
+Prerequisites: [Bun](https://bun.sh/) 1.4.3 and Node.js 24.19.0 or a newer supported Vite+ runtime.
 
 ```sh
 bun install
