@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { createTestDatabase } from '$lib/server/testing/database';
 import { createTestClock } from '$lib/server/testing/clock';
 import { seedEventAuthoringOptions, seedPublicPersonalEvents } from '$lib/server/seed';

@@ -23,10 +23,12 @@ export type PublicGroupDetail = PublicGroupSummary & {
 };
 
 export type GroupMutationAccess =
-	{ ok: true } | { ok: false; reason: 'not-found' | 'system-managed' };
+	| { ok: true }
+	| { ok: false; reason: 'not-found' | 'system-managed' };
 
 export type GroupMembershipRecordResult =
-	{ ok: true } | { ok: false; reason: 'duplicate-membership' | 'owner-exists' };
+	| { ok: true }
+	| { ok: false; reason: 'duplicate-membership' | 'owner-exists' };
 
 export type GroupFollowResult =
 	| { ok: true; following: boolean; subscriberCount: number }

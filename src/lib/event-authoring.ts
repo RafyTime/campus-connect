@@ -21,7 +21,12 @@ export type EventSaveResult =
 	| {
 			ok: false;
 			reason:
-				'unauthenticated' | 'invalid' | 'forbidden' | 'not-found' | 'read-only' | 'unavailable';
+				| 'unauthenticated'
+				| 'invalid'
+				| 'forbidden'
+				| 'not-found'
+				| 'read-only'
+				| 'unavailable';
 			fieldErrors?: EventFieldErrors;
 	  };
 export type EventAuthoringOptions = {

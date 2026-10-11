@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { createDb } from './client';
 import { applyMigrations } from './migrate';
 import { event, group } from './schema';

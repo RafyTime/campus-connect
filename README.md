@@ -19,11 +19,11 @@ Groups, accounts, participation, and creator publishing are still later Phase 2 
 
 ## Stack
 
-SvelteKit with the Node adapter, Svelte 5, TypeScript, Tailwind CSS, shadcn-svelte, Better Auth, Drizzle ORM, SQLite/libSQL, Bun, ESLint, Prettier, Vitest, Playwright, GitHub Actions, and Railway.
+SvelteKit with the Node adapter, Svelte 5, TypeScript, Tailwind CSS, shadcn-svelte, Better Auth, Drizzle ORM, SQLite/libSQL, Bun, Vite+ (Oxlint, Oxfmt, and Vitest), Playwright, GitHub Actions, and Railway.
 
 ## Local setup
 
-Prerequisite: [Bun](https://bun.sh/) 1.3.14 or later.
+Prerequisites: [Bun](https://bun.sh/) 1.3.14 and Node.js 24.19.0 or a newer supported Vite+ runtime.
 
 ```sh
 bun install
@@ -43,6 +43,8 @@ bun run quality
 ```
 
 The quality command checks formatting, linting, Svelte and TypeScript, runs the automated tests, and creates a production build. GitHub Actions runs the same command for every push and for pull requests targeting `main`.
+
+Vite+ tooling settings live in `vite.config.ts`. Svelte type checking still uses `svelte-check`, and ESLint checks Svelte files because Oxlint does not enforce their template rules. The `vite` alias and Vitest override keep framework and test-helper dependencies on the same toolchain.
 
 ## Database
 

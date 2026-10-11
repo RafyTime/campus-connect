@@ -166,7 +166,15 @@ test.describe('Campus Connect accounts and profiles', () => {
 		await expect(page.getByLabel('Display name')).toHaveValue('A');
 
 		await page.getByLabel('Display name').fill('Ada King');
-		await page.getByRole('button', { name: 'Save display name' }).click();
+		const [saveResponse] = await Promise.all([
+			page.waitForResponse(
+				(response) =>
+					response.request().method() === 'POST' && response.url().includes('/_app/remote/')
+			),
+			page.getByRole('button', { name: 'Save display name' }).click()
+		]);
+		expect(saveResponse.ok()).toBe(true);
+		await expect(page.getByRole('button', { name: 'Save display name' })).toBeEnabled();
 		await expect(page.getByLabel('Display name')).toHaveValue('Ada King');
 
 		await page.reload();

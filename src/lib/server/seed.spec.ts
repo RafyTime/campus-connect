@@ -1,5 +1,5 @@
 import { count } from 'drizzle-orm';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { discoverPublicEvents } from '$lib/server/application/events';
 import { getPublicGroup, listPublicGroups } from '$lib/server/application/groups';
 import { event, group, groupMembership, location, tag, user } from '$lib/server/db/schema';

@@ -27,3 +27,4 @@ playwright-report
 blob-report
 # SQLite
 *.db
+.vitest/
