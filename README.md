@@ -23,23 +23,27 @@ SvelteKit with the Node adapter, Svelte 5, TypeScript, Tailwind CSS, shadcn-svel
 
 ## Local setup
 
-Prerequisites: [Bun](https://bun.sh/) 1.4.3 and Node.js 24.19.0 or a newer supported Vite+ runtime.
+Prerequisites: the [global Vite+ CLI](https://viteplus.dev/guide/global-cli), Bun 1.4.3, and Node.js 24.19.0 or a newer supported Vite+ runtime. Vite+ can manage the Bun and Node installations. `vp install` uses the Bun version pinned in `package.json`.
 
 ```sh
-bun install
+vp install
 Copy-Item .env.example .env
-bun run db:migrate
-bun run db:seed
-bun run dev
+vp run db:migrate
+vp run db:seed
+vp dev
 ```
 
 Replace the example `BETTER_AUTH_SECRET` in `.env` before using authentication. Keep `.env` out of version control.
 
+Use the global `vp` command for built-ins such as `vp dev`, `vp build`, `vp preview`, and `vp test`. Without the global CLI, use `bunx --no-install vp` instead of `vp`.
+
+Run package scripts with `vp run <name>` or its shorthand `vpr <name>`, such as `vp run quality` or `vp run test:install`. `vp run check` runs our Svelte checks; `vp run lint` includes Svelte template linting; `vp run test` includes both unit and end-to-end tests. The built-in `vp check`, `vp lint`, and `vp test` do not run those package scripts. `bun run <name>` also remains supported.
+
 ## Quality checks
 
 ```sh
-bun run test:install # one-time Chromium download
-bun run quality
+vp run test:install # one-time Chromium download
+vp run quality
 ```
 
 The quality command checks formatting, linting, Svelte and TypeScript, runs the automated tests, and creates a production build. GitHub Actions runs the same command for every push and for pull requests targeting `main`.
@@ -49,14 +53,14 @@ Vite+ tooling settings live in `vite.config.ts`. Svelte type checking still uses
 ## Database
 
 ```sh
-bun run db:generate # generate migration after schema change
-bun run db:migrate  # apply committed migrations to database
-bun run db:seed     # idempotent seed of Tags, Locations, and public personal Events
-bun run db:studio   # visually inspect local database
+vp run db:generate # generate migration after schema change
+vp run db:migrate  # apply committed migrations to database
+vp run db:seed     # idempotent seed of Tags, Locations, and public personal Events
+vp run db:studio   # visually inspect local database
 ```
 
 The committed migrations create Better Auth's `user`, `session`, `account`, and `verification` tables plus the public personal Event records (`post`, `event`, `tag`, `event_tag`, and `location`). Seed uses stable identifiers and can be re-run safely.
 
-If `bun run db:migrate` reports that a table already exists, this SQLite file was created before tracked migrations (for example by an earlier `db:push`). Delete or rename `local.db` and run `db:migrate` again. Local SQLite is disposable; tests do not use this file.
+If `vp run db:migrate` reports that a table already exists, this SQLite file was created before tracked migrations (for example by an earlier `db:push`). Delete or rename `local.db` and run `vp run db:migrate` again. Local SQLite is disposable; tests do not use this file.
 
 For production SQLite, first deploy the committed migration, then run `bun run db:migrate` once from the Railway service console. Run `bun run db:seed` from the same runtime when demonstration content is required. The `/data` volume is available only at runtime, so do not migrate in Railway's build or pre-deploy phase. See [deployment.md](docs/deployment.md) for the full process.
