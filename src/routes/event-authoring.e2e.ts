@@ -108,7 +108,7 @@ test('visitors return through sign-in and other Users cannot manage someone else
 	}
 	await register(page);
 	await page.goto('/events/event-campus-welcome-walk/edit');
-	await expect(page.getByText('Only the author can edit this personal Event.')).toBeVisible();
+	await expect(page.getByText('You do not have permission to manage this Event.')).toBeVisible();
 	await page.goto('/my-events');
 	await expect(page.getByText('No Events yet')).toBeVisible();
 });

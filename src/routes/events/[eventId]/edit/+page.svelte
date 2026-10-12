@@ -3,8 +3,8 @@
 	import EventDetailsForm from '$lib/components/event-details-form.svelte';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
-	import { loadEventAuthoringOptions, loadPersonalEventForManagement } from '$lib/events.remote';
-	const event = $derived(await loadPersonalEventForManagement(page.params.eventId ?? ''));
+	import { loadEventAuthoringOptions, loadEventForManagement } from '$lib/events.remote';
+	const event = $derived(await loadEventForManagement(page.params.eventId ?? ''));
 	const options = await loadEventAuthoringOptions();
 </script>
 
@@ -12,7 +12,7 @@
 
 <div class="mx-auto flex w-full max-w-2xl flex-col gap-6">
 	<header class="flex flex-col gap-2">
-		<h1 class="font-heading text-2xl font-medium tracking-tight">Edit personal Event</h1>
+		<h1 class="font-heading text-2xl font-medium tracking-tight">Edit Event</h1>
 		<p class="text-muted-foreground">Update your public Event. The host stays the same.</p>
 	</header>
 	{#if event.status === 'scheduled'}

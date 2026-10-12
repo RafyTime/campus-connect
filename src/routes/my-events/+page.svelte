@@ -15,7 +15,7 @@
 		<div class="flex flex-col gap-2">
 			<h1 class="font-heading text-2xl font-medium tracking-tight">My events</h1>
 			<p class="text-muted-foreground">
-				Your published personal Events, including ended and cancelled Events.
+				Personal and Group Events you can manage, including ended and cancelled Events.
 			</p>
 		</div>
 		<Button href="/create" class="min-h-11">Create an Event</Button>
@@ -25,7 +25,7 @@
 			<Empty.Header>
 				<Empty.Title>No Events yet</Empty.Title>
 				<Empty.Description
-					>Create your first personal Event to invite the campus to join you.</Empty.Description
+					>Publish an Event as yourself or a Group you own or represent.</Empty.Description
 				>
 			</Empty.Header>
 			<Empty.Content><Button href="/create" class="min-h-11">Create an Event</Button></Empty.Content

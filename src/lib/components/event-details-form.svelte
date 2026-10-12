@@ -7,14 +7,14 @@
 	import * as NativeSelect from '$lib/components/ui/native-select';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Textarea } from '$lib/components/ui/textarea';
-	import { createPersonalEventForm, editPersonalEventForm } from '$lib/events.remote';
+	import { createEventForm, editEventForm } from '$lib/events.remote';
 	import {
 		parseEventDetails,
 		responseModes,
 		type EventAuthoringOptions,
 		type EventFieldErrors,
 		type EventFormValues,
-		type ManagedPersonalEvent
+		type ManagedEvent
 	} from '$lib/event-authoring';
 	import { responseModeLabel } from '$lib/event-labels';
 	import { tick } from 'svelte';
@@ -23,10 +23,10 @@
 		mode,
 		options,
 		initial
-	}: { mode: 'create' | 'edit'; options: EventAuthoringOptions; initial?: ManagedPersonalEvent } =
-		$props();
+	}: { mode: 'create' | 'edit'; options: EventAuthoringOptions; initial?: ManagedEvent } = $props();
 	const defaults = $derived<EventFormValues>(
 		initial ?? {
+			hostGroupId: '',
 			title: '',
 			description: '',
 			startsAt: '',
@@ -38,9 +38,7 @@
 			manualLocation: ''
 		}
 	);
-	const form = $derived(
-		mode === 'create' ? createPersonalEventForm : editPersonalEventForm.for(initial?.id ?? '')
-	);
+	const form = $derived(mode === 'create' ? createEventForm : editEventForm.for(initial?.id ?? ''));
 	const responseMode = $derived(form.fields.responseMode.value() ?? defaults.responseMode);
 	const locationId = $derived(form.fields.locationId.value() ?? defaults.locationId);
 	let clientErrors = $state<EventFieldErrors>({});
@@ -82,7 +80,7 @@
 	aria-busy={Boolean(form.pending)}
 >
 	{#if mode === 'edit'}<input
-			{...editPersonalEventForm.fields.eventId.as('hidden', initial?.id ?? '')}
+			{...editEventForm.fields.eventId.as('hidden', initial?.id ?? '')}
 		/>{/if}
 	{#if transportFailure || generalIssue}
 		<Alert.Root variant="destructive">
@@ -93,6 +91,33 @@
 		</Alert.Root>
 	{/if}
 	<Field.Group>
+		{#if mode === 'create'}
+			<Field.Field data-invalid={issues('hostGroupId').length > 0 || undefined}>
+				<Field.Label for="event-host">Host</Field.Label>
+				<NativeSelect.Root
+					{...form.fields.hostGroupId.as('select', defaults.hostGroupId)}
+					id="event-host"
+					class="w-full [&_select]:min-h-11"
+					aria-invalid={issues('hostGroupId').length > 0}
+					aria-describedby="event-host-help event-host-error"
+				>
+					<NativeSelect.Option value="">Yourself · Personal Event</NativeSelect.Option>
+					{#each options.groups as group (group.id)}
+						<NativeSelect.Option value={group.id}>{group.name}</NativeSelect.Option>
+					{/each}
+				</NativeSelect.Root>
+				<Field.Description id="event-host-help">
+					{options.groups.length
+						? 'Publish as yourself or a Group you own or represent. The host cannot change after publication.'
+						: 'You do not own or represent any Groups. You can publish a personal Event.'}
+				</Field.Description>
+				<Field.Error id="event-host-error" errors={issues('hostGroupId')} />
+			</Field.Field>
+		{:else if initial}
+			<p class="text-muted-foreground">
+				Host: {initial.hostName}. Published by {initial.author.displayName}. The host cannot change.
+			</p>
+		{/if}
 		<Field.Field data-invalid={issues('title').length > 0 || undefined}>
 			<Field.Label for="event-title">Title</Field.Label>
 			<Input

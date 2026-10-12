@@ -5,6 +5,7 @@ export const campusTimeZone = 'Europe/Berlin';
 export const responseModes = ['announcement', 'interest', 'registration'] as const;
 
 export type EventFormValues = {
+	hostGroupId: string;
 	title: string;
 	description: string;
 	startsAt: string;
@@ -30,11 +31,14 @@ export type EventSaveResult =
 			fieldErrors?: EventFieldErrors;
 	  };
 export type EventAuthoringOptions = {
+	groups: { id: string; name: string }[];
 	tags: { id: string; name: string }[];
 	locations: { id: string; label: string }[];
 };
-export type ManagedPersonalEvent = EventFormValues & {
+export type ManagedEvent = EventFormValues & {
 	id: string;
+	hostName: string;
+	author: { id: string; displayName: string };
 	status: PublicEventSummary['status'];
 };
 

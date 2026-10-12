@@ -5,10 +5,10 @@ import { seedEventAuthoringOptions, seedPublicPersonalEvents } from '$lib/server
 import { insertUser } from '$lib/server/fixtures';
 import { discoverPublicEvents, getPublicEvent } from './events';
 import {
-	createPersonalEvent,
-	editPersonalEvent,
+	createEvent,
+	editEvent,
 	getEventAuthoringOptions,
-	getPersonalEventForManagement,
+	getEventForManagement,
 	listMyEvents
 } from './event-authoring';
 
@@ -31,7 +31,7 @@ describe('personal Event authoring', () => {
 		const clock = createTestClock('2026-09-01T08:00:00Z');
 		await seedPublicPersonalEvents(database.db, clock);
 		await insertUser(database.db, clock, creator);
-		const result = await createPersonalEvent(database.db, clock, creator, validInput);
+		const result = await createEvent(database.db, clock, creator, validInput);
 		expect(result.ok).toBe(true);
 		if (!result.ok) throw new Error('Publication failed');
 		await expect(getPublicEvent(database.db, clock, result.eventId)).resolves.toMatchObject({
@@ -51,7 +51,7 @@ describe('personal Event authoring', () => {
 			result.eventId
 		]);
 		await expect(
-			getPersonalEventForManagement(database.db, clock, creator, result.eventId)
+			getEventForManagement(database.db, clock, creator, result.eventId)
 		).resolves.toMatchObject({
 			ok: true,
 			event: {
@@ -69,14 +69,14 @@ describe('personal Event authoring', () => {
 		await insertUser(database.db, clock, creator);
 		const before = await discoverPublicEvents(database.db, clock);
 		await expect(
-			createPersonalEvent(database.db, clock, creator, { ...validInput, tagIds: ['custom-tag'] })
+			createEvent(database.db, clock, creator, { ...validInput, tagIds: ['custom-tag'] })
 		).resolves.toMatchObject({
 			ok: false,
 			reason: 'invalid',
 			fieldErrors: { tagIds: expect.any(String) }
 		});
 		await expect(
-			createPersonalEvent(database.db, clock, creator, {
+			createEvent(database.db, clock, creator, {
 				...validInput,
 				locationId: 'custom-place'
 			})
@@ -92,7 +92,7 @@ describe('personal Event authoring', () => {
 		const clock = createTestClock('2026-09-01T08:00:00Z');
 		await seedPublicPersonalEvents(database.db, clock);
 		await insertUser(database.db, clock, creator);
-		const created = await createPersonalEvent(database.db, clock, creator, validInput);
+		const created = await createEvent(database.db, clock, creator, validInput);
 		if (!created.ok) throw new Error('Publication failed');
 		const edited = {
 			...validInput,
@@ -111,9 +111,10 @@ describe('personal Event authoring', () => {
 			latitude: 50,
 			longitude: 7
 		};
-		await expect(
-			editPersonalEvent(database.db, clock, creator, created.eventId, edited)
-		).resolves.toEqual({ ok: true, eventId: created.eventId });
+		await expect(editEvent(database.db, clock, creator, created.eventId, edited)).resolves.toEqual({
+			ok: true,
+			eventId: created.eventId
+		});
 		await expect(getPublicEvent(database.db, clock, created.eventId)).resolves.toMatchObject({
 			title: 'Garden study morning',
 			description: 'Study outdoors with tea and a few friends.',
@@ -125,16 +126,16 @@ describe('personal Event authoring', () => {
 			locationLabel: 'Garden beside the library'
 		});
 		await expect(
-			getPersonalEventForManagement(database.db, clock, creator, created.eventId)
+			getEventForManagement(database.db, clock, creator, created.eventId)
 		).resolves.toMatchObject({
 			ok: true,
 			event: { locationId: 'manual', manualLocation: 'Garden beside the library', capacity: '' }
 		});
 		await expect(
-			editPersonalEvent(database.db, clock, creator, created.eventId, validInput)
+			editEvent(database.db, clock, creator, created.eventId, validInput)
 		).resolves.toMatchObject({ ok: true });
 		await expect(
-			getPersonalEventForManagement(database.db, clock, creator, created.eventId)
+			getEventForManagement(database.db, clock, creator, created.eventId)
 		).resolves.toMatchObject({
 			ok: true,
 			event: { locationId: 'location-library', responseMode: 'registration', capacity: '12' }
@@ -171,7 +172,7 @@ describe('personal Event authoring', () => {
 		await seedPublicPersonalEvents(database.db, clock);
 		await insertUser(database.db, clock, creator);
 		await expect(
-			createPersonalEvent(database.db, clock, creator, { ...validInput, [field]: value })
+			createEvent(database.db, clock, creator, { ...validInput, [field]: value })
 		).resolves.toMatchObject({
 			ok: false,
 			reason: 'invalid',
@@ -187,20 +188,20 @@ describe('personal Event authoring', () => {
 			await seedPublicPersonalEvents(database.db, clock);
 			await insertUser(database.db, clock, creator);
 			await expect(
-				createPersonalEvent(database.db, clock, creator, { ...validInput, responseMode })
+				createEvent(database.db, clock, creator, { ...validInput, responseMode })
 			).resolves.toMatchObject({
 				ok: false,
 				reason: 'invalid',
 				fieldErrors: { capacity: expect.any(String) }
 			});
-			const result = await createPersonalEvent(database.db, clock, creator, {
+			const result = await createEvent(database.db, clock, creator, {
 				...validInput,
 				responseMode,
 				capacity: ''
 			});
 			if (!result.ok) throw new Error('Publication failed');
 			await expect(
-				getPersonalEventForManagement(database.db, clock, creator, result.eventId)
+				getEventForManagement(database.db, clock, creator, result.eventId)
 			).resolves.toMatchObject({ ok: true, event: { responseMode, capacity: '' } });
 		}
 	);
@@ -227,7 +228,7 @@ describe('personal Event authoring', () => {
 				expectedTags: ['tag-social', 'tag-study', 'tag-tech']
 			}
 		]) {
-			const result = await createPersonalEvent(database.db, clock, creator, {
+			const result = await createEvent(database.db, clock, creator, {
 				...validInput,
 				...fields,
 				capacity: '1',
@@ -247,11 +248,11 @@ describe('personal Event authoring', () => {
 				locationLabel: 'Garden'
 			});
 			await expect(
-				getPersonalEventForManagement(database.db, clock, creator, result.eventId)
+				getEventForManagement(database.db, clock, creator, result.eventId)
 			).resolves.toMatchObject({ ok: true, event: { tagIds: expectedTags, locationId: 'manual' } });
 		}
 		await expect(
-			createPersonalEvent(database.db, clock, creator, {
+			createEvent(database.db, clock, creator, {
 				...validInput,
 				locationId: 'manual',
 				manualLocation: '  '
@@ -267,25 +268,26 @@ describe('personal Event authoring', () => {
 		const clock = createTestClock('2026-09-01T08:00:00Z');
 		await seedPublicPersonalEvents(database.db, clock);
 		await insertUser(database.db, clock, creator);
-		await expect(createPersonalEvent(database.db, clock, null, validInput)).resolves.toEqual({
+		await expect(createEvent(database.db, clock, null, validInput)).resolves.toEqual({
 			ok: false,
 			reason: 'unauthenticated'
 		});
 		await expect(
-			getPersonalEventForManagement(database.db, clock, null, 'event-campus-welcome-walk')
+			getEventForManagement(database.db, clock, null, 'event-campus-welcome-walk')
 		).resolves.toEqual({ ok: false, reason: 'unauthenticated' });
 		await expect(
-			editPersonalEvent(database.db, clock, null, 'event-campus-welcome-walk', validInput)
+			editEvent(database.db, clock, null, 'event-campus-welcome-walk', validInput)
 		).resolves.toEqual({ ok: false, reason: 'unauthenticated' });
 		await expect(
-			getPersonalEventForManagement(database.db, clock, creator, 'event-campus-welcome-walk')
+			getEventForManagement(database.db, clock, creator, 'event-campus-welcome-walk')
 		).resolves.toEqual({ ok: false, reason: 'forbidden' });
 		await expect(
-			editPersonalEvent(database.db, clock, creator, 'event-campus-welcome-walk', validInput)
+			editEvent(database.db, clock, creator, 'event-campus-welcome-walk', validInput)
 		).resolves.toEqual({ ok: false, reason: 'forbidden' });
-		await expect(
-			editPersonalEvent(database.db, clock, creator, 'missing', validInput)
-		).resolves.toEqual({ ok: false, reason: 'not-found' });
+		await expect(editEvent(database.db, clock, creator, 'missing', validInput)).resolves.toEqual({
+			ok: false,
+			reason: 'not-found'
+		});
 		await expect(listMyEvents(database.db, clock, creator)).resolves.toEqual([]);
 	});
 	it('keeps ended and cancelled Events in My events and refuses editing', async () => {
@@ -293,22 +295,10 @@ describe('personal Event authoring', () => {
 		const clock = createTestClock('2026-09-01T08:00:00Z');
 		await seedPublicPersonalEvents(database.db, clock);
 		await expect(
-			editPersonalEvent(
-				database.db,
-				clock,
-				{ id: 'user-mira' },
-				'event-ended-library-hours',
-				validInput
-			)
+			editEvent(database.db, clock, { id: 'user-mira' }, 'event-ended-library-hours', validInput)
 		).resolves.toEqual({ ok: false, reason: 'read-only' });
 		await expect(
-			editPersonalEvent(
-				database.db,
-				clock,
-				{ id: 'user-jonas' },
-				'event-cancelled-picnic',
-				validInput
-			)
+			editEvent(database.db, clock, { id: 'user-jonas' }, 'event-cancelled-picnic', validInput)
 		).resolves.toEqual({ ok: false, reason: 'read-only' });
 		expect(
 			(await listMyEvents(database.db, clock, { id: 'user-mira' })).find(
@@ -326,8 +316,8 @@ describe('personal Event authoring', () => {
 		const clock = createTestClock('2026-09-01T08:00:00Z');
 		await seedPublicPersonalEvents(database.db, clock);
 		await insertUser(database.db, clock, creator);
-		const curated = await createPersonalEvent(database.db, clock, creator, validInput);
-		const manual = await createPersonalEvent(database.db, clock, creator, {
+		const curated = await createEvent(database.db, clock, creator, validInput);
+		const manual = await createEvent(database.db, clock, creator, {
 			...validInput,
 			locationId: 'manual',
 			manualLocation: 'Courtyard table',
@@ -392,7 +382,7 @@ describe('personal Event authoring', () => {
 			const clock = createTestClock('2026-09-01T08:00:00Z');
 			await seedEventAuthoringOptions(database.db);
 			await insertUser(database.db, clock, creator);
-			const result = await createPersonalEvent(database.db, clock, creator, {
+			const result = await createEvent(database.db, clock, creator, {
 				...validInput,
 				startsAt: start,
 				endsAt: end

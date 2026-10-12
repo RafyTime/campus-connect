@@ -1,19 +1,28 @@
-import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm';
 import type { Clock } from '$lib/server/clock';
 import type { Database } from '$lib/server/db';
-import { event, eventTag, location, post, tag } from '$lib/server/db/schema';
+import {
+	event,
+	eventTag,
+	group,
+	groupMembership,
+	location,
+	post,
+	tag
+} from '$lib/server/db/schema';
 import { campusLocations, campusTags } from '$lib/server/campus-catalog';
 import {
 	formatCampusInput,
 	parseEventDetails,
 	type EventAuthoringOptions,
 	type EventSaveResult,
-	type ManagedPersonalEvent
+	type ManagedEvent
 } from '$lib/event-authoring';
 import { getPublicEvent } from './events';
 
 export async function getEventAuthoringOptions(
-	db: Pick<Database, 'select'>
+	db: Pick<Database, 'select'>,
+	actor: { id: string } | null = null
 ): Promise<EventAuthoringOptions> {
 	const [tags, locations] = await Promise.all([
 		db
@@ -37,10 +46,37 @@ export async function getEventAuthoringOptions(
 			)
 			.orderBy(asc(location.label))
 	]);
-	return { tags, locations };
+	return { tags, locations, groups: await authorizedGroupHosts(db, actor) };
 }
 
-export async function createPersonalEvent(
+async function authorizedGroupHosts(db: Pick<Database, 'select'>, actor: { id: string } | null) {
+	if (!actor) return [];
+	return db
+		.select({ id: group.id, name: group.name })
+		.from(group)
+		.innerJoin(groupMembership, eq(groupMembership.groupId, group.id))
+		.where(
+			and(
+				eq(groupMembership.userId, actor.id),
+				inArray(groupMembership.role, ['owner', 'representative']),
+				eq(group.systemManaged, false)
+			)
+		)
+		.orderBy(asc(group.name));
+}
+
+async function canManageEvent(
+	db: Pick<Database, 'select'>,
+	actor: { id: string },
+	storedPost: { authorId: string; groupId: string | null }
+) {
+	if (storedPost.groupId === null) return storedPost.authorId === actor.id;
+	// Authorship does not retain Group authority after a role is removed or changed.
+	const hosts = await authorizedGroupHosts(db, actor);
+	return hosts.some((host) => host.id === storedPost.groupId);
+}
+
+export async function createEvent(
 	db: Database,
 	clock: Clock,
 	actor: { id: string } | null,
@@ -49,6 +85,20 @@ export async function createPersonalEvent(
 	if (!actor) return { ok: false, reason: 'unauthenticated' };
 	try {
 		return await db.withTransaction(async (tx) => {
+			const data =
+				typeof input === 'object' && input !== null ? (input as Record<string, unknown>) : {};
+			const hostGroupId = data.hostGroupId === undefined ? '' : data.hostGroupId;
+			if (typeof hostGroupId !== 'string')
+				return {
+					ok: false,
+					reason: 'invalid',
+					fieldErrors: { hostGroupId: 'Choose yourself or an authorized Group.' }
+				};
+			if (
+				hostGroupId &&
+				!(await authorizedGroupHosts(tx, actor)).some((host) => host.id === hostGroupId)
+			)
+				return { ok: false, reason: 'forbidden' };
 			const parsed = parseEventDetails(input, clock.now(), true);
 			if (!parsed.ok) return { ok: false, reason: 'invalid', fieldErrors: parsed.fieldErrors };
 			const fieldErrors = await validateOptions(tx, parsed.value);
@@ -61,7 +111,7 @@ export async function createPersonalEvent(
 				id: postId,
 				title,
 				authorId: actor.id,
-				groupId: null,
+				groupId: hostGroupId || null,
 				createdAt: clock.now(),
 				updatedAt: clock.now()
 			});
@@ -81,7 +131,7 @@ export async function createPersonalEvent(
 	}
 }
 
-export async function editPersonalEvent(
+export async function editEvent(
 	db: Database,
 	clock: Clock,
 	actor: { id: string } | null,
@@ -96,8 +146,7 @@ export async function editPersonalEvent(
 				with: { post: true }
 			});
 			if (!row) return { ok: false, reason: 'not-found' };
-			if (row.post.authorId !== actor.id || row.post.groupId !== null)
-				return { ok: false, reason: 'forbidden' };
+			if (!(await canManageEvent(tx, actor, row.post))) return { ok: false, reason: 'forbidden' };
 			if (row.status !== 'scheduled' || row.endsAt <= clock.now())
 				return { ok: false, reason: 'read-only' };
 			const parsed = parseEventDetails(input, clock.now(), false);
@@ -161,31 +210,41 @@ export async function listMyEvents(db: Database, clock: Clock, actor: { id: stri
 		.select({ id: event.id })
 		.from(event)
 		.innerJoin(post, eq(event.postId, post.id))
-		.where(and(eq(post.authorId, actor.id), isNull(post.groupId)))
+		.where(
+			or(
+				and(eq(post.authorId, actor.id), isNull(post.groupId)),
+				inArray(
+					post.groupId,
+					(await authorizedGroupHosts(db, actor)).map((host) => host.id)
+				)
+			)
+		)
 		.orderBy(asc(event.startsAt));
 	const events = await Promise.all(records.map((record) => getPublicEvent(db, clock, record.id)));
 	return events.filter((event) => event !== null);
 }
 
-export async function getPersonalEventForManagement(
+export async function getEventForManagement(
 	db: Database,
 	clock: Clock,
 	actor: { id: string } | null,
 	eventId: string
-): Promise<{ ok: true; event: ManagedPersonalEvent } | Extract<EventSaveResult, { ok: false }>> {
+): Promise<{ ok: true; event: ManagedEvent } | Extract<EventSaveResult, { ok: false }>> {
 	if (!actor) return { ok: false, reason: 'unauthenticated' };
 	const row = await db.query.event.findFirst({
 		where: eq(event.id, eventId),
-		with: { post: true, location: true, eventTags: true }
+		with: { post: { with: { author: true, group: true } }, location: true, eventTags: true }
 	});
 	if (!row) return { ok: false, reason: 'not-found' };
-	if (row.post.authorId !== actor.id || row.post.groupId !== null)
-		return { ok: false, reason: 'forbidden' };
+	if (!(await canManageEvent(db, actor, row.post))) return { ok: false, reason: 'forbidden' };
 	const curated = campusLocations.some((place) => place.id === row.locationId);
 	return {
 		ok: true,
 		event: {
 			id: row.id,
+			hostGroupId: row.post.groupId ?? '',
+			hostName: row.post.group?.name ?? row.post.author.name,
+			author: { id: row.post.authorId, displayName: row.post.author.name },
 			title: row.post.title,
 			description: row.description,
 			startsAt: formatCampusInput(row.startsAt),

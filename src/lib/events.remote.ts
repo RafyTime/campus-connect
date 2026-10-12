@@ -4,17 +4,19 @@ import { systemClock } from '$lib/server/clock';
 import { discoverPublicEvents, getPublicEvent } from '$lib/server/application/events';
 import { getDb } from '$lib/server/db';
 import {
-	createPersonalEvent,
-	editPersonalEvent,
+	createEvent,
+	editEvent,
 	getEventAuthoringOptions,
-	getPersonalEventForManagement,
+	getEventForManagement,
 	listMyEvents
 } from '$lib/server/application/event-authoring';
 import type { EventFormValues, EventSaveResult } from '$lib/event-authoring';
+import { loadPublicGroup } from '$lib/groups.remote';
 
 export const loadEventAuthoringOptions = query(async () => {
-	if (!getRequestEvent().locals.user) error(401, 'Sign in to create Events.');
-	return getEventAuthoringOptions(getDb());
+	const user = getRequestEvent().locals.user;
+	if (!user) error(401, 'Sign in to create Events.');
+	return getEventAuthoringOptions(getDb(), user);
 });
 
 export const loadMyEvents = query(async () => {
@@ -23,9 +25,9 @@ export const loadMyEvents = query(async () => {
 	return listMyEvents(getDb(), systemClock, user);
 });
 
-export const loadPersonalEventForManagement = query('unchecked', async (eventId: string) => {
+export const loadEventForManagement = query('unchecked', async (eventId: string) => {
 	if (typeof eventId !== 'string' || !eventId) error(404, 'Event not found');
-	const result = await getPersonalEventForManagement(
+	const result = await getEventForManagement(
 		getDb(),
 		systemClock,
 		getRequestEvent().locals.user ?? null,
@@ -33,14 +35,15 @@ export const loadPersonalEventForManagement = query('unchecked', async (eventId:
 	);
 	if (!result.ok) {
 		if (result.reason === 'unauthenticated') error(401, 'Sign in to manage Events.');
-		if (result.reason === 'forbidden') error(403, 'Only the author can edit this personal Event.');
+		if (result.reason === 'forbidden')
+			error(403, 'You do not have permission to manage this Event.');
 		error(404, 'Event not found');
 	}
 	return result.event;
 });
 
-export const createPersonalEventForm = form('unchecked', async (data: EventFormValues) => {
-	const result = await createPersonalEvent(
+export const createEventForm = form('unchecked', async (data: EventFormValues) => {
+	const result = await createEvent(
 		getDb(),
 		systemClock,
 		getRequestEvent().locals.user ?? null,
@@ -49,14 +52,15 @@ export const createPersonalEventForm = form('unchecked', async (data: EventFormV
 	if (!result.ok) eventSaveError(result);
 	void listPublicEvents().refresh();
 	void loadMyEvents().refresh();
+	if (data.hostGroupId) void loadPublicGroup(data.hostGroupId).refresh();
 	redirect(303, `/events/${result.eventId}`);
 });
 
-export const editPersonalEventForm = form(
+export const editEventForm = form(
 	'unchecked',
 	async (data: EventFormValues & { eventId: string }) => {
 		const eventId = typeof data.eventId === 'string' ? data.eventId : '';
-		const result = await editPersonalEvent(
+		const result = await editEvent(
 			getDb(),
 			systemClock,
 			getRequestEvent().locals.user ?? null,
@@ -67,7 +71,9 @@ export const editPersonalEventForm = form(
 		void listPublicEvents().refresh();
 		void loadMyEvents().refresh();
 		void loadPublicEvent(eventId).refresh();
-		void loadPersonalEventForManagement(eventId).refresh();
+		void loadEventForManagement(eventId).refresh();
+		const updatedEvent = await getPublicEvent(getDb(), systemClock, eventId);
+		if (updatedEvent?.host.type === 'group') void loadPublicGroup(updatedEvent.host.id).refresh();
 		redirect(303, `/events/${result.eventId}`);
 	}
 );
@@ -82,7 +88,7 @@ function eventSaveError(result: Extract<EventSaveResult, { ok: false }>): never 
 		);
 	const messages = {
 		unauthenticated: 'Sign in to manage Events.',
-		forbidden: 'Only the author can edit this personal Event.',
+		forbidden: 'You do not have permission to publish or manage Events for this host.',
 		'not-found': 'This Event no longer exists.',
 		'read-only': 'Ended and cancelled Events cannot be edited.',
 		unavailable: 'Could not save the Event. Try again.'

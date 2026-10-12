@@ -15,7 +15,7 @@ export default defineConfig({
 	use: { baseURL: 'http://127.0.0.1:4173' },
 	webServer: {
 		command:
-			'vp run db:migrate && bun src/lib/server/seed/cli.ts && vp build && vp preview --host 127.0.0.1',
+			'vp run db:migrate && bun src/lib/server/seed/cli.ts && bun src/lib/server/testing/seed-accounts/cli.ts && vp build && vp preview --host 127.0.0.1',
 		url: 'http://127.0.0.1:4173',
 		timeout: 300_000,
 		env: {
