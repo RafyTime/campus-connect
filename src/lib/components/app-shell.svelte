@@ -28,6 +28,8 @@
 		user ? signedInPrimaryDestinations : primaryDestinations
 	);
 	const isNavigating = $derived(Boolean(navigating.to));
+	// Keep same-page filter controls mounted while loading to preserve keyboard focus.
+	const isChangingPage = $derived(navigating.from?.url.pathname !== navigating.to?.url.pathname);
 	const currentAccountDestinations = $derived(
 		user ? signedInAccountDestinations : accountDestinations
 	);
@@ -96,11 +98,17 @@
 		class="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-6 pb-24 focus-visible:ring-3 focus-visible:ring-ring/30 md:py-8 md:pb-8"
 	>
 		{#if isNavigating}
-			<div class="flex flex-col gap-4" role="status" aria-label="Loading page">
-				<div class="flex items-center gap-2 text-sm text-muted-foreground">
-					<Spinner role="presentation" aria-hidden="true" />
-					Loading page
-				</div>
+			<div
+				class="mb-4 flex items-center gap-2 text-sm text-muted-foreground"
+				role="status"
+				aria-label="Loading page"
+			>
+				<Spinner role="presentation" aria-hidden="true" />
+				Loading page
+			</div>
+		{/if}
+		{#if isNavigating && isChangingPage}
+			<div class="flex flex-col gap-4">
 				<Skeleton class="h-8 w-48" />
 				<Skeleton class="h-24 w-full" />
 				<Skeleton class="h-24 w-full" />

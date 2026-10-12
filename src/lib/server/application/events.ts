@@ -1,7 +1,9 @@
 import { and, asc, eq, gt } from 'drizzle-orm';
+import { fromDate, parseDate, toCalendarDate } from '@internationalized/date';
+import { campusTimeZone } from '$lib/event-authoring';
 import type { Clock } from '$lib/server/clock';
 import type { Database } from '$lib/server/db';
-import { event } from '$lib/server/db/schema';
+import { event, group, tag } from '$lib/server/db/schema';
 import { responseModeLabel } from '$lib/event-labels';
 import type {
 	PublicEventDetail,
@@ -44,6 +46,46 @@ export async function discoverPublicEvents(
 	});
 
 	return rows.map((row) => toSummary(row, now));
+}
+
+export async function searchPublicEvents(db: Database, clock: Clock, input: unknown = '') {
+	const tags = await db.select({ id: tag.id, name: tag.name }).from(tag).orderBy(asc(tag.name));
+	const groups = await db
+		.select({ id: group.id, name: group.name })
+		.from(group)
+		.orderBy(asc(group.name));
+	const params = new URLSearchParams(typeof input === 'string' ? input : '');
+	const tagIds = [...new Set(params.getAll('tag').map((id) => id.trim()))].filter((id) =>
+		tags.some((tag) => tag.id === id)
+	);
+	const requestedGroup = params.get('group')?.trim();
+	const groupId = groups.find((group) => group.id === requestedGroup)?.id ?? '';
+	const requestedHost = params.get('host')?.trim().toLowerCase();
+	const hostType = requestedHost === 'personal' || requestedHost === 'group' ? requestedHost : '';
+	const date = normalizeDiscoveryDate(params.get('date'));
+	const events = (await discoverPublicEvents(db, clock)).filter(
+		(event) =>
+			(!tagIds.length || event.tags.some((tag) => tagIds.includes(tag.id))) &&
+			(!groupId || (event.host.type === 'group' && event.host.id === groupId)) &&
+			(!hostType || event.host.type === hostType) &&
+			(!date || toCalendarDate(fromDate(event.startsAt, campusTimeZone)).toString() === date)
+	);
+	return {
+		events,
+		count: events.length,
+		filters: { tagIds, groupId, hostType, date },
+		options: { tags, groups }
+	};
+}
+
+function normalizeDiscoveryDate(value: string | null): string {
+	const date = value?.trim() ?? '';
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return '';
+	try {
+		return parseDate(date).toString();
+	} catch {
+		return '';
+	}
 }
 
 export async function getPublicEvent(

@@ -1,7 +1,7 @@
 import { error, invalid, redirect } from '@sveltejs/kit';
 import { form, getRequestEvent, query } from '$app/server';
 import { systemClock } from '$lib/server/clock';
-import { discoverPublicEvents, getPublicEvent } from '$lib/server/application/events';
+import { searchPublicEvents, getPublicEvent } from '$lib/server/application/events';
 import { getDb } from '$lib/server/db';
 import {
 	createEvent,
@@ -50,7 +50,7 @@ export const createEventForm = form('unchecked', async (data: EventFormValues) =
 		data
 	);
 	if (!result.ok) eventSaveError(result);
-	void listPublicEvents().refresh();
+	void listPublicEvents('').refresh();
 	void loadMyEvents().refresh();
 	if (data.hostGroupId) void loadPublicGroup(data.hostGroupId).refresh();
 	redirect(303, `/events/${result.eventId}`);
@@ -68,7 +68,7 @@ export const editEventForm = form(
 			data
 		);
 		if (!result.ok) eventSaveError(result);
-		void listPublicEvents().refresh();
+		void listPublicEvents('').refresh();
 		void loadMyEvents().refresh();
 		void loadPublicEvent(eventId).refresh();
 		void loadEventForManagement(eventId).refresh();
@@ -96,8 +96,8 @@ function eventSaveError(result: Extract<EventSaveResult, { ok: false }>): never 
 	invalid(messages[result.reason]);
 }
 
-export const listPublicEvents = query(async () => {
-	return discoverPublicEvents(getDb(), systemClock);
+export const listPublicEvents = query('unchecked', async (search: string) => {
+	return searchPublicEvents(getDb(), systemClock, search);
 });
 
 export const loadPublicEvent = query('unchecked', async (eventId: string) => {
