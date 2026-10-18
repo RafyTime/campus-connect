@@ -38,3 +38,5 @@ The 14 October 2026 review observed Kit 2.70.1, Svelte 5.56.8, Node adapter 5.5.
 Dependency changes and their application adaptations belong together because splitting them would leave an incompatible intermediate application. This ticket must finish with the complete existing quality gate passing; it does not defer broken product flows to final verification.
 
 The local `ready` status represents `ready-for-agent`. Preserve ADR 0001 and ADR 0002, the Node runtime/adapter architecture, SQLite/libSQL, Drizzle, and existing product permissions. No new feature work, unrelated broad dependency upgrades, production access or deployment, daily-preview changes, commits, pushes, or pull requests are authorized.
+
+18 October 2026 acceptance amendment: Leo authorized disabling only the loading/focus test named in the parent spec's waiver, with its body and assertions unchanged. Its passing requirement is deferred to discovery-filter work; every other check remains required. Local gitmoji commits are now explicitly authorized. No push or deployment is authorized.

@@ -107,3 +107,5 @@ The installed Better Auth release declares Kit 2 support only. Upstream now decl
 ## Comments
 
 Published from the agreed upgrade review using the to-spec workflow. The local `ready` status represents the `ready-for-agent` triage label. Implementation and ticket breakdown have not started.
+
+18 October 2026: Leo explicitly waived the passing requirement for `src/routes/event-filtering.e2e.ts`'s "changing a filter announces loading until the new results arrive" test while discovery filters receive separate work. Disable only its declaration with `test.skip`; retain its entire body and assertions. This is the sole exception to the no-skips acceptance requirement. Report it as skipped in final evidence. Leo also authorized local commits using gitmoji; pushes, pull requests, production access, and deployment remain outside the authorized scope.
