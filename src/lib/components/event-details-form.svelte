@@ -1,13 +1,13 @@
 <script lang="ts">
-	import * as Alert from '$lib/components/ui/alert';
-	import { Button } from '$lib/components/ui/button';
-	import { Checkbox } from '$lib/components/ui/checkbox';
-	import * as Field from '$lib/components/ui/field';
-	import { Input } from '$lib/components/ui/input';
-	import * as NativeSelect from '$lib/components/ui/native-select';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { Textarea } from '$lib/components/ui/textarea';
-	import { createEventForm, editEventForm } from '$lib/events.remote';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
+	import * as Field from '#lib/components/ui/field/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import * as NativeSelect from '#lib/components/ui/native-select/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { Textarea } from '#lib/components/ui/textarea/index.js';
+	import { createEventForm, editEventForm } from '#lib/events.remote.js';
 	import {
 		parseEventDetails,
 		responseModes,
@@ -15,8 +15,8 @@
 		type EventFieldErrors,
 		type EventFormValues,
 		type ManagedEvent
-	} from '$lib/event-authoring';
-	import { responseModeLabel } from '$lib/event-labels';
+	} from '#lib/event-authoring.js';
+	import { responseModeLabel } from '#lib/event-labels.js';
 	import { tick } from 'svelte';
 
 	let {
@@ -38,7 +38,8 @@
 			manualLocation: ''
 		}
 	);
-	const form = $derived(mode === 'create' ? createEventForm : editEventForm.for(initial?.id ?? ''));
+	const editForm = $derived(editEventForm.for(initial?.id ?? ''));
+	const form = $derived(mode === 'create' ? createEventForm : editForm);
 	const responseMode = $derived(form.fields.responseMode.value() ?? defaults.responseMode);
 	const locationId = $derived(form.fields.locationId.value() ?? defaults.locationId);
 	let clientErrors = $state<EventFieldErrors>({});
@@ -57,9 +58,9 @@
 <form
 	{...form.enhance(async (submission) => {
 		transportFailure = false;
-		const data = new FormData(submission.element);
+		const values = { ...defaults, ...submission.fields.value() };
 		const parsed = parseEventDetails(
-			{ ...Object.fromEntries(data), tagIds: data.getAll('tagIds[]') },
+			{ ...values, capacity: responseMode === 'registration' ? values.capacity : '' },
 			new Date(),
 			mode === 'create'
 		);
@@ -79,9 +80,7 @@
 	novalidate
 	aria-busy={Boolean(form.pending)}
 >
-	{#if mode === 'edit'}<input
-			{...editEventForm.fields.eventId.as('hidden', initial?.id ?? '')}
-		/>{/if}
+	{#if mode === 'edit'}<input {...editForm.fields.eventId.as('hidden', initial?.id ?? '')} />{/if}
 	{#if transportFailure || generalIssue}
 		<Alert.Root variant="destructive">
 			<Alert.Title>Could not save Event</Alert.Title>
@@ -94,8 +93,13 @@
 		{#if mode === 'create'}
 			<Field.Field data-invalid={issues('hostGroupId').length > 0 || undefined}>
 				<Field.Label for="event-host">Host</Field.Label>
+				<!-- An unset initial value preserves the native selection during hydration. -->
 				<NativeSelect.Root
-					{...form.fields.hostGroupId.as('select', defaults.hostGroupId)}
+					{...{ ...form.fields.hostGroupId.as('select') }}
+					bind:value={
+						() => form.fields.hostGroupId.value(),
+						(value: string | undefined) => form.fields.hostGroupId.set(value)
+					}
 					id="event-host"
 					class="w-full [&_select]:min-h-11"
 					aria-invalid={issues('hostGroupId').length > 0}
@@ -120,8 +124,13 @@
 		{/if}
 		<Field.Field data-invalid={issues('title').length > 0 || undefined}>
 			<Field.Label for="event-title">Title</Field.Label>
+			<!-- Bind to field state so hydration preserves early browser edits. Copy attributes for SSR overrides. -->
 			<Input
-				{...form.fields.title.as('text', defaults.title)}
+				{...{ ...form.fields.title.as('text', defaults.title) }}
+				bind:value={
+					() => form.fields.title.value() ?? defaults.title,
+					(value: string) => form.fields.title.set(value)
+				}
 				id="event-title"
 				class="min-h-11"
 				maxlength={100}
@@ -134,7 +143,11 @@
 		<Field.Field data-invalid={issues('description').length > 0 || undefined}>
 			<Field.Label for="event-description">Description</Field.Label>
 			<Textarea
-				{...form.fields.description.as('text', defaults.description)}
+				{...{ ...form.fields.description.as('text', defaults.description) }}
+				bind:value={
+					() => form.fields.description.value() ?? defaults.description,
+					(value: string) => form.fields.description.set(value)
+				}
 				id="event-description"
 				class="min-h-32"
 				maxlength={2000}
@@ -155,7 +168,11 @@
 					<Field.Field class="min-w-0" data-invalid={issues(key).length > 0 || undefined}>
 						<Field.Label for={`event-${key}`}>{key === 'startsAt' ? 'Start' : 'End'}</Field.Label>
 						<Input
-							{...form.fields[key].as('datetime-local', defaults[key])}
+							{...{ ...form.fields[key].as('datetime-local', defaults[key]) }}
+							bind:value={
+								() => form.fields[key].value() ?? defaults[key],
+								(value: string) => form.fields[key].set(value)
+							}
 							id={`event-${key}`}
 							class="min-h-11 min-w-0"
 							aria-invalid={issues(key).length > 0}
@@ -176,9 +193,8 @@
 					<Field.Field orientation="horizontal" class="min-h-11 gap-2">
 						<Checkbox
 							id={`event-${tag.id}`}
-							name="tagIds[]"
-							value={tag.id}
-							checked={(form.fields.tagIds.value() ?? defaults.tagIds).includes(tag.id)}
+							{...form.fields.tagIds.as('checkbox', tag.id, defaults.tagIds.includes(tag.id))}
+							type="button"
 							onCheckedChange={(checked) => {
 								const selected = form.fields.tagIds.value() ?? defaults.tagIds;
 								form.fields.tagIds.set(
@@ -199,7 +215,13 @@
 		<Field.Field data-invalid={issues('responseMode').length > 0 || undefined}>
 			<Field.Label for="event-response-mode">Response mode</Field.Label>
 			<NativeSelect.Root
-				{...form.fields.responseMode.as('select', defaults.responseMode)}
+				{...{ ...form.fields.responseMode.as('select') }}
+				defaultValue={defaults.responseMode}
+				bind:value={
+					() => form.fields.responseMode.value(),
+					(value: EventFormValues['responseMode'] | undefined) =>
+						form.fields.responseMode.set(value)
+				}
 				id="event-response-mode"
 				class="w-full [&_select]:min-h-11"
 				aria-invalid={issues('responseMode').length > 0}
@@ -219,7 +241,12 @@
 			<Field.Field data-invalid={issues('capacity').length > 0 || undefined}>
 				<Field.Label for="event-capacity">Capacity</Field.Label>
 				<Input
-					{...form.fields.capacity.as('text', defaults.capacity)}
+					{...{ ...form.fields.capacity.as('text', defaults.capacity) }}
+					bind:value={
+						() => form.fields.capacity.value() ?? defaults.capacity,
+						(value: string | number | undefined) =>
+							form.fields.capacity.set(value === undefined ? '' : String(value))
+					}
 					type="number"
 					id="event-capacity"
 					class="min-h-11"
@@ -235,7 +262,12 @@
 		<Field.Field data-invalid={issues('locationId').length > 0 || undefined}>
 			<Field.Label for="event-location">Location</Field.Label>
 			<NativeSelect.Root
-				{...form.fields.locationId.as('select', defaults.locationId)}
+				{...{ ...form.fields.locationId.as('select') }}
+				defaultValue={defaults.locationId}
+				bind:value={
+					() => form.fields.locationId.value(),
+					(value: string | undefined) => form.fields.locationId.set(value)
+				}
 				id="event-location"
 				class="w-full [&_select]:min-h-11"
 				aria-invalid={issues('locationId').length > 0}
@@ -253,7 +285,11 @@
 			<Field.Field data-invalid={issues('manualLocation').length > 0 || undefined}>
 				<Field.Label for="event-manual-location">Location label</Field.Label>
 				<Input
-					{...form.fields.manualLocation.as('text', defaults.manualLocation)}
+					{...{ ...form.fields.manualLocation.as('text', defaults.manualLocation) }}
+					bind:value={
+						() => form.fields.manualLocation.value() ?? defaults.manualLocation,
+						(value: string) => form.fields.manualLocation.set(value)
+					}
 					id="event-manual-location"
 					class="min-h-11"
 					aria-invalid={issues('manualLocation').length > 0}

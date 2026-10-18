@@ -1,12 +1,12 @@
 <script lang="ts">
-	import * as Alert from '$lib/components/ui/alert';
-	import { Button } from '$lib/components/ui/button';
-	import * as Field from '$lib/components/ui/field';
-	import { Input } from '$lib/components/ui/input';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { signInAccount } from '$lib/accounts.remote';
-	import { authenticationHref } from '$lib/auth-paths';
-	import AccountPage from '$lib/components/account-page.svelte';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Field from '#lib/components/ui/field/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { signInAccount } from '#lib/accounts.remote.js';
+	import { authenticationHref } from '#lib/auth-paths.js';
+	import AccountPage from '#lib/components/account-page.svelte';
 
 	let { data }: { data: { returnTo: string } } = $props();
 
@@ -36,7 +36,10 @@
 					id="email"
 					class="h-11 min-h-11"
 					autocomplete="email"
-					{...form.fields.email.as('email')}
+					{...{ ...form.fields.email.as('email') }}
+					bind:value={
+						() => form.fields.email.value() ?? '', (value: string) => form.fields.email.set(value)
+					}
 				/>
 				<Field.Error errors={emailIssues} />
 			</Field.Field>
@@ -47,7 +50,11 @@
 					id="password"
 					class="h-11 min-h-11"
 					autocomplete="current-password"
-					{...form.fields._password.as('password')}
+					{...{ ...form.fields._password.as('password') }}
+					bind:value={
+						() => form.fields._password.value() ?? '',
+						(value: string) => form.fields._password.set(value)
+					}
 				/>
 				<Field.Error errors={passwordIssues} />
 			</Field.Field>

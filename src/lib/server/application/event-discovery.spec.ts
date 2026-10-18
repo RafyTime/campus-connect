@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vite-plus/test';
 import { searchPublicEvents } from './events';
-import { createTestClock } from '$lib/server/testing/clock';
-import { createTestDatabase } from '$lib/server/testing/database';
+import { createTestClock } from '#lib/server/testing/clock.js';
+import { createTestDatabase } from '#lib/server/testing/database.js';
 import {
 	insertGroup,
 	insertPublicGroupEvent,
 	insertPublicPersonalEvent
-} from '$lib/server/fixtures';
+} from '#lib/server/fixtures.js';
 
 describe('public Event filtering', () => {
 	it.each([

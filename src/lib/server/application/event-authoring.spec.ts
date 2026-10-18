@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { createTestDatabase } from '$lib/server/testing/database';
-import { createTestClock } from '$lib/server/testing/clock';
-import { seedEventAuthoringOptions, seedPublicPersonalEvents } from '$lib/server/seed';
-import { insertUser } from '$lib/server/fixtures';
+import { createTestDatabase } from '#lib/server/testing/database.js';
+import { createTestClock } from '#lib/server/testing/clock.js';
+import { seedEventAuthoringOptions, seedPublicPersonalEvents } from '#lib/server/seed.js';
+import { insertUser } from '#lib/server/fixtures.js';
 import { discoverPublicEvents, getPublicEvent } from './events';
 import {
 	createEvent,

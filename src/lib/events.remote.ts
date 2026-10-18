@@ -1,17 +1,17 @@
 import { error, invalid, redirect } from '@sveltejs/kit';
 import { form, getRequestEvent, query } from '$app/server';
-import { systemClock } from '$lib/server/clock';
-import { searchPublicEvents, getPublicEvent } from '$lib/server/application/events';
-import { getDb } from '$lib/server/db';
+import { systemClock } from '#lib/server/clock.js';
+import { searchPublicEvents, getPublicEvent } from '#lib/server/application/events.js';
+import { getDb } from '#lib/server/db/index.js';
 import {
 	createEvent,
 	editEvent,
 	getEventAuthoringOptions,
 	getEventForManagement,
 	listMyEvents
-} from '$lib/server/application/event-authoring';
-import type { EventFormValues, EventSaveResult } from '$lib/event-authoring';
-import { loadPublicGroup } from '$lib/groups.remote';
+} from '#lib/server/application/event-authoring.js';
+import type { EventFormValues, EventSaveResult } from '#lib/event-authoring.js';
+import { loadPublicGroup } from '#lib/groups.remote.js';
 
 export const loadEventAuthoringOptions = query(async () => {
 	const user = getRequestEvent().locals.user;

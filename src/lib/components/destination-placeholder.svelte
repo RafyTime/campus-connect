@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { IconSvgElement } from '@hugeicons/svelte';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import * as Empty from '$lib/components/ui/empty';
+	import * as Empty from '#lib/components/ui/empty/index.js';
 
 	let {
 		title,

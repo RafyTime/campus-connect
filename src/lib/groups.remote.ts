@@ -1,6 +1,6 @@
 import { error, invalid, redirect } from '@sveltejs/kit';
 import { command, form, getRequestEvent, query } from '$app/server';
-import { systemClock } from '$lib/server/clock';
+import { systemClock } from '#lib/server/clock.js';
 import {
 	followGroup as followGroupFromApplication,
 	createGroup as createGroupFromApplication,
@@ -8,9 +8,9 @@ import {
 	getPublicGroup,
 	listPublicGroups as listPublicGroupsFromApplication,
 	unfollowGroup as unfollowGroupFromApplication
-} from '$lib/server/application/groups';
-import { getDb } from '$lib/server/db';
-import type { GroupSaveResult } from '$lib/server/application/groups';
+} from '#lib/server/application/groups.js';
+import { getDb } from '#lib/server/db/index.js';
+import type { GroupSaveResult } from '#lib/server/application/groups.js';
 
 export const listPublicGroups = query(async () => {
 	return listPublicGroupsFromApplication(getDb());

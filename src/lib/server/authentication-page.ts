@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import { resolveReturnPath } from '$lib/server/application/accounts';
+import { resolveReturnPath } from '#lib/server/application/accounts.js';
 
 export function loadVisitorAuthenticationPage(
 	user: { id: string } | null | undefined,

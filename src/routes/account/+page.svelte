@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
-	import * as Field from '$lib/components/ui/field';
-	import { Input } from '$lib/components/ui/input';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { signOutAccount, updateDisplayName } from '$lib/accounts.remote';
-	import AccountPage from '$lib/components/account-page.svelte';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Field from '#lib/components/ui/field/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { signOutAccount, updateDisplayName } from '#lib/accounts.remote.js';
+	import AccountPage from '#lib/components/account-page.svelte';
 
 	let { data }: { data: { displayName: string } } = $props();
 
@@ -24,7 +24,11 @@
 					id="displayName"
 					class="h-11 min-h-11"
 					autocomplete="name"
-					{...form.fields.displayName.as('text', data.displayName)}
+					{...{ ...form.fields.displayName.as('text', data.displayName) }}
+					bind:value={
+						() => form.fields.displayName.value() ?? data.displayName,
+						(value: string) => form.fields.displayName.set(value)
+					}
 				/>
 				<Field.Error errors={displayNameIssues} />
 			</Field.Field>

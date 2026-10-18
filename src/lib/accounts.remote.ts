@@ -10,8 +10,8 @@ import {
 	registerUser,
 	resolveReturnPath,
 	updateUserDisplayName
-} from '$lib/server/application/accounts';
-import { getAuth } from '$lib/server/auth';
+} from '#lib/server/application/accounts.js';
+import { getAuth } from '#lib/server/auth.js';
 
 export const registerAccount = form('unchecked', async (data) => {
 	const parsed = parseRegistration(data);

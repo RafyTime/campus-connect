@@ -3,15 +3,15 @@
 	import { page } from '$app/state';
 	import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Button } from '$lib/components/ui/button';
-	import EventCard from '$lib/components/event-card.svelte';
-	import HostAvatar from '$lib/components/host-avatar.svelte';
-	import * as Empty from '$lib/components/ui/empty';
-	import GroupFollowControls from '$lib/components/group-follow-controls.svelte';
-	import { subscriberCountLabel } from '$lib/group-labels';
-	import { loadPublicGroup } from '$lib/groups.remote';
-	import ProtectedActionDialog from '$lib/components/protected-action-dialog.svelte';
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import EventCard from '#lib/components/event-card.svelte';
+	import HostAvatar from '#lib/components/host-avatar.svelte';
+	import * as Empty from '#lib/components/ui/empty/index.js';
+	import GroupFollowControls from '#lib/components/group-follow-controls.svelte';
+	import { subscriberCountLabel } from '#lib/group-labels.js';
+	import { loadPublicGroup } from '#lib/groups.remote.js';
+	import ProtectedActionDialog from '#lib/components/protected-action-dialog.svelte';
 
 	const group = $derived(await loadPublicGroup(page.params.groupId ?? ''));
 	const user = $derived(page.data.user);
@@ -24,8 +24,9 @@
 
 <article class="mx-auto flex w-full max-w-2xl flex-col gap-6">
 	<p>
-		<Button href={resolve('/groups')} variant="ghost" class="min-h-11 px-3">
+		<Button href={resolve('groups')} variant="ghost" class="min-h-11 px-3">
 			<HugeiconsIcon icon={ArrowLeft01Icon} data-icon="inline-start" size={16} />
+
 			Back to Groups
 		</Button>
 	</p>
@@ -92,9 +93,7 @@
 		{:else}
 			<ul class="grid list-none gap-4 p-0">
 				{#each group.upcomingEvents as event (event.id)}
-					<li>
-						<EventCard {event} />
-					</li>
+					<li><EventCard {event} /></li>
 				{/each}
 			</ul>
 		{/if}

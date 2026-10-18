@@ -3,12 +3,12 @@
 	import { page } from '$app/state';
 	import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Button } from '$lib/components/ui/button';
-	import HostAvatar from '$lib/components/host-avatar.svelte';
-	import { capacityStateIcon, eventStatusIcon } from '$lib/event-icons';
-	import { eventStatusLabel, responseModeLabel } from '$lib/event-labels';
-	import { loadPublicEvent } from '$lib/events.remote';
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import HostAvatar from '#lib/components/host-avatar.svelte';
+	import { capacityStateIcon, eventStatusIcon } from '#lib/event-icons.js';
+	import { eventStatusLabel, responseModeLabel } from '#lib/event-labels.js';
+	import { loadPublicEvent } from '#lib/events.remote.js';
 
 	const event = $derived(await loadPublicEvent(page.params.eventId ?? ''));
 </script>

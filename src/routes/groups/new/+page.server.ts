@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import { authenticationHref } from '$lib/auth-paths';
+import { authenticationHref } from '#lib/auth-paths.js';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ locals }) => {

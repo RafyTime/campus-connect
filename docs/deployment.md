@@ -10,12 +10,12 @@ The application remains a development skeleton; media-bucket integration and Cam
 
 ## Continuous integration
 
-The workflow in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs on every push, pull requests targeting `main`, and manual dispatches. It uses Bun `1.4.3` to run:
+The workflow in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs on every push, pull requests targeting `main`, and manual dispatches. It uses the pinned official Vite+ setup action, Node `24.22.0` from `.node-version`, and Bun `1.4.3`. After a frozen-lockfile install, `vp run quality` runs:
 
 1. formatting and linting;
 2. Svelte and TypeScript checks;
 3. Chromium installation for Playwright; and
-4. unit and end-to-end tests.
+4. unit, browser-component, and end-to-end tests, plus the production Node-adapter build.
 
 The CI environment uses non-production values solely so the application can build and test. Production secrets stay in Railway.
 
@@ -23,15 +23,21 @@ The CI environment uses non-production values solely so the application can buil
 
 The deployed service uses SvelteKit's Node adapter. Railway builds with `bun run build` and starts the app with `bun run start`.
 
-| Setting              | Production value / rule                                  |
-| -------------------- | -------------------------------------------------------- |
-| Source               | GitHub repository, `main` branch                         |
-| Region               | EU West                                                  |
-| Wait for CI          | Enabled                                                  |
-| Volume mount         | `/data`                                                  |
-| `DATABASE_URL`       | `file:/data/campus-connect.db`                           |
-| `ORIGIN`             | The complete public HTTPS application URL                |
-| `BETTER_AUTH_SECRET` | A private, high-entropy value configured only in Railway |
+| Setting              | Production value / rule                                          |
+| -------------------- | ---------------------------------------------------------------- |
+| Source               | GitHub repository, `main` branch                                 |
+| Region               | EU West                                                          |
+| Wait for CI          | Enabled                                                          |
+| Volume mount         | `/data`                                                          |
+| `DATABASE_URL`       | `file:/data/campus-connect.db`                                   |
+| `ORIGIN`             | The complete public HTTPS origin, identical at build and runtime |
+| `BETTER_AUTH_SECRET` | A private, high-entropy value configured only in Railway         |
+
+SvelteKit 3's Node adapter no longer reads `ORIGIN`. The Vite configuration loads it from the process environment or Vite's mode-specific env files into `sveltekit({ paths: { origin } })` at build time. Better Auth still requires `ORIGIN` at runtime for its explicit `baseURL`. Configure the same complete public origin, including the scheme and any nonstandard port, for both phases. Rebuild when the public origin changes. Changing only the running container's environment cannot update the origin compiled into the server.
+
+Railway's HTTPS proxy can forward an internal HTTP request to Node. The explicit compiled `paths.origin` makes SvelteKit's CSRF checks use the public HTTPS origin, while Better Auth's explicit runtime base URL keeps authentication and cookies on that origin. This setup does not depend on adapter `ORIGIN`, `PROTOCOL_HEADER`, or `HOST_HEADER`, and does not opt into Better Auth's dynamic forwarded-host handling. Keep CSRF protection enabled with no wildcard trusted origins.
+
+These instructions describe the release configuration. This toolchain migration does not apply Railway settings, deploy, access production data, or run production migrations. Local browser tests build and run at `http://127.0.0.1:4173` using their disposable database. The README gives a matching local build/preview example.
 
 Do not commit Railway secrets or a production database file. Do not configure restrictive Railway watch paths for this single-service repository: migrations, dependency changes, configuration, and static assets can all require a deployment, not just `src/` changes.
 

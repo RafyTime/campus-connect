@@ -1,4 +1,4 @@
-import type { Clock } from '$lib/server/clock';
+import type { Clock } from '#lib/server/clock.js';
 
 export interface TestClock extends Clock {
 	set(instant: Date | string | number): void;

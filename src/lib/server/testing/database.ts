@@ -1,5 +1,5 @@
-import { createDb, type Database } from '$lib/server/db';
-import { applyMigrations } from '$lib/server/db/migrate';
+import { createDb, type Database } from '#lib/server/db/index.js';
+import { applyMigrations } from '#lib/server/db/migrate.js';
 
 export interface TestDatabase extends Disposable {
 	db: Database;

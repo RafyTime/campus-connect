@@ -8,7 +8,7 @@ Phase 1 is complete and approved. The tutor confirmed that the concept meets the
 
 The Phase 2 development baseline is complete and deployed to Railway:
 
-- SvelteKit/Svelte 5, TypeScript, Tailwind CSS, and shadcn-svelte are configured.
+- SvelteKit 3/Svelte 5, TypeScript, Tailwind CSS, and shadcn-svelte are configured.
 - Better Auth provides the initial email/password authentication foundation.
 - Drizzle ORM and SQLite include Better Auth tables plus public personal Event records.
 - Visitors can browse seeded public personal Events on Discover and open Event details without an account.
@@ -52,6 +52,20 @@ Use the global `vp` command for the workflow below. It selects the declared envi
 
 Commit dependency and lockfile changes together. `vp preview` is a local preview; `vp run start` runs the built Node adapter server.
 
+SvelteKit 3 reads `ORIGIN` into `paths.origin` when Vite loads its configuration. Better Auth reads the same value at runtime. Keep the build and server values identical to the browser's complete origin, including its port. Vite loads `.env` and the selected mode's env files, with process environment values taking precedence. The development example uses `http://localhost:5173`.
+
+For a local production preview in PowerShell, set the preview origin before building and keep it set while preview runs:
+
+```powershell
+$env:ORIGIN = 'http://127.0.0.1:4173'
+vp build
+vp preview --host 127.0.0.1
+```
+
+Keep `DATABASE_URL` and `BETTER_AUTH_SECRET` configured as in local setup. For the built Node server, supply these runtime values and the same `ORIGIN`, then use `vp run start` with `PORT=4173` and `HOST=127.0.0.1`. Node does not automatically load `.env`; export the values in its environment or use Node's `--env-file` option. Rebuild after changing the public origin. Restore `ORIGIN` to `http://localhost:5173` in the shell before returning to `vp dev`.
+
+The Node adapter no longer consumes its former `ORIGIN` setting. The application deliberately retains `ORIGIN` for both the build configuration and Better Auth. CSRF protection remains enabled without cross-origin exceptions. See [deployment.md](docs/deployment.md) before preparing a release.
+
 Run custom package tasks with `vp run <name>`, such as `vp run test:install`. `vp run check` runs Svelte/type checking. `vp run lint` checks formatting, Oxlint, and Svelte-aware ESLint template rules. `vp run test` includes unit, browser-component, and end-to-end tests; `vp run test:e2e` runs the end-to-end suite alone. Built-ins such as `vp check`, `vp lint`, and `vp test` do not invoke these custom tasks. Use `vp run quality` for acceptance.
 
 ## Quality checks
@@ -63,7 +77,7 @@ vp run quality
 
 The quality command checks formatting, linting, Svelte and TypeScript, runs the automated tests, and creates a production build. Browser tests create a disposable database. Run the gate in an isolated checkout when its build or preview would conflict with another local session. GitHub Actions uses the exact official `setup-vp@v1.21.2` integration, reads the same Node and Bun pins, installs from the frozen lockfile, installs Chromium with system dependencies, and runs `vp run quality` for every push, pull requests targeting `main`, and manual dispatch. CI does not cache project task results.
 
-Vite+ tooling settings live in `vite.config.ts`. Svelte type checking still uses `svelte-check`, and ESLint checks Svelte files because Oxlint does not enforce their template rules. The `vite` alias and Vitest override keep framework and test-helper dependencies on the same toolchain.
+Vite+ tooling settings live in `vite.config.ts`. Svelte type checking still uses `svelte-check`, and ESLint checks Svelte files because Oxlint does not enforce their template rules. The `vite` alias and Vitest override keep framework and test-helper dependencies on the same toolchain. Library imports use the `#lib` Node subpath mappings in `package.json` with explicit file extensions. `components.json` uses the same aliases for component generation. The TypeScript config extends `$app/tsconfig` and explicitly includes application, Vite, Drizzle, and Playwright sources.
 
 ## Database
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import GroupDetailsForm from '$lib/components/group-details-form.svelte';
+	import GroupDetailsForm from '#lib/components/group-details-form.svelte';
 </script>
 
 <svelte:head>

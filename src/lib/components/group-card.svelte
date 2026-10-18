@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import * as Card from '$lib/components/ui/card';
-	import HostAvatar from '$lib/components/host-avatar.svelte';
-	import { subscriberCountLabel } from '$lib/group-labels';
-	import type { PublicGroupSummary } from '$lib/public-group';
+	import * as Card from '#lib/components/ui/card/index.js';
+	import HostAvatar from '#lib/components/host-avatar.svelte';
+	import { subscriberCountLabel } from '#lib/group-labels.js';
+	import type { PublicGroupSummary } from '#lib/public-group.js';
 
 	let { group }: { group: PublicGroupSummary } = $props();
 </script>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import HostAvatar from '$lib/components/host-avatar.svelte';
+	import HostAvatar from '#lib/components/host-avatar.svelte';
 </script>
 
 <svelte:head>

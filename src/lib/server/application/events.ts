@@ -1,16 +1,16 @@
 import { and, asc, eq, gt } from 'drizzle-orm';
 import { fromDate, parseDate, toCalendarDate } from '@internationalized/date';
-import { campusTimeZone } from '$lib/event-authoring';
-import type { Clock } from '$lib/server/clock';
-import type { Database } from '$lib/server/db';
-import { event, group, tag } from '$lib/server/db/schema';
-import { responseModeLabel } from '$lib/event-labels';
+import { campusTimeZone } from '#lib/event-authoring.js';
+import type { Clock } from '#lib/server/clock.js';
+import type { Database } from '#lib/server/db/index.js';
+import { event, group, tag } from '#lib/server/db/schema.js';
+import { responseModeLabel } from '#lib/event-labels.js';
 import type {
 	PublicEventDetail,
 	PublicEventStatus,
 	PublicEventSummary,
 	PublicResponseMode
-} from '$lib/public-event';
+} from '#lib/public-event.js';
 import { formatCampusExactTime, formatCampusSchedule } from './campus-time';
 import { displayInitials, imageAttribution, publicImageUrl } from './remote-images';
 
@@ -22,7 +22,7 @@ export type {
 	PublicEventTag,
 	PublicHostType,
 	PublicResponseMode
-} from '$lib/public-event';
+} from '#lib/public-event.js';
 
 const discoverWith = {
 	post: { with: { author: true, group: true } },

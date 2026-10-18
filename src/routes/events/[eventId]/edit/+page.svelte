@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import EventDetailsForm from '$lib/components/event-details-form.svelte';
-	import * as Alert from '$lib/components/ui/alert';
-	import { Button } from '$lib/components/ui/button';
-	import { loadEventAuthoringOptions, loadEventForManagement } from '$lib/events.remote';
+	import EventDetailsForm from '#lib/components/event-details-form.svelte';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { loadEventAuthoringOptions, loadEventForManagement } from '#lib/events.remote.js';
 	const event = $derived(await loadEventForManagement(page.params.eventId ?? ''));
 	const options = await loadEventAuthoringOptions();
 </script>
