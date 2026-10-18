@@ -6,16 +6,18 @@ Phase 1 is complete and approved. The tutor confirmed that the concept meets the
 
 ## Current status
 
-The Phase 2 development baseline is complete and deployed to Railway:
+The repository implements the Phase 2 development baseline:
 
 - SvelteKit 3/Svelte 5, TypeScript, Tailwind CSS, and shadcn-svelte are configured.
 - Better Auth provides the initial email/password authentication foundation.
 - Drizzle ORM and SQLite include Better Auth tables plus public personal Event records.
 - Visitors can browse seeded public personal Events on Discover and open Event details without an account.
 - GitHub Actions runs the quality checks on every push and on pull requests to `main`.
-- Railway deploys the `main` branch after CI, with a persistent `/data` volume for SQLite.
+- The recorded Railway arrangement deploys `main` after CI and mounts `/data` for SQLite.
 
 Accounts, Groups, personal and Group Event authoring, Group subscriptions, and Event filtering are implemented. Event participation remains a later Phase 2 ticket.
+
+The SvelteKit 3 upgrade is verified locally and awaits a separately authorized release. This page does not describe a verified inventory of the live service. See [the upgrade evidence](docs/evidence/toolchain-upgrade-02.md).
 
 ## Stack
 
@@ -25,7 +27,7 @@ SvelteKit with the Node adapter, Svelte 5, TypeScript, Tailwind CSS, shadcn-svel
 
 Install the [global Vite+ CLI](https://viteplus.dev/guide/global-cli) with its environment management enabled and open a new terminal. Vite+ selects Node.js 24.22.0 from `.node-version` and Bun 1.4.3 from `package.json`. Run `vp env current` to check both selections. Bun manages dependencies and runs the existing database utilities; the deployed application uses Node.
 
-```sh
+```powershell
 vp install --frozen-lockfile
 Copy-Item .env.example .env
 vp run db:migrate
@@ -62,7 +64,17 @@ vp build
 vp preview --host 127.0.0.1
 ```
 
-Keep `DATABASE_URL` and `BETTER_AUTH_SECRET` configured as in local setup. For the built Node server, supply these runtime values and the same `ORIGIN`, then use `vp run start` with `PORT=4173` and `HOST=127.0.0.1`. Node does not automatically load `.env`; export the values in its environment or use Node's `--env-file` option. Rebuild after changing the public origin. Restore `ORIGIN` to `http://localhost:5173` in the shell before returning to `vp dev`.
+To run the actual built Node server in PowerShell, first migrate and seed the local database as above, then run:
+
+```powershell
+$env:ORIGIN = 'http://127.0.0.1:4183'
+vp build
+$env:HOST = '127.0.0.1'
+$env:PORT = '4183'
+vp env exec node --env-file=.env build/index.js
+```
+
+Node does not automatically load `.env`. The explicit `--env-file` supplies `DATABASE_URL` and your `BETTER_AUTH_SECRET`; the exported `ORIGIN` takes precedence over the file. `vp run start` instead expects all runtime values already exported by the shell or hosting platform. Rebuild after changing the public origin. After stopping the local server, restore `ORIGIN` to `http://localhost:5173` before returning to `vp dev`.
 
 The Node adapter no longer consumes its former `ORIGIN` setting. The application deliberately retains `ORIGIN` for both the build configuration and Better Auth. CSRF protection remains enabled without cross-origin exceptions. See [deployment.md](docs/deployment.md) before preparing a release.
 

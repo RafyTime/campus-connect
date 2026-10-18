@@ -1,27 +1,24 @@
 # Deployment and delivery
 
-## Current state
+## Recorded deployment arrangement
 
-Campus Connect is deployed from the `main` branch to Railway in **EU West**. The service has a Railway public domain, resumes promptly after inactivity, and uses a persistent volume mounted at `/data` for its SQLite database.
+The repository records a Railway service sourced from `main` in EU West, with a public domain and a persistent SQLite volume mounted at `/data`. Railway's Wait for CI setting gates deployment on GitHub Actions. The original auth-only migration was recorded as applied when this arrangement was documented.
 
-GitHub Actions CI is enabled and Railway's **Wait for CI** setting prevents an automatic deployment until the relevant CI run succeeds. The initial auth-only Drizzle migration has been applied to the production database.
-
-The application remains a development skeleton; media-bucket integration and Campus Connect domain features are not deployed yet.
+This upgrade was verified only in isolated local checkouts. The live service, its feature inventory, configuration, and applied migrations were not inspected. SvelteKit 3 and the required build/runtime origin settings await a separately authorized release. [Ticket 01 evidence](evidence/toolchain-upgrade-01.md) records the migration; [ticket 02 evidence](evidence/toolchain-upgrade-02.md) records standalone Node verification.
 
 ## Continuous integration
 
-The workflow in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs on every push, pull requests targeting `main`, and manual dispatches. It uses the pinned official Vite+ setup action, Node `24.22.0` from `.node-version`, and Bun `1.4.3`. After a frozen-lockfile install, `vp run quality` runs:
+The workflow in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs on every push, pull requests targeting `main`, and manual dispatches. It uses the pinned official Vite+ setup action, Node `24.22.0` from `.node-version`, and Bun `1.4.3`. CI performs a frozen-lockfile install, then installs Chromium with `vp run test:install --with-deps`. It then runs `vp run quality`:
 
 1. formatting and linting;
 2. Svelte and TypeScript checks;
-3. Chromium installation for Playwright; and
-4. unit, browser-component, and end-to-end tests, plus the production Node-adapter build.
+3. unit, browser-component, and end-to-end tests, plus the production Node-adapter build.
 
 The CI environment uses non-production values solely so the application can build and test. Production secrets stay in Railway.
 
 ## Railway configuration
 
-The deployed service uses SvelteKit's Node adapter. Railway builds with `bun run build` and starts the app with `bun run start`.
+The recorded Railway commands are `bun run build` and `bun run start`. The build delegates to Vite+; the start script executes `node build/index.js` through SvelteKit's Node adapter. The release environment must provide the declared Node 24.22.0 and Bun 1.4.3 runtimes.
 
 | Setting              | Production value / rule                                          |
 | -------------------- | ---------------------------------------------------------------- |
@@ -37,7 +34,7 @@ SvelteKit 3's Node adapter no longer reads `ORIGIN`. The Vite configuration load
 
 Railway's HTTPS proxy can forward an internal HTTP request to Node. The explicit compiled `paths.origin` makes SvelteKit's CSRF checks use the public HTTPS origin, while Better Auth's explicit runtime base URL keeps authentication and cookies on that origin. This setup does not depend on adapter `ORIGIN`, `PROTOCOL_HEADER`, or `HOST_HEADER`, and does not opt into Better Auth's dynamic forwarded-host handling. Keep CSRF protection enabled with no wildcard trusted origins.
 
-These instructions describe the release configuration. This toolchain migration does not apply Railway settings, deploy, access production data, or run production migrations. Local browser tests build and run at `http://127.0.0.1:4173` using their disposable database. The README gives a matching local build/preview example.
+These instructions describe the release configuration. This toolchain migration does not apply Railway settings, deploy, access production data, or run production migrations. Default browser tests build and preview at `http://127.0.0.1:4173` using a disposable database. Explicit built Node verification uses `http://127.0.0.1:4183` and the same existing fixture without rebuilding. The README gives matching local startup examples; [ticket 02 evidence](evidence/toolchain-upgrade-02.md) provides the isolated unavailable-database verification commands.
 
 Do not commit Railway secrets or a production database file. Do not configure restrictive Railway watch paths for this single-service repository: migrations, dependency changes, configuration, and static assets can all require a deployment, not just `src/` changes.
 
@@ -47,9 +44,17 @@ Railway volumes are mounted only when the service runs, while SvelteKit evaluate
 
 This is required for the real persistent SQLite database to work. Do not replace it with an in-memory build database, a separate SQLite service, or a Railway-only build-command override. See [the lifecycle decision record](research/railway-sveltekit-sqlite-build-lifecycle.md).
 
+## Release checks requiring separate authorization
+
+Before releasing, review Railway's build and runtime variables together. Set `ORIGIN` to the same complete public HTTPS origin in both phases and retain the runtime `DATABASE_URL=file:/data/campus-connect.db` and private `BETTER_AUTH_SECRET`. Preserve Wait for CI and the existing source/volume settings. Rebuild after any public-origin change.
+
+After the authorized deployment, verify public Event and Group pages, registration/sign-in, refresh persistence, and an authenticated create/edit flow using an appropriate release account. Confirm redirects stay on the public HTTPS origin, authentication cookies have `Secure`, `HttpOnly`, and the expected SameSite policy, same-origin forms succeed, and a mismatched Origin receives 403. Inspect service logs for runtime database errors. Local HTTP checks cannot establish Railway TLS or secure-cookie behavior.
+
+Check the actual applied migration journal before any separately authorized production migration. Do not infer its contents from the historical auth-only note. This toolchain upgrade introduces no migrations.
+
 ## Production migration procedure
 
-The initial auth-only migration is already applied to production. For each future schema change:
+For each separately authorized future schema change:
 
 1. Update the Drizzle schema and generate a committed migration with `bun run db:generate`.
 2. Verify the migration against a fresh local SQLite database and run the quality checks.

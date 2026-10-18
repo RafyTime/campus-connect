@@ -190,3 +190,60 @@ test('create and edit forms fit phone, tablet, and desktop sizes', async ({ page
 		expect(width.scroll).toBeLessThanOrEqual(width.client);
 	}
 });
+
+test('Group creation rejects a mismatched Origin and accepts the public origin behind an internal Host', async ({
+	page,
+	context,
+	baseURL
+}) => {
+	await register(page, 'Origin Group Owner');
+	if (!baseURL) throw new Error('The browser suite requires its public base URL');
+	const publicOrigin = new URL(baseURL).origin;
+	const session = (await context.cookies()).find((cookie) => cookie.name.endsWith('session_token'));
+	expect(session).toMatchObject({
+		domain: '127.0.0.1',
+		path: '/',
+		httpOnly: true,
+		sameSite: 'Lax',
+		secure: false
+	});
+	expect(session?.expires).toBeGreaterThan(Date.now() / 1000);
+
+	await page.goto('/groups/new');
+	const name = `Origin Group ${crypto.randomUUID().slice(0, 8)}`;
+	const description = 'Students verifying public-origin Group publication.';
+	await fillDetails(page, name, description);
+	let checkedOrigin = false;
+	await page.route('**/_app/remote/**', async (route) => {
+		if (route.request().method() !== 'POST') return route.continue();
+		const headers = {
+			...route.request().headers(),
+			host: 'internal.localhost:3000'
+		};
+		const rejected = await route.fetch({
+			headers: { ...headers, origin: 'https://untrusted.example' },
+			maxRedirects: 0
+		});
+		expect(rejected.status()).toBe(403);
+		expect(await rejected.json()).toEqual({ message: 'Cross-site remote requests are forbidden' });
+		expect(rejected.headers()['set-cookie']).toBeUndefined();
+		const directory = await context.request.get('/groups');
+		expect(await directory.text()).not.toContain(name);
+
+		const accepted = await route.fetch({
+			headers: { ...headers, origin: publicOrigin },
+			maxRedirects: 0
+		});
+		expect(accepted.ok()).toBe(true);
+		checkedOrigin = true;
+		await route.fulfill({ response: accepted });
+	});
+	await page.getByRole('button', { name: 'Create Group' }).click();
+	await expect(page.getByRole('heading', { name, level: 1 })).toBeVisible();
+	expect(checkedOrigin).toBe(true);
+	expect(new URL(page.url()).origin).toBe(publicOrigin);
+	await page.reload();
+	await expect(page.getByRole('heading', { name, level: 1 })).toBeVisible();
+	await expect(page.getByText(description)).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Edit Group' })).toBeVisible();
+});
