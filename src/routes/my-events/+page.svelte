@@ -1,10 +1,10 @@
 <script lang="ts">
-	import EventCard from '$lib/components/event-card.svelte';
-	import { Button } from '$lib/components/ui/button';
-	import { Badge } from '$lib/components/ui/badge';
-	import * as Empty from '$lib/components/ui/empty';
-	import { loadMyEvents } from '$lib/events.remote';
-	import { eventStatusLabel } from '$lib/event-labels';
+	import EventCard from '#lib/components/event-card.svelte';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import * as Empty from '#lib/components/ui/empty/index.js';
+	import { loadMyEvents } from '#lib/events.remote.js';
+	import { eventStatusLabel } from '#lib/event-labels.js';
 	const events = $derived(await loadMyEvents());
 </script>
 

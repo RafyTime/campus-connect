@@ -6,16 +6,18 @@ Phase 1 is complete and approved. The tutor confirmed that the concept meets the
 
 ## Current status
 
-The Phase 2 development baseline is complete and deployed to Railway:
+The repository implements the Phase 2 development baseline:
 
-- SvelteKit/Svelte 5, TypeScript, Tailwind CSS, and shadcn-svelte are configured.
+- SvelteKit 3/Svelte 5, TypeScript, Tailwind CSS, and shadcn-svelte are configured.
 - Better Auth provides the initial email/password authentication foundation.
 - Drizzle ORM and SQLite include Better Auth tables plus public personal Event records.
 - Visitors can browse seeded public personal Events on Discover and open Event details without an account.
 - GitHub Actions runs the quality checks on every push and on pull requests to `main`.
-- Railway deploys the `main` branch after CI, with a persistent `/data` volume for SQLite.
+- The recorded Railway arrangement deploys `main` after CI and mounts `/data` for SQLite.
 
-Groups, accounts, participation, and creator publishing are still later Phase 2 tickets.
+Accounts, Groups, personal and Group Event authoring, Group subscriptions, and Event filtering are implemented. Event participation remains a later Phase 2 ticket.
+
+The SvelteKit 3 upgrade is verified locally and awaits a separately authorized release. This page does not describe a verified inventory of the live service. See [the upgrade evidence](docs/evidence/toolchain-upgrade-02.md).
 
 ## Stack
 
@@ -23,10 +25,10 @@ SvelteKit with the Node adapter, Svelte 5, TypeScript, Tailwind CSS, shadcn-svel
 
 ## Local setup
 
-Prerequisites: the [global Vite+ CLI](https://viteplus.dev/guide/global-cli), Bun 1.4.3, and Node.js 24.19.0 or a newer supported Vite+ runtime. Vite+ can manage the Bun and Node installations. `vp install` uses the Bun version pinned in `package.json`.
+Install the [global Vite+ CLI](https://viteplus.dev/guide/global-cli) with its environment management enabled and open a new terminal. Vite+ selects Node.js 24.22.0 from `.node-version` and Bun 1.4.3 from `package.json`. Run `vp env current` to check both selections. Bun manages dependencies and runs the existing database utilities; the deployed application uses Node.
 
-```sh
-vp install
+```powershell
+vp install --frozen-lockfile
 Copy-Item .env.example .env
 vp run db:migrate
 vp run db:seed
@@ -35,9 +37,48 @@ vp dev
 
 Replace the example `BETTER_AUTH_SECRET` in `.env` before using authentication. Keep `.env` out of version control.
 
-Use the global `vp` command for built-ins such as `vp dev`, `vp build`, `vp preview`, and `vp test`. Without the global CLI, use `bunx --no-install vp` instead of `vp`.
+Use the global `vp` command for the workflow below. It selects the declared environment and delegates project tooling to the pinned local Vite+ 1.0.0 package.
 
-Run package scripts with `vp run <name>` or its shorthand `vpr <name>`, such as `vp run quality` or `vp run test:install`. `vp run check` runs our Svelte checks; `vp run lint` includes Svelte template linting; `vp run test` includes both unit and end-to-end tests. The built-in `vp check`, `vp lint`, and `vp test` do not run those package scripts. `bun run <name>` also remains supported.
+| Operation                                          | Command                                    |
+| -------------------------------------------------- | ------------------------------------------ |
+| Install the committed dependencies                 | `vp install --frozen-lockfile`             |
+| Add or remove a dependency                         | `vp add <package>` / `vp remove <package>` |
+| Update dependencies and the lockfile intentionally | `vp update`                                |
+| Start development                                  | `vp dev`                                   |
+| Build the Node application                         | `vp build`                                 |
+| Preview the build locally                          | `vp preview`                               |
+| Format files                                       | `vp fmt .`                                 |
+| Run Oxlint                                         | `vp lint .`                                |
+| Run unit and browser-component tests               | `vp test --run`                            |
+| Run the complete acceptance gate                   | `vp run quality`                           |
+
+Commit dependency and lockfile changes together. `vp preview` is a local preview; `vp run start` runs the built Node adapter server.
+
+SvelteKit 3 reads `ORIGIN` into `paths.origin` when Vite loads its configuration. Better Auth reads the same value at runtime. Keep the build and server values identical to the browser's complete origin, including its port. Vite loads `.env` and the selected mode's env files, with process environment values taking precedence. The development example uses `http://localhost:5173`.
+
+For a local production preview in PowerShell, set the preview origin before building and keep it set while preview runs:
+
+```powershell
+$env:ORIGIN = 'http://127.0.0.1:4173'
+vp build
+vp preview --host 127.0.0.1
+```
+
+To run the actual built Node server in PowerShell, first migrate and seed the local database as above, then run:
+
+```powershell
+$env:ORIGIN = 'http://127.0.0.1:4183'
+vp build
+$env:HOST = '127.0.0.1'
+$env:PORT = '4183'
+vp env exec node --env-file=.env build/index.js
+```
+
+Node does not automatically load `.env`. The explicit `--env-file` supplies `DATABASE_URL` and your `BETTER_AUTH_SECRET`; the exported `ORIGIN` takes precedence over the file. `vp run start` instead expects all runtime values already exported by the shell or hosting platform. Rebuild after changing the public origin. After stopping the local server, restore `ORIGIN` to `http://localhost:5173` before returning to `vp dev`.
+
+The Node adapter no longer consumes its former `ORIGIN` setting. The application deliberately retains `ORIGIN` for both the build configuration and Better Auth. CSRF protection remains enabled without cross-origin exceptions. See [deployment.md](docs/deployment.md) before preparing a release.
+
+Run custom package tasks with `vp run <name>`, such as `vp run test:install`. `vp run check` runs Svelte/type checking. `vp run lint` checks formatting, Oxlint, and Svelte-aware ESLint template rules. `vp run test` includes unit, browser-component, and end-to-end tests; `vp run test:e2e` runs the end-to-end suite alone. Built-ins such as `vp check`, `vp lint`, and `vp test` do not invoke these custom tasks. Use `vp run quality` for acceptance.
 
 ## Quality checks
 
@@ -46,9 +87,9 @@ vp run test:install # one-time Chromium download
 vp run quality
 ```
 
-The quality command checks formatting, linting, Svelte and TypeScript, runs the automated tests, and creates a production build. GitHub Actions runs the same command for every push and for pull requests targeting `main`.
+The quality command checks formatting, linting, Svelte and TypeScript, runs the automated tests, and creates a production build. Browser tests create a disposable database. Run the gate in an isolated checkout when its build or preview would conflict with another local session. GitHub Actions uses the exact official `setup-vp@v1.21.2` integration, reads the same Node and Bun pins, installs from the frozen lockfile, installs Chromium with system dependencies, and runs `vp run quality` for every push, pull requests targeting `main`, and manual dispatch. CI does not cache project task results.
 
-Vite+ tooling settings live in `vite.config.ts`. Svelte type checking still uses `svelte-check`, and ESLint checks Svelte files because Oxlint does not enforce their template rules. The `vite` alias and Vitest override keep framework and test-helper dependencies on the same toolchain.
+Vite+ tooling settings live in `vite.config.ts`. Svelte type checking still uses `svelte-check`, and ESLint checks Svelte files because Oxlint does not enforce their template rules. The `vite` alias and Vitest override keep framework and test-helper dependencies on the same toolchain. Library imports use the `#lib` Node subpath mappings in `package.json` with explicit file extensions. `components.json` uses the same aliases for component generation. The TypeScript config extends `$app/tsconfig` and explicitly includes application, Vite, Drizzle, and Playwright sources.
 
 ## Database
 

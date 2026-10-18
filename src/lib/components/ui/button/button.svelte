@@ -1,7 +1,6 @@
 <script lang="ts" module>
-	/* eslint-disable svelte/no-navigation-without-resolve -- Button forwards caller hrefs, including hashes and external URLs. */
 	import { type VariantProps, tv } from 'tailwind-variants';
-	import { cn, type WithElementRef } from '$lib/utils.js';
+	import { cn, type WithElementRef } from '#lib/utils.js';
 	import type { HTMLAnchorAttributes, HTMLButtonAttributes } from 'svelte/elements';
 
 	export const buttonVariants = tv({

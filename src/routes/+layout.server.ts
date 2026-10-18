@@ -1,4 +1,4 @@
-import { toSessionUser } from '$lib/session-user';
+import { toSessionUser } from '#lib/session-user.js';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = ({ locals }) => {

@@ -1,10 +1,10 @@
 <script lang="ts">
-	import * as Alert from '$lib/components/ui/alert';
-	import { Button } from '$lib/components/ui/button';
-	import * as Field from '$lib/components/ui/field';
-	import { Input } from '$lib/components/ui/input';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { createGroupForm, editGroupForm } from '$lib/groups.remote';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Field from '#lib/components/ui/field/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { createGroupForm, editGroupForm } from '#lib/groups.remote.js';
 
 	let {
 		mode,
@@ -55,8 +55,12 @@
 	<Field.FieldGroup>
 		<Field.Field data-invalid={nameIssues.length > 0 ? true : undefined}>
 			<Field.Label for="group-name">Group name</Field.Label>
+			<!-- Copy generated attributes so SSR can override their value getter with the binding. -->
 			<Input
-				{...form.fields.name.as('text', name)}
+				{...{ ...form.fields.name.as('text', name) }}
+				bind:value={
+					() => form.fields.name.value() ?? name, (value: string) => form.fields.name.set(value)
+				}
 				id="group-name"
 				class="h-11 min-h-11"
 				maxlength={80}
@@ -71,8 +75,14 @@
 
 		<Field.Field data-invalid={descriptionIssues.length > 0 ? true : undefined}>
 			<Field.Label for="group-description">Short description</Field.Label>
+			{@const descriptionField = form.fields.description.as('text', description)}
 			<textarea
-				{...form.fields.description.as('text', description)}
+				name={descriptionField.name}
+				defaultValue={descriptionField.defaultValue}
+				bind:value={
+					() => form.fields.description.value() ?? description,
+					(value) => form.fields.description.set(value)
+				}
 				id="group-description"
 				class="min-h-32 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
 				maxlength={300}

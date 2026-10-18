@@ -3,8 +3,8 @@
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { Button } from '$lib/components/ui/button';
-	import * as Empty from '$lib/components/ui/empty';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Empty from '#lib/components/ui/empty/index.js';
 
 	const isNotFound = $derived(page.status === 404);
 	const isForbidden = $derived(page.status === 403);

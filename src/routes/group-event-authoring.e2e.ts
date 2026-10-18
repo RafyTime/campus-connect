@@ -83,6 +83,8 @@ test('Group validation and request failure preserve host and input for recovery'
 	await expect(page.getByLabel('Host', { exact: true })).toHaveValue('group-film-society');
 	await expect(page.getByLabel('Title', { exact: true })).toHaveValue(title);
 	await expect(page.getByRole('button', { name: 'Publish Event' })).toBeEnabled();
+	await expect(page.getByRole('checkbox', { name: 'Arts', exact: true })).toBeChecked();
+	await expect(page.getByRole('checkbox', { name: 'Tech', exact: true })).toBeChecked();
 	await page.unroute('**/_app/remote/**');
 	await page.getByRole('button', { name: 'Publish Event' }).click();
 	await expect(page.getByRole('heading', { name: title, level: 1 })).toBeVisible();
@@ -197,6 +199,7 @@ async function fillEvent(page: Page, title: string) {
 	await page.getByLabel('Start', { exact: true }).fill('2030-09-02T18:00');
 	await page.getByLabel('End', { exact: true }).fill('2030-09-02T20:00');
 	await page.getByRole('checkbox', { name: 'Arts', exact: true }).check();
+	await page.getByRole('checkbox', { name: 'Tech', exact: true }).check();
 	await page.getByLabel('Response mode', { exact: true }).selectOption('registration');
 	await page.getByLabel('Capacity', { exact: true }).fill('12');
 	await page.getByLabel('Location', { exact: true }).selectOption('location-library');
@@ -214,6 +217,8 @@ for (const actor of ['lena', 'jonas'] as const) {
 		await page.getByRole('button', { name: 'Publish Event' }).click();
 		await expect(page.getByRole('heading', { name: title, level: 1 })).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Film Society', exact: true })).toBeVisible();
+		await expect(page.getByText('Arts', { exact: true })).toBeVisible();
+		await expect(page.getByText('Tech', { exact: true })).toBeVisible();
 		const eventUrl = page.url();
 		const visitor = await browser.newPage();
 		await visitor.goto('/');
@@ -234,6 +239,10 @@ for (const actor of ['lena', 'jonas'] as const) {
 			)
 		).toBeVisible();
 		await expect(other.getByLabel('Host', { exact: true })).toHaveCount(0);
+		await expect(other.getByRole('checkbox', { name: 'Arts', exact: true })).toBeChecked();
+		await expect(other.getByRole('checkbox', { name: 'Tech', exact: true })).toBeChecked();
+		await other.getByRole('checkbox', { name: 'Tech', exact: true }).uncheck();
+		await other.getByRole('checkbox', { name: 'Social', exact: true }).check();
 		await other.getByLabel('Title', { exact: true }).fill(`${title} outdoors`);
 		await other.getByLabel('Response mode', { exact: true }).selectOption('interest');
 		await other.getByLabel('Location', { exact: true }).selectOption('manual');
@@ -243,6 +252,13 @@ for (const actor of ['lena', 'jonas'] as const) {
 		await other.reload();
 		await expect(other.getByRole('link', { name: 'Film Society', exact: true })).toBeVisible();
 		await expect(other.getByText('Library garden', { exact: true })).toBeVisible();
+		await expect(other.getByText('Arts', { exact: true })).toBeVisible();
+		await expect(other.getByText('Social', { exact: true })).toBeVisible();
+		await expect(other.getByText('Tech', { exact: true })).toHaveCount(0);
+		await other.goto(`${eventUrl}/edit`);
+		await expect(other.getByRole('checkbox', { name: 'Arts', exact: true })).toBeChecked();
+		await expect(other.getByRole('checkbox', { name: 'Social', exact: true })).toBeChecked();
+		await expect(other.getByRole('checkbox', { name: 'Tech', exact: true })).not.toBeChecked();
 		await other.close();
 	});
 }

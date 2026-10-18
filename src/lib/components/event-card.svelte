@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { Badge } from '$lib/components/ui/badge';
-	import * as Card from '$lib/components/ui/card';
-	import HostAvatar from '$lib/components/host-avatar.svelte';
-	import { responseModeLabel } from '$lib/event-labels';
-	import type { PublicEventSummary } from '$lib/public-event';
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import * as Card from '#lib/components/ui/card/index.js';
+	import HostAvatar from '#lib/components/host-avatar.svelte';
+	import { responseModeLabel } from '#lib/event-labels.js';
+	import type { PublicEventSummary } from '#lib/public-event.js';
 
 	let { event }: { event: PublicEventSummary } = $props();
 </script>

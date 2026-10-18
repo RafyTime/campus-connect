@@ -9,17 +9,17 @@
 		UserGroupIcon
 	} from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { Button } from '$lib/components/ui/button';
-	import { Skeleton } from '$lib/components/ui/skeleton';
-	import { Spinner } from '$lib/components/ui/spinner';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import {
 		accountDestinations,
 		isCurrentDestination,
 		primaryDestinations,
 		signedInAccountDestinations,
 		signedInPrimaryDestinations
-	} from '$lib/navigation';
-	import type { SessionUser } from '$lib/session-user';
+	} from '#lib/navigation.js';
+	import type { SessionUser } from '#lib/session-user.js';
 
 	let { children, user }: { children: Snippet; user: SessionUser | null } = $props();
 

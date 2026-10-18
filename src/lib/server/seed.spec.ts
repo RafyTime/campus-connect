@@ -1,10 +1,10 @@
 import { count } from 'drizzle-orm';
 import { describe, expect, it } from 'vite-plus/test';
-import { discoverPublicEvents } from '$lib/server/application/events';
-import { getPublicGroup, listPublicGroups } from '$lib/server/application/groups';
-import { event, group, groupMembership, location, tag, user } from '$lib/server/db/schema';
-import { createTestClock } from '$lib/server/testing/clock';
-import { createTestDatabase } from '$lib/server/testing/database';
+import { discoverPublicEvents } from '#lib/server/application/events.js';
+import { getPublicGroup, listPublicGroups } from '#lib/server/application/groups.js';
+import { event, group, groupMembership, location, tag, user } from '#lib/server/db/schema.js';
+import { createTestClock } from '#lib/server/testing/clock.js';
+import { createTestDatabase } from '#lib/server/testing/database.js';
 import { seedCampusConnect, seedPublicPersonalEvents } from './seed';
 
 const campusNow = '2026-09-01T08:00:00.000Z';

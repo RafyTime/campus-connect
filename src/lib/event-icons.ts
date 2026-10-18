@@ -7,7 +7,7 @@ import {
 	Ticket01Icon
 } from '@hugeicons/core-free-icons';
 import type { IconSvgElement } from '@hugeicons/svelte';
-import type { PublicEventStatus, PublicResponseMode } from '$lib/public-event';
+import type { PublicEventStatus, PublicResponseMode } from '#lib/public-event.js';
 
 export function eventStatusIcon(status: PublicEventStatus): IconSvgElement {
 	if (status === 'cancelled') return Cancel01Icon;

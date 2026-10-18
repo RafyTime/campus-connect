@@ -1,4 +1,4 @@
-import { campusTimeZone } from '$lib/event-authoring';
+import { campusTimeZone } from '#lib/event-authoring.js';
 
 export const CAMPUS_TIME_ZONE = campusTimeZone;
 

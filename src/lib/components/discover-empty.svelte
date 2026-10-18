@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { CompassIcon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import * as Empty from '$lib/components/ui/empty';
+	import * as Empty from '#lib/components/ui/empty/index.js';
 </script>
 
 <Empty.Root>

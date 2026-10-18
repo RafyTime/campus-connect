@@ -232,6 +232,7 @@ test.describe('Campus Connect accounts and profiles', () => {
 			.getByRole('link', { name: 'Account' })
 			.click();
 		await page.getByRole('button', { name: 'Sign out' }).click();
+		await expect(page).toHaveURL('/');
 
 		await page.goto('/sign-in');
 		await page.getByLabel('Email').fill(email);

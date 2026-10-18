@@ -18,6 +18,7 @@ async function fillEvent(page: Page, title: string) {
 	await page.getByLabel('Start', { exact: true }).fill('2030-09-02T18:00');
 	await page.getByLabel('End', { exact: true }).fill('2030-09-02T20:00');
 	await page.getByRole('checkbox', { name: 'Tech', exact: true }).check();
+	await page.getByRole('checkbox', { name: 'Social', exact: true }).check();
 	await page.getByLabel('Response mode', { exact: true }).selectOption('registration');
 	await page.getByLabel('Capacity', { exact: true }).fill('12');
 	await page.getByLabel('Location', { exact: true }).selectOption('location-library');
@@ -39,6 +40,8 @@ test('a Creator publishes, discovers, and manages a public personal Event', asyn
 	await expect(page.getByText('Personal Creator', { exact: true })).toBeVisible();
 	await expect(page.getByText('Campus Library', { exact: true })).toBeVisible();
 	await expect(page.getByText('12 places remaining', { exact: true })).toBeVisible();
+	await expect(page.getByText('Tech', { exact: true })).toBeVisible();
+	await expect(page.getByText('Social', { exact: true })).toBeVisible();
 	const eventUrl = page.url();
 	const visitor = await browser.newPage();
 	await visitor.goto('/');
@@ -53,6 +56,9 @@ test('a Creator publishes, discovers, and manages a public personal Event', asyn
 	await page.getByRole('link', { name: `Edit ${title}` }).click();
 	await expect(page.getByLabel('Start', { exact: true })).toHaveValue('2030-09-02T18:00');
 	await expect(page.getByRole('checkbox', { name: 'Tech', exact: true })).toBeChecked();
+	await expect(page.getByRole('checkbox', { name: 'Social', exact: true })).toBeChecked();
+	await page.getByRole('checkbox', { name: 'Social', exact: true }).uncheck();
+	await page.getByRole('checkbox', { name: 'Outdoors', exact: true }).check();
 	await page.getByLabel('Title', { exact: true }).fill(`${title} outdoors`);
 	await page.getByLabel('Response mode', { exact: true }).selectOption('interest');
 	await page.getByLabel('Location', { exact: true }).selectOption('manual');
@@ -62,6 +68,13 @@ test('a Creator publishes, discovers, and manages a public personal Event', asyn
 	await page.reload();
 	await expect(page.getByText('Garden beside the library', { exact: true })).toBeVisible();
 	await expect(page.getByText('Interest', { exact: true })).toBeVisible();
+	await expect(page.getByText('Tech', { exact: true })).toBeVisible();
+	await expect(page.getByText('Outdoors', { exact: true })).toBeVisible();
+	await expect(page.getByText('Social', { exact: true })).toHaveCount(0);
+	await page.goto(`${eventUrl}/edit`);
+	await expect(page.getByRole('checkbox', { name: 'Tech', exact: true })).toBeChecked();
+	await expect(page.getByRole('checkbox', { name: 'Outdoors', exact: true })).toBeChecked();
+	await expect(page.getByRole('checkbox', { name: 'Social', exact: true })).not.toBeChecked();
 });
 
 test('validation and request failures preserve input and allow correction', async ({ page }) => {
@@ -80,6 +93,8 @@ test('validation and request failures preserve input and allow correction', asyn
 	await expect(
 		page.getByText('Choose an unambiguous date and time in Europe/Berlin.')
 	).toBeVisible();
+	await expect(page.getByRole('checkbox', { name: 'Tech', exact: true })).toBeChecked();
+	await expect(page.getByRole('checkbox', { name: 'Social', exact: true })).toBeChecked();
 	await page.getByLabel('Start', { exact: true }).fill('2030-09-02T18:00');
 	await page.route('**/_app/remote/**', async (route) => {
 		if (route.request().method() === 'POST')
@@ -92,11 +107,16 @@ test('validation and request failures preserve input and allow correction', asyn
 		'Failed request campus Event'
 	);
 	await expect(page.getByRole('button', { name: 'Publish Event' })).toBeEnabled();
+	await expect(page.getByRole('checkbox', { name: 'Tech', exact: true })).toBeChecked();
+	await expect(page.getByRole('checkbox', { name: 'Social', exact: true })).toBeChecked();
 	await page.unroute('**/_app/remote/**');
 	await page.getByRole('button', { name: 'Publish Event' }).click();
 	await expect(
 		page.getByRole('heading', { name: 'Failed request campus Event', level: 1 })
 	).toBeVisible();
+	await page.reload();
+	await expect(page.getByText('Tech', { exact: true })).toBeVisible();
+	await expect(page.getByText('Social', { exact: true })).toBeVisible();
 });
 
 test('visitors return through sign-in and other Users cannot manage someone else’s Event', async ({

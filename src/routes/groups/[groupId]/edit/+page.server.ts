@@ -1,8 +1,8 @@
 import { error, redirect } from '@sveltejs/kit';
-import { authenticationHref } from '$lib/auth-paths';
-import { getDb } from '$lib/server/db';
-import { getPublicGroup } from '$lib/server/application/groups';
-import { systemClock } from '$lib/server/clock';
+import { authenticationHref } from '#lib/auth-paths.js';
+import { getDb } from '#lib/server/db/index.js';
+import { getPublicGroup } from '#lib/server/application/groups.js';
+import { systemClock } from '#lib/server/clock.js';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {

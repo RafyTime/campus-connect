@@ -7,12 +7,12 @@ import { pathToFileURL } from 'node:url';
 import { setFlagsFromString } from 'node:v8';
 import { runInNewContext } from 'node:vm';
 import { setImmediate } from 'node:timers/promises';
-import { createDb } from '$lib/server/db/client';
-import { applyMigrations } from '$lib/server/db/migrate';
-import { createTestDatabase } from '$lib/server/testing/database';
-import { createTestClock } from '$lib/server/testing/clock';
-import { insertGroup, insertUser } from '$lib/server/fixtures';
-import { group, groupMembership } from '$lib/server/db/schema';
+import { createDb } from '#lib/server/db/client.js';
+import { applyMigrations } from '#lib/server/db/migrate.js';
+import { createTestDatabase } from '#lib/server/testing/database.js';
+import { createTestClock } from '#lib/server/testing/clock.js';
+import { insertGroup, insertUser } from '#lib/server/fixtures.js';
+import { group, groupMembership } from '#lib/server/db/schema.js';
 import {
 	createGroup,
 	editGroup,

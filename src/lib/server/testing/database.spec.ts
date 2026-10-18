@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { user } from '$lib/server/db/schema';
+import { user } from '#lib/server/db/schema.js';
 import { createTestDatabase } from './database';
 
 describe('test database', () => {

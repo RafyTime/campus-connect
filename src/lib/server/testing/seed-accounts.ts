@@ -1,6 +1,6 @@
 import { hashPassword } from 'better-auth/crypto';
-import type { Database } from '$lib/server/db';
-import { account } from '$lib/server/db/schema';
+import type { Database } from '#lib/server/db/index.js';
+import { account } from '#lib/server/db/schema.js';
 
 /** Password accounts for the existing role fixtures, used only by the disposable browser database. */
 export async function seedGroupEventTestAccounts(db: Database) {

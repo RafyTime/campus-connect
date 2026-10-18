@@ -1,10 +1,11 @@
 <script lang="ts">
-	import * as Alert from '$lib/components/ui/alert';
-	import { Button } from '$lib/components/ui/button';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { followGroup, unfollowGroup } from '$lib/groups.remote';
-	import type { PublicGroupDetail } from '$lib/public-group';
-	import type { SessionUser } from '$lib/session-user';
+	import { onMount } from 'svelte';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { followGroup, unfollowGroup } from '#lib/groups.remote.js';
+	import type { PublicGroupDetail } from '#lib/public-group.js';
+	import type { SessionUser } from '#lib/session-user.js';
 
 	let {
 		group,
@@ -16,6 +17,10 @@
 		onUnauthenticated: () => void;
 	} = $props();
 
+	let hydrated = $state(false);
+	onMount(() => {
+		hydrated = true;
+	});
 	let pending = $state(false);
 	let failure = $state<'conflict' | 'unauthenticated' | 'server-failure' | null>(null);
 
@@ -78,7 +83,7 @@
 		<Button
 			class="min-h-11 min-w-36"
 			variant={following ? 'outline' : 'default'}
-			disabled={pending}
+			disabled={!hydrated || pending}
 			aria-busy={pending}
 			onclick={submit}
 		>

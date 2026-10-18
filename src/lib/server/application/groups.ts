@@ -1,18 +1,18 @@
 import { and, asc, eq } from 'drizzle-orm';
-import type { Database } from '$lib/server/db';
-import { group, groupMembership } from '$lib/server/db/schema';
-import type { GroupMembershipRole } from '$lib/server/db/domain.schema';
-import type { Clock } from '$lib/server/clock';
+import type { Database } from '#lib/server/db/index.js';
+import { group, groupMembership } from '#lib/server/db/schema.js';
+import type { GroupMembershipRole } from '#lib/server/db/domain.schema.js';
+import type { Clock } from '#lib/server/clock.js';
 import type {
 	GroupFollowResult,
 	GroupMembershipRecordResult,
 	GroupMutationAccess,
 	PublicGroupDetail,
 	PublicGroupSummary
-} from '$lib/public-group';
+} from '#lib/public-group.js';
 import { displayInitials, imageAttribution, publicImageUrl } from './remote-images';
 import { discoverPublicEventsForGroup } from './events';
-import { groupNameKey } from '$lib/server/group-name';
+import { groupNameKey } from '#lib/server/group-name.js';
 
 export type {
 	GroupFollowResult,
@@ -21,7 +21,7 @@ export type {
 	PublicGroupDetail,
 	PublicGroupOwner,
 	PublicGroupSummary
-} from '$lib/public-group';
+} from '#lib/public-group.js';
 
 const groupWithMemberships = {
 	memberships: { with: { user: true } }

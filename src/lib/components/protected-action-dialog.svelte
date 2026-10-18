@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { authenticationHref, currentReturnPath } from '$lib/auth-paths';
-	import { Button } from '$lib/components/ui/button';
-	import * as Dialog from '$lib/components/ui/dialog';
+	import { authenticationHref, currentReturnPath } from '#lib/auth-paths.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Dialog from '#lib/components/ui/dialog/index.js';
 
 	let { open = $bindable(false) }: { open?: boolean } = $props();
 

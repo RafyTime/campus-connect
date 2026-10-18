@@ -1,16 +1,18 @@
-import { env } from '$env/dynamic/private';
+import { ORIGIN, BETTER_AUTH_SECRET, AUTH_RATE_LIMIT } from '$app/env/private';
 import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { getRequestEvent } from '$app/server';
-import { getDb } from '$lib/server/db';
+import { getDb } from '#lib/server/db/index.js';
 
 let auth: ReturnType<typeof createAuth> | undefined;
 
 function createAuth() {
+	if (!ORIGIN) throw new Error('ORIGIN is not set');
+	if (!BETTER_AUTH_SECRET) throw new Error('BETTER_AUTH_SECRET is not set');
 	return betterAuth({
-		baseURL: env.ORIGIN,
-		secret: env.BETTER_AUTH_SECRET,
+		baseURL: ORIGIN,
+		secret: BETTER_AUTH_SECRET,
 		database: drizzleAdapter(getDb(), { provider: 'sqlite' }),
 		emailAndPassword: {
 			enabled: true,
@@ -21,9 +23,7 @@ function createAuth() {
 			changeEmail: { enabled: false },
 			deleteUser: { enabled: false }
 		},
-		rateLimit: {
-			enabled: env.AUTH_RATE_LIMIT !== 'off'
-		},
+		rateLimit: { enabled: AUTH_RATE_LIMIT !== 'off' },
 		plugins: [
 			sveltekitCookies(getRequestEvent) // make sure this is the last plugin in the array
 		]

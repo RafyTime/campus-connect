@@ -8,6 +8,6 @@ export function authenticationHref(page: '/sign-in' | '/register', returnTo: str
 	return query.length > 0 ? `${page}?${query}` : page;
 }
 
-export function currentReturnPath(url: URL): string {
+export function currentReturnPath(url: Pick<URL, 'pathname' | 'search'>): string {
 	return `${url.pathname}${url.search}`;
 }

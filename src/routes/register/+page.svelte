@@ -1,12 +1,12 @@
 <script lang="ts">
-	import * as Alert from '$lib/components/ui/alert';
-	import { Button } from '$lib/components/ui/button';
-	import * as Field from '$lib/components/ui/field';
-	import { Input } from '$lib/components/ui/input';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { registerAccount } from '$lib/accounts.remote';
-	import { authenticationHref } from '$lib/auth-paths';
-	import AccountPage from '$lib/components/account-page.svelte';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Field from '#lib/components/ui/field/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { registerAccount } from '#lib/accounts.remote.js';
+	import { authenticationHref } from '#lib/auth-paths.js';
+	import AccountPage from '#lib/components/account-page.svelte';
 
 	let { data }: { data: { returnTo: string } } = $props();
 
@@ -40,7 +40,11 @@
 					id="displayName"
 					class="h-11 min-h-11"
 					autocomplete="name"
-					{...form.fields.displayName.as('text')}
+					{...{ ...form.fields.displayName.as('text') }}
+					bind:value={
+						() => form.fields.displayName.value() ?? '',
+						(value: string) => form.fields.displayName.set(value)
+					}
 				/>
 				<Field.Error errors={displayNameIssues} />
 			</Field.Field>
@@ -51,7 +55,10 @@
 					id="email"
 					class="h-11 min-h-11"
 					autocomplete="email"
-					{...form.fields.email.as('email')}
+					{...{ ...form.fields.email.as('email') }}
+					bind:value={
+						() => form.fields.email.value() ?? '', (value: string) => form.fields.email.set(value)
+					}
 				/>
 				<Field.Error errors={emailIssues} />
 			</Field.Field>
@@ -62,7 +69,11 @@
 					id="password"
 					class="h-11 min-h-11"
 					autocomplete="new-password"
-					{...form.fields._password.as('password')}
+					{...{ ...form.fields._password.as('password') }}
+					bind:value={
+						() => form.fields._password.value() ?? '',
+						(value: string) => form.fields._password.set(value)
+					}
 				/>
 				<Field.Error errors={passwordIssues} />
 			</Field.Field>

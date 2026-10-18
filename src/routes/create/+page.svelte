@@ -1,6 +1,6 @@
 <script lang="ts">
-	import EventDetailsForm from '$lib/components/event-details-form.svelte';
-	import { loadEventAuthoringOptions } from '$lib/events.remote';
+	import EventDetailsForm from '#lib/components/event-details-form.svelte';
+	import { loadEventAuthoringOptions } from '#lib/events.remote.js';
 	const options = await loadEventAuthoringOptions();
 </script>
 

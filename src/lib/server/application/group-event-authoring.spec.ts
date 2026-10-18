@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { createTestDatabase } from '$lib/server/testing/database';
-import { createTestClock } from '$lib/server/testing/clock';
-import { seedCampusConnect } from '$lib/server/seed';
+import { createTestDatabase } from '#lib/server/testing/database.js';
+import { createTestClock } from '#lib/server/testing/clock.js';
+import { seedCampusConnect } from '#lib/server/seed.js';
 import { and, eq } from 'drizzle-orm';
-import { groupMembership } from '$lib/server/db/schema';
+import { groupMembership } from '#lib/server/db/schema.js';
 import { discoverPublicEventsForGroup, getPublicEvent } from './events';
 import {
 	createEvent,

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import DiscoverEmpty from '$lib/components/discover-empty.svelte';
+	import DiscoverEmpty from '#lib/components/discover-empty.svelte';
 </script>
 
 <svelte:head>

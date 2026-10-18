@@ -1,5 +1,5 @@
 import { APIError } from 'better-auth/api';
-import type { getAuth } from '$lib/server/auth';
+import type { getAuth } from '#lib/server/auth.js';
 
 const fallbackReturnPath = '/';
 const displayNameMinLength = 2;

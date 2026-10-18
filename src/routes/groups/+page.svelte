@@ -1,8 +1,8 @@
 <script lang="ts">
-	import GroupCard from '$lib/components/group-card.svelte';
-	import GroupsEmpty from '$lib/components/groups-empty.svelte';
-	import { listPublicGroups } from '$lib/groups.remote';
-	import { Button } from '$lib/components/ui/button';
+	import GroupCard from '#lib/components/group-card.svelte';
+	import GroupsEmpty from '#lib/components/groups-empty.svelte';
+	import { listPublicGroups } from '#lib/groups.remote.js';
+	import { Button } from '#lib/components/ui/button/index.js';
 	import { page } from '$app/state';
 
 	const groups = await listPublicGroups();

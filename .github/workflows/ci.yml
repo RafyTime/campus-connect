@@ -27,21 +27,17 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v5
 
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Set up Vite+, Node.js, and Bun
+        uses: voidzero-dev/setup-vp@v1.21.2
         with:
-          bun-version: 1.4.3
-
-      - name: Set up Node.js for Vite+
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24.19.0
+          node-version-file: .node-version
+          run-install: false
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: vp install --frozen-lockfile
 
       - name: Install Chromium
-        run: bunx playwright install --with-deps chromium
+        run: vp run test:install --with-deps
 
       - name: Run quality gates
-        run: bun run quality
+        run: vp run quality

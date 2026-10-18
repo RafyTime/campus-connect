@@ -3,17 +3,23 @@
 	import { resolve } from '$app/paths';
 	import { navigating, page } from '$app/state';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
-	import DiscoverEmpty from '$lib/components/discover-empty.svelte';
-	import EventCard from '$lib/components/event-card.svelte';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Button } from '$lib/components/ui/button';
-	import { Checkbox } from '$lib/components/ui/checkbox';
-	import * as Empty from '$lib/components/ui/empty';
-	import * as Field from '$lib/components/ui/field';
-	import { Input } from '$lib/components/ui/input';
-	import * as NativeSelect from '$lib/components/ui/native-select';
-	import { listPublicEvents } from '$lib/events.remote';
+	import { onMount } from 'svelte';
+	import DiscoverEmpty from '#lib/components/discover-empty.svelte';
+	import EventCard from '#lib/components/event-card.svelte';
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
+	import * as Empty from '#lib/components/ui/empty/index.js';
+	import * as Field from '#lib/components/ui/field/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import * as NativeSelect from '#lib/components/ui/native-select/index.js';
+	import { listPublicEvents } from '#lib/events.remote.js';
 
+	// Filters require client handlers; enable them once those handlers are mounted.
+	let hydrated = $state(false);
+	onMount(() => {
+		hydrated = true;
+	});
 	const result = $derived(await listPublicEvents(page.url.search));
 	const filters = $derived(result.filters);
 	const activeFilters = $derived([
@@ -38,14 +44,12 @@
 		params.delete(key);
 		for (const value of values) params.append(key, value);
 		const search = params.toString();
-		return goto(search ? resolve(`/?${search}`) : resolve('/'), {
-			keepFocus: true,
-			noScroll: true
-		});
+
+		return goto(search ? resolve(`?${search}`) : resolve('/'), { reset: false });
 	}
 
 	function clearFilters() {
-		return goto(resolve('/'), { noScroll: true });
+		return goto(resolve('/'), { reset: false });
 	}
 </script>
 
@@ -68,10 +72,11 @@
 				<Field.Description>Match any selected Tag.</Field.Description>
 				<Field.Group class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
 					{#each result.options.tags as tag (tag.id)}
-						<Field.Field orientation="horizontal">
+						<Field.Field orientation="horizontal" data-disabled={!hydrated || undefined}>
 							<Field.Label class="min-h-11 w-full" for={`filter-${tag.id}`}>
 								<Checkbox
 									id={`filter-${tag.id}`}
+									disabled={!hydrated}
 									checked={filters.tagIds.includes(tag.id)}
 									onCheckedChange={(checked) => updateFilter('tag', tag.id, checked)}
 								/>
@@ -82,10 +87,11 @@
 				</Field.Group>
 			</Field.Set>
 			<Field.Group class="grid gap-4 md:grid-cols-3">
-				<Field.Field>
+				<Field.Field data-disabled={!hydrated || undefined}>
 					<Field.Label for="filter-date">Date</Field.Label>
 					<Input
 						id="filter-date"
+						disabled={!hydrated}
 						type="date"
 						value={filters.date}
 						class="min-h-11 min-w-0"
@@ -94,10 +100,11 @@
 					/>
 					<Field.Description id="filter-date-help">Start date in Europe/Berlin.</Field.Description>
 				</Field.Field>
-				<Field.Field>
+				<Field.Field data-disabled={!hydrated || undefined}>
 					<Field.Label for="filter-group">Group</Field.Label>
 					<NativeSelect.Root
 						id="filter-group"
+						disabled={!hydrated}
 						value={filters.groupId}
 						class="w-full [&_select]:min-h-11"
 						onchange={(event) => updateFilter('group', event.currentTarget.value)}
@@ -108,10 +115,11 @@
 						{/each}
 					</NativeSelect.Root>
 				</Field.Field>
-				<Field.Field>
+				<Field.Field data-disabled={!hydrated || undefined}>
 					<Field.Label for="filter-host">Host type</Field.Label>
 					<NativeSelect.Root
 						id="filter-host"
+						disabled={!hydrated}
 						value={filters.hostType}
 						class="w-full [&_select]:min-h-11"
 						onchange={(event) => updateFilter('host', event.currentTarget.value)}
@@ -125,12 +133,16 @@
 		</Field.Group>
 		{#if activeFilters.length}
 			<ul aria-label="Active filters" class="flex list-none flex-wrap gap-2 p-0">
-				{#each activeFilters as label (label)}<li>
-						<Badge variant="secondary">{label}</Badge>
-					</li>{/each}
+				{#each activeFilters as label (label)}
+					<li><Badge variant="secondary">{label}</Badge></li>
+				{/each}
 			</ul>
-			<Button variant="outline" class="min-h-11 self-start" onclick={clearFilters}
-				>Clear all filters</Button
+
+			<Button
+				variant="outline"
+				class="min-h-11 self-start"
+				disabled={!hydrated}
+				onclick={clearFilters}>Clear all filters</Button
 			>
 		{/if}
 	</section>
@@ -149,7 +161,9 @@
 				>
 			</Empty.Header>
 			<Empty.Content
-				><Button class="min-h-11" onclick={clearFilters}>Show all Events</Button></Empty.Content
+				><Button class="min-h-11" disabled={!hydrated} onclick={clearFilters}
+					>Show all Events</Button
+				></Empty.Content
 			>
 		</Empty.Root>
 	{:else if result.count === 0}
@@ -157,9 +171,7 @@
 	{:else}
 		<ul class="grid list-none gap-4 p-0 md:grid-cols-2">
 			{#each result.events as event (event.id)}
-				<li class="h-full">
-					<EventCard {event} />
-				</li>
+				<li class="h-full"><EventCard {event} /></li>
 			{/each}
 		</ul>
 	{/if}

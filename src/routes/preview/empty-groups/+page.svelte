@@ -1,5 +1,5 @@
 <script lang="ts">
-	import GroupsEmpty from '$lib/components/groups-empty.svelte';
+	import GroupsEmpty from '#lib/components/groups-empty.svelte';
 </script>
 
 <svelte:head>

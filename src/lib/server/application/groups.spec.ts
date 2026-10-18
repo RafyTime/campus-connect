@@ -10,15 +10,15 @@ import {
 	unfollowGroup
 } from './groups';
 import { getPublicEvent } from './events';
-import { createTestClock } from '$lib/server/testing/clock';
-import { createTestDatabase } from '$lib/server/testing/database';
+import { createTestClock } from '#lib/server/testing/clock.js';
+import { createTestDatabase } from '#lib/server/testing/database.js';
 import {
 	insertGroup,
 	insertPublicGroupEvent,
 	insertPublicPersonalEvent,
 	insertUser
-} from '$lib/server/fixtures';
-import { group, groupMembership } from '$lib/server/db/schema';
+} from '#lib/server/fixtures.js';
+import { group, groupMembership } from '#lib/server/db/schema.js';
 
 const campusNow = '2026-09-01T08:00:00.000Z';
 

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vite-plus/test';
 import { discoverPublicEvents, getPublicEvent } from './events';
-import { createTestClock } from '$lib/server/testing/clock';
-import { createTestDatabase } from '$lib/server/testing/database';
-import { insertPublicPersonalEvent } from '$lib/server/fixtures';
+import { createTestClock } from '#lib/server/testing/clock.js';
+import { createTestDatabase } from '#lib/server/testing/database.js';
+import { insertPublicPersonalEvent } from '#lib/server/fixtures.js';
 
 const campusNow = '2026-09-01T08:00:00.000Z';
 

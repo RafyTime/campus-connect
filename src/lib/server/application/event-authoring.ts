@@ -1,6 +1,6 @@
 import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm';
-import type { Clock } from '$lib/server/clock';
-import type { Database } from '$lib/server/db';
+import type { Clock } from '#lib/server/clock.js';
+import type { Database } from '#lib/server/db/index.js';
 import {
 	event,
 	eventTag,
@@ -9,15 +9,15 @@ import {
 	location,
 	post,
 	tag
-} from '$lib/server/db/schema';
-import { campusLocations, campusTags } from '$lib/server/campus-catalog';
+} from '#lib/server/db/schema.js';
+import { campusLocations, campusTags } from '#lib/server/campus-catalog.js';
 import {
 	formatCampusInput,
 	parseEventDetails,
 	type EventAuthoringOptions,
 	type EventSaveResult,
 	type ManagedEvent
-} from '$lib/event-authoring';
+} from '#lib/event-authoring.js';
 import { getPublicEvent } from './events';
 
 export async function getEventAuthoringOptions(

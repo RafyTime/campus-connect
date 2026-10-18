@@ -1,5 +1,5 @@
 <script lang="ts">
-	import GroupDetailsForm from '$lib/components/group-details-form.svelte';
+	import GroupDetailsForm from '#lib/components/group-details-form.svelte';
 	let { data }: { data: { groupId: string; name: string; description: string } } = $props();
 </script>
 

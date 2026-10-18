@@ -1,6 +1,6 @@
 # Campus Connect toolchain upgrade
 
-Status: ready
+Status: completed
 
 ## Problem Statement
 
@@ -106,4 +106,8 @@ The installed Better Auth release declares Kit 2 support only. Upstream now decl
 
 ## Comments
 
-Published from the agreed upgrade review using the to-spec workflow. The local `ready` status represents the `ready-for-agent` triage label. Implementation and ticket breakdown have not started.
+Published from the agreed upgrade review using the to-spec workflow. Implementation is tracked in tickets 00 through 02.
+
+18 October 2026: Leo explicitly waived the passing requirement for `src/routes/event-filtering.e2e.ts`'s "changing a filter announces loading until the new results arrive" test while discovery filters receive separate work. Disable only its declaration with `test.skip`; retain its entire body and assertions. This is the sole exception to the no-skips acceptance requirement. Report it as skipped in final evidence. Leo also authorized local commits using gitmoji; pushes, pull requests, production access, and deployment remain outside the authorized scope.
+
+18 October 2026: Completed on `codex/toolchain-upgrade`. Tickets 00 through 02 are completed, subject to the single explicit test waiver above. [Workflow evidence](../../evidence/toolchain-upgrade-00.md), [migration evidence](../../evidence/toolchain-upgrade-01.md), and [built Node evidence](../../evidence/toolchain-upgrade-02.md) record the selected versions, actual clean installs, commands, results, warnings, and verification limits. Final quality passed 153 unit/component tests and 65 active browser tests with one waived skip, plus formatting, linting, type checking, and production build. The same 65 active browser tests passed against the actual Node artifact after compilation with an unavailable database path; all 454 artifact hashes stayed unchanged. Final standards and spec reviews against pre-implementation commit `798f9b1` each found zero issues. Remote CI, Railway TLS/proxy behavior, and HTTPS cookies remain for a separately authorized release. Nothing was pushed or deployed.
