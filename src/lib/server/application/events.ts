@@ -1,6 +1,7 @@
 import { and, asc, eq, gt } from 'drizzle-orm';
-import { fromDate, parseDate, toCalendarDate } from '@internationalized/date';
+import { fromDate, parseDate, startOfWeek, toCalendarDate } from '@internationalized/date';
 import { campusTimeZone } from '#lib/event-authoring.js';
+import { discoveryDatePresets, discoveryResponseModes } from '#lib/event-filter-options.js';
 import type { Clock } from '#lib/server/clock.js';
 import type { Database } from '#lib/server/db/index.js';
 import { event, group, tag } from '#lib/server/db/schema.js';
@@ -63,23 +64,47 @@ export async function searchPublicEvents(db: Database, clock: Clock, input: unkn
 	const requestedHost = params.get('host')?.trim().toLowerCase();
 	const hostType = requestedHost === 'personal' || requestedHost === 'group' ? requestedHost : '';
 	const date = normalizeDiscoveryDate(params.get('date'));
-	const events = (await discoverPublicEvents(db, clock)).filter(
-		(event) =>
+	const responseModes = [
+		...new Set(params.getAll('type').map((mode) => mode.trim().toLowerCase()))
+	].filter((mode): mode is PublicResponseMode =>
+		discoveryResponseModes.some((known) => known === mode)
+	);
+	const current = toCalendarDate(fromDate(clock.now(), campusTimeZone));
+	const week = startOfWeek(current, 'de-DE');
+	const start =
+		date === 'today'
+			? current
+			: date === 'tomorrow'
+				? current.add({ days: 1 })
+				: date === 'week'
+					? week
+					: date === 'next-week'
+						? week.add({ days: 7 })
+						: date
+							? parseDate(date)
+							: null;
+	const end = start?.add({ days: date === 'week' || date === 'next-week' ? 7 : 1 });
+	const events = (await discoverPublicEvents(db, clock)).filter((event) => {
+		const campusDate = toCalendarDate(fromDate(event.startsAt, campusTimeZone));
+		return (
 			(!tagIds.length || event.tags.some((tag) => tagIds.includes(tag.id))) &&
 			(!groupId || (event.host.type === 'group' && event.host.id === groupId)) &&
 			(!hostType || event.host.type === hostType) &&
-			(!date || toCalendarDate(fromDate(event.startsAt, campusTimeZone)).toString() === date)
-	);
+			(!responseModes.length || responseModes.includes(event.responseMode)) &&
+			(!start || !end || (campusDate.compare(start) >= 0 && campusDate.compare(end) < 0))
+		);
+	});
 	return {
 		events,
 		count: events.length,
-		filters: { tagIds, groupId, hostType, date },
+		filters: { tagIds, groupId, hostType, date, responseModes },
 		options: { tags, groups }
 	};
 }
 
 function normalizeDiscoveryDate(value: string | null): string {
 	const date = value?.trim() ?? '';
+	if (discoveryDatePresets.some((preset) => preset.value === date)) return date;
 	if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return '';
 	try {
 		return parseDate(date).toString();

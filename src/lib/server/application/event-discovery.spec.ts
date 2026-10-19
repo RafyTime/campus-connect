@@ -9,6 +9,80 @@ import {
 } from '#lib/server/fixtures.js';
 
 describe('public Event filtering', () => {
+	it('matches any selected response mode, normalizes Type values, and combines with other filters', async () => {
+		using database = await createTestDatabase();
+		const clock = createTestClock('2026-09-01T08:00:00Z');
+		for (const responseMode of ['announcement', 'interest', 'registration'] as const) {
+			await insertPublicPersonalEvent(database.db, clock, {
+				id: responseMode,
+				title: responseMode,
+				responseMode,
+				startsAt: new Date('2026-09-02T12:00:00Z'),
+				endsAt: new Date('2026-09-02T14:00:00Z')
+			});
+		}
+		const result = await searchPublicEvents(
+			database.db,
+			clock,
+			'type=%20INTEREST%20&type=registration&type=interest&type=unknown&host=personal&tag=tag-fixture-social&date=tomorrow'
+		);
+		expect(result.filters.responseModes).toEqual(['interest', 'registration']);
+		expect(result.events.map((event) => event.id).sort()).toEqual(['interest', 'registration']);
+		expect(result.count).toBe(2);
+		const conflict = await searchPublicEvents(database.db, clock, 'type=interest&host=group');
+		expect(conflict.count).toBe(0);
+		const invalid = await searchPublicEvents(database.db, clock, 'type=unknown');
+		expect(invalid.filters.responseModes).toEqual([]);
+		expect(invalid.count).toBe(3);
+	});
+	it.each([
+		{
+			now: '2026-10-24T22:30:00Z',
+			today: '2026-10-25T12:00:00Z',
+			tomorrow: '2026-10-25T23:00:00Z',
+			lastNextWeek: '2026-11-01T22:59:00Z',
+			afterNextWeek: '2026-11-01T23:00:00Z'
+		},
+		{
+			now: '2026-03-28T23:30:00Z',
+			today: '2026-03-29T12:00:00Z',
+			tomorrow: '2026-03-29T22:00:00Z',
+			lastNextWeek: '2026-04-05T21:59:00Z',
+			afterNextWeek: '2026-04-05T22:00:00Z'
+		}
+	])(
+		'resolves relative dates around $now and reevaluates shared presets after midnight',
+		async ({ now, today, tomorrow, lastNextWeek, afterNextWeek }) => {
+			using database = await createTestDatabase();
+			const clock = createTestClock(now);
+			for (const [id, startsAt] of Object.entries({
+				today,
+				tomorrow,
+				lastNextWeek,
+				afterNextWeek
+			})) {
+				await insertPublicPersonalEvent(database.db, clock, {
+					id,
+					title: id,
+					startsAt: new Date(startsAt),
+					endsAt: new Date(new Date(afterNextWeek).getTime() + 86400000)
+				});
+			}
+			for (const [preset, ids] of [
+				['today', ['today']],
+				['tomorrow', ['tomorrow']],
+				['week', ['today']],
+				['next-week', ['tomorrow', 'lastNextWeek']]
+			] as const) {
+				const result = await searchPublicEvents(database.db, clock, `date=${preset}`);
+				expect(result.filters.date).toBe(preset);
+				expect(result.events.map((event) => event.id)).toEqual(ids);
+			}
+			clock.set(tomorrow); // Monday midnight after the clock change.
+			const reopened = await searchPublicEvents(database.db, clock, 'date=today');
+			expect(reopened.events.map((event) => event.id)).toEqual(['tomorrow']);
+		}
+	);
 	it.each([
 		{
 			date: '2026-09-02',
@@ -153,6 +227,7 @@ describe('public Event filtering', () => {
 		);
 		expect(result.filters).toEqual({
 			tagIds: ['tag-fixture-social'],
+			responseModes: [],
 			date: '',
 			groupId: '',
 			hostType: 'personal'
@@ -166,7 +241,13 @@ describe('public Event filtering', () => {
 			'date=2026-13-01'
 		]) {
 			const ignored = await searchPublicEvents(database.db, clock, input);
-			expect(ignored.filters).toEqual({ tagIds: [], date: '', groupId: '', hostType: '' });
+			expect(ignored.filters).toEqual({
+				tagIds: [],
+				date: '',
+				groupId: '',
+				hostType: '',
+				responseModes: []
+			});
 			expect(ignored.count).toBe(2);
 		}
 	});
