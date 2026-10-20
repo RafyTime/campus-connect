@@ -287,7 +287,7 @@ async function insertPublicEvent(
 	}
 }
 
-/** Seed an existing interest, including retained history, without duplicating the relationship. */
+/** Seed existing Participation, including retained history, without duplicating the relationship. */
 export async function insertParticipation(
 	db: Database,
 	clock: Clock,

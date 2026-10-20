@@ -172,7 +172,8 @@ export const eventRelations = relations(event, ({ one, many }) => ({
 		fields: [event.locationId],
 		references: [location.id]
 	}),
-	eventTags: many(eventTag)
+	eventTags: many(eventTag),
+	participations: many(participation)
 }));
 
 export const eventTagRelations = relations(eventTag, ({ one }) => ({
@@ -212,3 +213,7 @@ export const participation = sqliteTable(
 		check('participation_kind', sql`${table.kind} in ('interest', 'registration')`)
 	]
 );
+
+export const participationRelations = relations(participation, ({ one }) => ({
+	event: one(event, { fields: [participation.eventId], references: [event.id] })
+}));

@@ -13,24 +13,30 @@
 	<header class="flex flex-col gap-2">
 		<h1 class="font-heading text-2xl font-medium tracking-tight">My activity</h1>
 		<p class="text-muted-foreground">
-			Your interests, including cancelled and ended Events. Open an upcoming Event to withdraw
-			interest.
+			Your interests and registrations, including cancelled and ended Events. Open an upcoming Event
+			to withdraw interest or cancel registration.
 		</p>
 	</header>
 	{#if events.length === 0}
 		<Empty.Root
 			><Empty.Header
-				><Empty.Title>No interests yet</Empty.Title><Empty.Description
-					>Explore campus Events and express interest to save them here.</Empty.Description
+				><Empty.Title>No activity yet</Empty.Title><Empty.Description
+					>Explore campus Events and express interest or register to save them here.</Empty.Description
 				></Empty.Header
 			><Empty.Content><Button href="/" class="min-h-11">Discover Events</Button></Empty.Content
 			></Empty.Root
 		>
 	{:else}
-		<ul class="grid grid-cols-1 gap-4 md:grid-cols-2" aria-label="My interests">
+		<ul class="grid grid-cols-1 gap-4 md:grid-cols-2" aria-label="My activity">
 			{#each events as event (event.id)}
 				<li class="flex min-w-0 flex-col gap-2">
-					<p><Badge variant="secondary">Interest · {eventStatusLabel(event.status)}</Badge></p>
+					<p>
+						<Badge variant="secondary"
+							>{event.participationKind === 'registration' ? 'Registered' : 'Interest'} · {eventStatusLabel(
+								event.status
+							)}</Badge
+						>
+					</p>
 					<EventCard {event} />
 				</li>
 			{/each}

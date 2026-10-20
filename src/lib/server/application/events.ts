@@ -28,7 +28,8 @@ export type {
 const discoverWith = {
 	post: { with: { author: true, group: true } },
 	location: true,
-	eventTags: { with: { tag: true } }
+	eventTags: { with: { tag: true } },
+	participations: { columns: { kind: true } }
 } as const;
 
 export async function discoverPublicEvents(
@@ -152,6 +153,7 @@ type LoadedEvent = {
 	};
 	location: PublicEventDetail['location'];
 	eventTags: { tag: { id: string; name: string } }[];
+	participations: { kind: 'interest' | 'registration' }[];
 };
 
 function toHost(row: LoadedEvent): PublicEventSummary['host'] {
@@ -193,7 +195,13 @@ function toSummary(row: LoadedEvent, now: Date): PublicEventSummary {
 			.map((eventTag) => ({ id: eventTag.tag.id, name: eventTag.tag.name }))
 			.sort((left, right) => left.name.localeCompare(right.name)),
 		responseMode: row.responseMode,
-		capacityState: capacityState(row.responseMode, row.capacity),
+		capacityState: capacityState(
+			row.responseMode,
+			row.capacity === null
+				? null
+				: row.capacity -
+						row.participations.filter((record) => record.kind === 'registration').length
+		),
 		status: publicStatus(row.status, row.endsAt, now)
 	};
 }

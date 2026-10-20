@@ -128,7 +128,8 @@ describe('Group and public group Event seed', () => {
 			'event-plain-text-safety',
 			'event-evening-run',
 			'event-group-run',
-			'event-stats-study-group'
+			'event-stats-study-group',
+			'event-full-workshop'
 		]);
 		expect(events.find((record) => record.id === 'event-film-night')?.host).toMatchObject({
 			type: 'group',
@@ -151,7 +152,7 @@ describe('Group and public group Event seed', () => {
 		expect(users.value).toBe(5);
 		expect(groups.value).toBe(3);
 		expect(memberships.value).toBe(8);
-		expect(events.value).toBe(12);
+		expect(events.value).toBe(14);
 	});
 });
 

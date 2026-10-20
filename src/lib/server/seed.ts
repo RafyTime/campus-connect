@@ -233,7 +233,7 @@ export async function seedGroupsAndPublicGroupEvents(db: Database, clock: Clock)
 		id: 'event-group-run',
 		title: 'Sunday campus run',
 		description:
-			'A paced 5 km from the sports field. Twelve places keep the group small enough to stay together.',
+			'A paced 5 km from the sports field. Two places keep the group small enough to stay together.',
 		startsAt: at(clock, 80),
 		endsAt: at(clock, 82),
 		groupId: 'group-campus-runners',
@@ -241,7 +241,7 @@ export async function seedGroupsAndPublicGroupEvents(db: Database, clock: Clock)
 		location: locations['location-sports'],
 		tags: [tags['tag-sports'], tags['tag-wellness']],
 		responseMode: 'registration',
-		capacity: 12
+		capacity: 2
 	});
 
 	await insertPublicGroupEvent(db, clock, {
@@ -277,6 +277,7 @@ export async function seedCampusConnect(db: Database, clock: Clock) {
 	await seedPublicPersonalEvents(db, clock);
 	await seedGroupsAndPublicGroupEvents(db, clock);
 	await seedInterests(db, clock);
+	await seedRegistrations(db, clock);
 }
 
 /** Lena has an upcoming interest, Sofia has cancelled history, and Mira has an empty activity. */
@@ -291,4 +292,33 @@ export async function seedInterests(db: Database, clock: Clock) {
 		eventId: 'event-cancelled-picnic',
 		kind: 'interest'
 	});
+}
+
+/** Available, nearly full, full, confirmed, and cancelled registration examples use stable keys. */
+export async function seedRegistrations(db: Database, clock: Clock) {
+	await insertParticipation(db, clock, {
+		userId: authors.jonas.id,
+		eventId: 'event-group-run',
+		kind: 'registration'
+	});
+	for (const status of ['scheduled', 'cancelled'] as const) {
+		const id = status === 'scheduled' ? 'event-full-workshop' : 'event-cancelled-workshop';
+		await insertPublicPersonalEvent(db, clock, {
+			id,
+			title: status === 'scheduled' ? 'Small campus workshop' : 'Cancelled campus workshop',
+			startsAt: at(clock, 160),
+			endsAt: at(clock, 162),
+			author: authors.campusOffice,
+			location: locations['location-library'],
+			tags: [tags['tag-study']],
+			responseMode: 'registration',
+			capacity: 1,
+			status
+		});
+		await insertParticipation(db, clock, {
+			userId: authors.jonas.id,
+			eventId: id,
+			kind: 'registration'
+		});
+	}
 }

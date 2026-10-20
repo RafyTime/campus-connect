@@ -34,7 +34,7 @@ for (const viewport of viewports) {
 		await page.setViewportSize(viewport);
 		await register(page);
 		await page.goto('/my-activity');
-		await expect(page.getByText('No interests yet')).toBeVisible();
+		await expect(page.getByText('No activity yet')).toBeVisible();
 		await page.goto('/events/event-board-game-evening');
 		const button = page.getByRole('button', { name: 'Express interest', exact: true });
 		await expect(button).toBeEnabled();
@@ -77,7 +77,7 @@ for (const viewport of viewports) {
 		await page.getByRole('button', { name: 'Withdraw interest' }).click();
 		await expect(page.getByRole('button', { name: 'Express interest', exact: true })).toBeEnabled();
 		await page.goto('/my-activity');
-		await expect(page.getByText('No interests yet')).toBeVisible();
+		await expect(page.getByText('No activity yet')).toBeVisible();
 	});
 	test(`visitor, unavailable and server failure states fit ${viewport.width}px`, async ({
 		page
@@ -120,7 +120,7 @@ for (const viewport of viewports) {
 		await noOverflow(page);
 		await page.unroute('**/_app/remote/**');
 		await page.goto('/my-activity');
-		await expect(page.getByText('No interests yet')).toBeVisible();
+		await expect(page.getByText('No activity yet')).toBeVisible();
 	});
 }
 
@@ -162,5 +162,5 @@ test('My activity presents loading and recoverable read failure', async ({ page 
 	await expect(page.getByRole('heading', { name: 'Something went wrong' })).toBeVisible();
 	await page.unroute('**/_app/remote/**');
 	await page.reload();
-	await expect(page.getByText('No interests yet')).toBeVisible();
+	await expect(page.getByText('No activity yet')).toBeVisible();
 });
