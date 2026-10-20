@@ -38,6 +38,7 @@
 		'/': CompassIcon,
 		'/groups': UserGroupIcon,
 		'/create': Add01Icon,
+		'/my-activity': Calendar03Icon,
 		'/my-events': Calendar03Icon
 	} as const;
 </script>
@@ -59,7 +60,10 @@
 				Campus Connect
 			</a>
 
-			<nav aria-label="Primary" class="hidden min-w-0 flex-1 items-center gap-1 md:flex">
+			<nav
+				aria-label="Primary"
+				class={['hidden min-w-0 flex-1 items-center gap-1', user ? 'lg:flex' : 'md:flex']}
+			>
 				{#each currentPrimaryDestinations as destination (destination.href)}
 					{@const current = isCurrentDestination(pathname, destination.href)}
 					<Button
@@ -95,7 +99,10 @@
 		id="main-content"
 		tabindex="-1"
 		aria-busy={isNavigating}
-		class="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-6 pb-24 focus-visible:ring-3 focus-visible:ring-ring/30 md:py-8 md:pb-8"
+		class={[
+			'mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-6 pb-24 focus-visible:ring-3 focus-visible:ring-ring/30',
+			user ? 'lg:py-8 lg:pb-8' : 'md:py-8 md:pb-8'
+		]}
 	>
 		{#if isNavigating}
 			<div
@@ -120,7 +127,10 @@
 
 	<nav
 		aria-label="Primary"
-		class="fixed inset-x-0 bottom-0 z-10 border-t bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
+		class={[
+			'fixed inset-x-0 bottom-0 z-10 border-t bg-background pb-[env(safe-area-inset-bottom)]',
+			user ? 'lg:hidden' : 'md:hidden'
+		]}
 	>
 		<div class="flex items-stretch gap-1 px-2 py-1">
 			{#each currentPrimaryDestinations as destination (destination.href)}
@@ -128,7 +138,7 @@
 				<Button
 					href={resolve(destination.href)}
 					variant={current ? 'secondary' : 'ghost'}
-					class="min-h-11 min-w-11 flex-1 flex-col gap-0.5 py-2 text-xs"
+					class="min-h-11 min-w-0 flex-1 flex-col gap-0.5 px-1 py-2 text-xs"
 					aria-current={current ? 'page' : undefined}
 				>
 					<HugeiconsIcon icon={primaryIcons[destination.href]} />

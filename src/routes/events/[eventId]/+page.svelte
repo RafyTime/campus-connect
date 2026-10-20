@@ -8,6 +8,7 @@
 	import HostAvatar from '#lib/components/host-avatar.svelte';
 	import { capacityStateIcon, eventStatusIcon } from '#lib/event-icons.js';
 	import { eventStatusLabel, responseModeLabel } from '#lib/event-labels.js';
+	import InterestControls from '#lib/components/interest-controls.svelte';
 	import { loadPublicEvent } from '#lib/events.remote.js';
 
 	const event = $derived(await loadPublicEvent(page.params.eventId ?? ''));
@@ -45,6 +46,10 @@
 			<time datetime={event.startsAt.toISOString()}>{event.exactTimeLabel}</time>
 		</p>
 	</header>
+
+	{#if event.responseMode === 'interest'}
+		<InterestControls eventId={event.id} user={page.data.user} />
+	{/if}
 
 	<section class="flex flex-col gap-4" aria-labelledby="event-host-heading">
 		<h2 id="event-host-heading" class="font-heading text-lg font-medium tracking-tight">Host</h2>

@@ -193,3 +193,22 @@ export const tagRelations = relations(tag, ({ many }) => ({
 export const locationRelations = relations(location, ({ many }) => ({
 	events: many(event)
 }));
+
+export const participation = sqliteTable(
+	'participation',
+	{
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id),
+		eventId: text('event_id')
+			.notNull()
+			.references(() => event.id),
+		kind: text('kind', { enum: ['interest', 'registration'] }).notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull()
+	},
+	(table) => [
+		primaryKey({ columns: [table.userId, table.eventId] }),
+		index('participation_event_idx').on(table.eventId),
+		check('participation_kind', sql`${table.kind} in ('interest', 'registration')`)
+	]
+);

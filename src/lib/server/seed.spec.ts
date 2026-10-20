@@ -1,5 +1,6 @@
 import { count } from 'drizzle-orm';
 import { describe, expect, it } from 'vite-plus/test';
+import { listMyActivity, getInterestState } from '#lib/server/application/participation.js';
 import { discoverPublicEvents } from '#lib/server/application/events.js';
 import { getPublicGroup, listPublicGroups } from '#lib/server/application/groups.js';
 import { event, group, groupMembership, location, tag, user } from '#lib/server/db/schema.js';
@@ -151,5 +152,27 @@ describe('Group and public group Event seed', () => {
 		expect(groups.value).toBe(3);
 		expect(memberships.value).toBe(8);
 		expect(events.value).toBe(12);
+	});
+});
+
+describe('Participation seed', () => {
+	it('seeds stable upcoming and cancelled interests, author exclusion, and an empty activity', async () => {
+		using database = await createTestDatabase();
+		const clock = createTestClock(campusNow);
+		await seedCampusConnect(database.db, clock);
+		await seedCampusConnect(database.db, clock);
+		expect(
+			(await listMyActivity(database.db, clock, { id: 'user-lena' })).map((event) => event.id)
+		).toEqual(['event-board-game-evening']);
+		expect(
+			(await listMyActivity(database.db, clock, { id: 'user-sofia' })).map((event) => ({
+				id: event.id,
+				status: event.status
+			}))
+		).toEqual([{ id: 'event-cancelled-picnic', status: 'cancelled' }]);
+		expect(await listMyActivity(database.db, clock, { id: 'user-mira' })).toEqual([]);
+		expect(
+			await getInterestState(database.db, clock, { id: 'user-jonas' }, 'event-film-night')
+		).toMatchObject({ author: true, interested: false });
 	});
 });

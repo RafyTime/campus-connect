@@ -16,6 +16,7 @@ export const accountDestinations = [
 export const signedInPrimaryDestinations = [
 	...primaryDestinations,
 	{ href: '/create', label: 'Create' },
+	{ href: '/my-activity', label: 'My activity' },
 	{ href: '/my-events', label: 'My events' }
 ] as const satisfies readonly ShellDestination[];
 

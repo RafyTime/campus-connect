@@ -2,7 +2,17 @@ import { eq } from 'drizzle-orm';
 import type { Clock } from './clock';
 import type { Database } from './db/client';
 import type { GroupMembershipRole } from './db/domain.schema';
-import { event, eventTag, group, groupMembership, location, post, tag, user } from './db/schema';
+import {
+	event,
+	eventTag,
+	group,
+	groupMembership,
+	location,
+	participation,
+	post,
+	tag,
+	user
+} from './db/schema';
 import { groupNameKey } from './group-name';
 
 export type ResponseMode = 'announcement' | 'interest' | 'registration';
@@ -275,4 +285,20 @@ async function insertPublicEvent(
 			}))
 		);
 	}
+}
+
+/** Seed an existing interest, including retained history, without duplicating the relationship. */
+export async function insertParticipation(
+	db: Database,
+	clock: Clock,
+	fixture: {
+		userId: string;
+		eventId: string;
+		kind: 'interest' | 'registration';
+	}
+) {
+	await db
+		.insert(participation)
+		.values({ ...fixture, createdAt: clock.now() })
+		.onConflictDoNothing();
 }

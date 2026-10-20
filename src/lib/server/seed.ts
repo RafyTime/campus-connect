@@ -4,6 +4,7 @@ import type { Database } from './db/client';
 import { missingWikimediaAvatarUrl, wikimediaHostPortraitUrl } from './application/remote-images';
 import {
 	insertGroup,
+	insertParticipation,
 	insertLocation,
 	insertTag,
 	insertPublicGroupEvent,
@@ -275,4 +276,19 @@ export async function seedGroupsAndPublicGroupEvents(db: Database, clock: Clock)
 export async function seedCampusConnect(db: Database, clock: Clock) {
 	await seedPublicPersonalEvents(db, clock);
 	await seedGroupsAndPublicGroupEvents(db, clock);
+	await seedInterests(db, clock);
+}
+
+/** Lena has an upcoming interest, Sofia has cancelled history, and Mira has an empty activity. */
+export async function seedInterests(db: Database, clock: Clock) {
+	await insertParticipation(db, clock, {
+		userId: authors.lena.id,
+		eventId: 'event-board-game-evening',
+		kind: 'interest'
+	});
+	await insertParticipation(db, clock, {
+		userId: authors.sofia.id,
+		eventId: 'event-cancelled-picnic',
+		kind: 'interest'
+	});
 }

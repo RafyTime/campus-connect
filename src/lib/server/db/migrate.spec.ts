@@ -120,7 +120,9 @@ describe('applyMigrations', () => {
 					args: ['duplicate', 'MÜNCHEN Club', 'münchen club', 'Duplicate', 0, 0]
 				})
 			).rejects.toThrow(/UNIQUE/);
-			expect((await db.$client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(4);
+			expect((await db.$client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(
+				readMigrationFiles({ migrationsFolder: 'drizzle' }).length
+			);
 		} finally {
 			db.$client.close();
 		}
