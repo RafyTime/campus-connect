@@ -26,7 +26,10 @@ export type EventSaveResult =
 				| 'invalid'
 				| 'forbidden'
 				| 'not-found'
-				| 'read-only'
+				| 'locked-fields'
+				| 'capacity-conflict'
+				| 'cancelled'
+				| 'ended'
 				| 'unavailable';
 			fieldErrors?: EventFieldErrors;
 	  };
@@ -40,6 +43,7 @@ export type ManagedEvent = EventFormValues & {
 	hostName: string;
 	author: { id: string; displayName: string };
 	status: PublicEventSummary['status'];
+	participationLocked: boolean;
 };
 
 export function formatCampusInput(date: Date): string {

@@ -217,10 +217,13 @@ describe('public group Event authoring', () => {
 			expect(managed.find((event) => event.id === 'event-cancelled-group-screening')?.status).toBe(
 				'cancelled'
 			);
-			for (const eventId of ['event-ended-film-meetup', 'event-cancelled-group-screening']) {
+			for (const [eventId, reason] of [
+				['event-ended-film-meetup', 'ended'],
+				['event-cancelled-group-screening', 'cancelled']
+			] as const) {
 				await expect(editEvent(database.db, clock, { id }, eventId, validInput)).resolves.toEqual({
 					ok: false,
-					reason: 'read-only'
+					reason
 				});
 			}
 		}

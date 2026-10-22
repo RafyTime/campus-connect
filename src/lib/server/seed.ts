@@ -278,6 +278,7 @@ export async function seedCampusConnect(db: Database, clock: Clock) {
 	await seedGroupsAndPublicGroupEvents(db, clock);
 	await seedInterests(db, clock);
 	await seedRegistrations(db, clock);
+	await seedEndedParticipation(db, clock);
 }
 
 /** Lena has an upcoming interest, Sofia has cancelled history, and Mira has an empty activity. */
@@ -321,4 +322,24 @@ export async function seedRegistrations(db: Database, clock: Clock) {
 			kind: 'registration'
 		});
 	}
+}
+
+/** An ended, participated Event demonstrates read-only history without appearing in Discover. */
+export async function seedEndedParticipation(db: Database, clock: Clock) {
+	await insertPublicPersonalEvent(db, clock, {
+		id: 'event-ended-workshop',
+		title: 'Completed campus workshop',
+		startsAt: at(clock, -24),
+		endsAt: at(clock, -22),
+		author: authors.lena,
+		location: locations['location-library'],
+		tags: [tags['tag-tech']],
+		responseMode: 'registration',
+		capacity: 2
+	});
+	await insertParticipation(db, clock, {
+		userId: authors.jonas.id,
+		eventId: 'event-ended-workshop',
+		kind: 'registration'
+	});
 }

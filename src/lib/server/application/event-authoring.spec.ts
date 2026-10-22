@@ -296,10 +296,10 @@ describe('personal Event authoring', () => {
 		await seedPublicPersonalEvents(database.db, clock);
 		await expect(
 			editEvent(database.db, clock, { id: 'user-mira' }, 'event-ended-library-hours', validInput)
-		).resolves.toEqual({ ok: false, reason: 'read-only' });
+		).resolves.toEqual({ ok: false, reason: 'ended' });
 		await expect(
 			editEvent(database.db, clock, { id: 'user-jonas' }, 'event-cancelled-picnic', validInput)
-		).resolves.toEqual({ ok: false, reason: 'read-only' });
+		).resolves.toEqual({ ok: false, reason: 'cancelled' });
 		expect(
 			(await listMyEvents(database.db, clock, { id: 'user-mira' })).find(
 				(event) => event.id === 'event-ended-library-hours'

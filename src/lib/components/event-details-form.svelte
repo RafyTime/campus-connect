@@ -38,6 +38,7 @@
 			manualLocation: ''
 		}
 	);
+	const locked = $derived(mode === 'edit' && Boolean(initial?.participationLocked));
 	const editForm = $derived(editEventForm.for(initial?.id ?? ''));
 	const form = $derived(mode === 'create' ? createEventForm : editForm);
 	const responseMode = $derived(form.fields.responseMode.value() ?? defaults.responseMode);
@@ -88,6 +89,17 @@
 				>{transportFailure ? 'The request failed. Try again.' : generalIssue}</Alert.Description
 			>
 		</Alert.Root>
+	{/if}
+	{#if locked}
+		<Alert.Root>
+			<Alert.Title>Participation protects this Event</Alert.Title>
+			<Alert.Description
+				>Response mode, start, end and Location are locked. You can update the title, description
+				and Tags, or increase capacity.</Alert.Description
+			>
+		</Alert.Root>
+		<input {...form.fields.responseMode.as('hidden', defaults.responseMode)} />
+		<input {...form.fields.locationId.as('hidden', defaults.locationId)} />
 	{/if}
 	<Field.Group>
 		{#if mode === 'create'}
@@ -173,6 +185,7 @@
 								() => form.fields[key].value() ?? defaults[key],
 								(value: string) => form.fields[key].set(value)
 							}
+							readonly={locked}
 							id={`event-${key}`}
 							class="min-h-11 min-w-0"
 							aria-invalid={issues(key).length > 0}
@@ -222,6 +235,7 @@
 					(value: EventFormValues['responseMode'] | undefined) =>
 						form.fields.responseMode.set(value)
 				}
+				disabled={locked}
 				id="event-response-mode"
 				class="w-full [&_select]:min-h-11"
 				aria-invalid={issues('responseMode').length > 0}
@@ -250,7 +264,7 @@
 					type="number"
 					id="event-capacity"
 					class="min-h-11"
-					min={1}
+					min={locked ? Number(defaults.capacity) : 1}
 					step={1}
 					inputmode="numeric"
 					aria-invalid={issues('capacity').length > 0}
@@ -268,6 +282,7 @@
 					() => form.fields.locationId.value(),
 					(value: string | undefined) => form.fields.locationId.set(value)
 				}
+				disabled={locked}
 				id="event-location"
 				class="w-full [&_select]:min-h-11"
 				aria-invalid={issues('locationId').length > 0}
@@ -290,6 +305,7 @@
 						() => form.fields.manualLocation.value() ?? defaults.manualLocation,
 						(value: string) => form.fields.manualLocation.set(value)
 					}
+					readonly={locked}
 					id="event-manual-location"
 					class="min-h-11"
 					aria-invalid={issues('manualLocation').length > 0}

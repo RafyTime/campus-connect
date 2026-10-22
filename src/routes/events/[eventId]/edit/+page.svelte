@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import EventCancellation from '#lib/components/event-cancellation.svelte';
 	import EventDetailsForm from '#lib/components/event-details-form.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -17,10 +18,13 @@
 	</header>
 	{#if event.status === 'scheduled'}
 		{#key event.id}<EventDetailsForm mode="edit" {options} initial={event} />{/key}
+		<EventCancellation eventId={event.id} />
 	{:else}
 		<Alert.Root
 			><Alert.Title>Event is read-only</Alert.Title><Alert.Description
-				>Ended and cancelled Events cannot be edited.</Alert.Description
+				>{event.status === 'cancelled'
+					? 'This Event is cancelled. Cancellation is final; its details and Participation are retained.'
+					: 'This Event has ended. Its details and Participation are retained as read-only history.'}</Alert.Description
 			></Alert.Root
 		>
 		<Button href={`/events/${event.id}`} variant="outline" class="min-h-11">View Event</Button>

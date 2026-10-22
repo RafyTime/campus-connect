@@ -1,9 +1,10 @@
 import { error, invalid, redirect } from '@sveltejs/kit';
-import { form, getRequestEvent, query } from '$app/server';
+import { command, form, getRequestEvent, query } from '$app/server';
 import { systemClock } from '#lib/server/clock.js';
 import { searchPublicEvents, getPublicEvent } from '#lib/server/application/events.js';
 import { getDb } from '#lib/server/db/index.js';
 import {
+	cancelEvent,
 	createEvent,
 	editEvent,
 	getEventAuthoringOptions,
@@ -78,8 +79,27 @@ export const editEventForm = form(
 	}
 );
 
+export const cancelManagedEvent = command('unchecked', async (eventId: string) => {
+	if (typeof eventId !== 'string' || !eventId) error(400, 'Invalid Event');
+	const result = await cancelEvent(
+		getDb(),
+		systemClock,
+		getRequestEvent().locals.user ?? null,
+		eventId
+	);
+	if (result.ok || result.reason === 'cancelled' || result.reason === 'ended') {
+		await loadPublicEvent(eventId).refresh();
+		await loadEventForManagement(eventId).refresh();
+		await loadMyEvents().refresh();
+		await listPublicEvents('').refresh();
+		const updated = await getPublicEvent(getDb(), systemClock, eventId);
+		if (updated?.host.type === 'group') await loadPublicGroup(updated.host.id).refresh();
+	}
+	return result;
+});
+
 function eventSaveError(result: Extract<EventSaveResult, { ok: false }>): never {
-	if (result.reason === 'invalid')
+	if (result.fieldErrors)
 		invalid(
 			...Object.entries(result.fieldErrors ?? {}).map(([field, message]) => ({
 				path: [field],
@@ -90,7 +110,11 @@ function eventSaveError(result: Extract<EventSaveResult, { ok: false }>): never 
 		unauthenticated: 'Sign in to manage Events.',
 		forbidden: 'You do not have permission to publish or manage Events for this host.',
 		'not-found': 'This Event no longer exists.',
-		'read-only': 'Ended and cancelled Events cannot be edited.',
+		'locked-fields': 'Participation has locked the schedule, response mode and Location.',
+		'capacity-conflict': 'Capacity can only increase after Participation.',
+		cancelled: 'This Event is cancelled. Cancellation is final.',
+		ended: 'This Event has ended and is read-only.',
+		invalid: 'Check the Event fields.',
 		unavailable: 'Could not save the Event. Try again.'
 	} as const;
 	invalid(messages[result.reason]);

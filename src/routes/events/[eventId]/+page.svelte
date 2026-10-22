@@ -5,6 +5,7 @@
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Alert from '#lib/components/ui/alert/index.js';
 	import HostAvatar from '#lib/components/host-avatar.svelte';
 	import { capacityStateIcon, eventStatusIcon } from '#lib/event-icons.js';
 	import { eventStatusLabel, responseModeLabel } from '#lib/event-labels.js';
@@ -47,6 +48,17 @@
 			<time datetime={event.startsAt.toISOString()}>{event.exactTimeLabel}</time>
 		</p>
 	</header>
+
+	{#if event.status !== 'scheduled'}
+		<Alert.Root>
+			<Alert.Title>{event.status === 'cancelled' ? 'Event cancelled' : 'Event ended'}</Alert.Title>
+			<Alert.Description
+				>{event.status === 'cancelled'
+					? 'This Event will not take place. Cancellation is final. Your Participation remains in My activity.'
+					: 'This Event is read-only. Its details and Participation are retained in history.'}</Alert.Description
+			>
+		</Alert.Root>
+	{/if}
 
 	{#if event.responseMode === 'interest'}
 		<InterestControls eventId={event.id} user={page.data.user} />

@@ -152,7 +152,7 @@ describe('Group and public group Event seed', () => {
 		expect(users.value).toBe(5);
 		expect(groups.value).toBe(3);
 		expect(memberships.value).toBe(8);
-		expect(events.value).toBe(14);
+		expect(events.value).toBe(15);
 	});
 });
 
@@ -175,5 +175,15 @@ describe('Participation seed', () => {
 		expect(
 			await getInterestState(database.db, clock, { id: 'user-jonas' }, 'event-film-night')
 		).toMatchObject({ author: true, interested: false });
+	});
+	it('seeds ended Participation history idempotently', async () => {
+		using database = await createTestDatabase();
+		const clock = createTestClock(campusNow);
+		await seedCampusConnect(database.db, clock);
+		await seedCampusConnect(database.db, clock);
+		const history = (await listMyActivity(database.db, clock, { id: 'user-jonas' })).filter(
+			(event) => event.id === 'event-ended-workshop'
+		);
+		expect(history).toMatchObject([{ status: 'ended', participationKind: 'registration' }]);
 	});
 });
