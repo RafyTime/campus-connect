@@ -73,6 +73,7 @@ Do not use a Railway build or pre-deploy command for SQLite migrations because t
 
 ## Operating notes
 
+- `railpack.json` includes `deploy/railway-tools.sh` in the runtime image at `/etc/profile.d/railway-tools.sh`. Login shells reset `PATH` in `/etc/profile`; this hook restores the Mise shims and project executables so `bun`, `node`, and `vp` work in a normal `railway ssh` session without version-specific paths.
 - To inspect production data visually, download a copy of the SQLite file and run `bun run db:studio` locally against that copy. Do not expose Drizzle Studio from the Railway service.
 - Before enabling uploads, implement the planned media-storage abstraction and configure a Railway Storage Bucket. Store metadata and storage keys in SQLite, never media BLOBs.
 - Railway has one volume per service and deployments using a volume can incur a short restart. Keep the database file on the mounted volume and validate the application after each schema migration.

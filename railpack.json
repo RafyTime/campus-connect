@@ -1,0 +1,11 @@
+{
+	"$schema": "https://schema.railpack.com",
+	"steps": {
+		"build": {
+			"commands": ["...", "install -Dm644 deploy/railway-tools.sh /etc/profile.d/railway-tools.sh"]
+		}
+	},
+	"deploy": {
+		"inputs": ["...", { "step": "build", "include": ["/etc/profile.d/railway-tools.sh"] }]
+	}
+}
