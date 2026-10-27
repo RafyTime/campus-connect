@@ -7,6 +7,7 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import HostAvatar from '#lib/components/host-avatar.svelte';
+	import EventMap from '#lib/components/event-map.svelte';
 	import { capacityStateIcon, eventStatusIcon } from '#lib/event-icons.js';
 	import { eventStatusLabel, responseModeLabel } from '#lib/event-labels.js';
 	import RegistrationControls from '#lib/components/registration-controls.svelte';
@@ -103,6 +104,15 @@
 			Location
 		</h2>
 		<p>{event.locationLabel}</p>
+		{#if event.location.latitude !== null && event.location.longitude !== null}
+			{#key event.id}
+				<EventMap
+					label={event.location.label}
+					latitude={event.location.latitude}
+					longitude={event.location.longitude}
+				/>
+			{/key}
+		{/if}
 	</section>
 
 	<section class="flex flex-col gap-2" aria-labelledby="event-details-heading">
