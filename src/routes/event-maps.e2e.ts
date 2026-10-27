@@ -144,7 +144,9 @@ for (const failure of ['tiles', 'script', 'stylesheet', 'timeout'] as const) {
 			await expect(page.locator('.leaflet-marker-icon')).toBeVisible();
 			await page.clock.fastForward(12_000);
 		}
-		await expect(page.getByRole('status')).toContainText('The map is unavailable');
+		await expect(
+			page.getByRole('region', { name: 'Location map' }).getByRole('status')
+		).toContainText('The map is unavailable');
 		await expect(page.getByText('Campus Cafeteria', { exact: true })).toBeVisible();
 		await expect(page.getByText('Jonas Weber', { exact: true })).toBeVisible();
 		await expect(page.locator('article time')).toBeVisible();

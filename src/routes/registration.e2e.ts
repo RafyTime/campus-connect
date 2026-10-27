@@ -1,6 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
+test.beforeEach(async ({ page }) => {
+	// Keep registration independent of tile availability, with the map's failure status present.
+	await page.route('https://tile.openstreetmap.org/**', (route) => route.abort());
+});
+
 async function createExplorer(page: Page) {
 	await page.goto('/register');
 	await page.getByLabel('Display name').fill('Registration Explorer');
@@ -49,7 +54,9 @@ for (const width of [360, 768, 1440]) {
 		await button.click();
 		await expect(button).toBeDisabled();
 		await expect(button).toHaveAttribute('aria-busy', 'true');
-		await expect(page.getByRole('status')).toHaveText('Updating registration…');
+		await expect(
+			page.getByRole('region', { name: 'Event registration' }).getByRole('status')
+		).toHaveText('Updating registration…');
 		await button.click({ force: true });
 		release();
 		await expect(page.getByRole('button', { name: 'Cancel registration' })).toBeEnabled();
