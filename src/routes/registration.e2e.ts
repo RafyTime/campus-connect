@@ -59,12 +59,18 @@ for (const width of [360, 768, 1440]) {
 		).toHaveText('Updating registration…');
 		await button.click({ force: true });
 		release();
-		await expect(page.getByRole('button', { name: 'Cancel registration' })).toBeEnabled();
+		const cancelButton = page.getByRole('button', { name: 'Cancel registration' });
+		await expect(cancelButton).toBeEnabled();
 		expect(mutations).toBe(1);
 		await page.unroute('**/_app/remote/**');
 		await expect(page.getByText('Capacity: 12', { exact: false })).toContainText('11 remaining');
 		await expect(page.getByText('11 places remaining', { exact: true })).toBeVisible();
 		await noOverflow(page);
+		await page.mouse.move(0, 0);
+		// Scan the settled button, after its filled-to-outline and hover color transitions.
+		await cancelButton.evaluate(async (element) => {
+			await Promise.all(element.getAnimations().map((animation) => animation.finished));
+		});
 		const scan = await new AxeBuilder({ page }).analyze();
 		expect(
 			scan.violations.filter((violation) =>
