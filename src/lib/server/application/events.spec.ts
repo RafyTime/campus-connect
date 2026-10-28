@@ -120,6 +120,26 @@ describe('public Event discovery', () => {
 });
 
 describe('public Event detail', () => {
+	it('returns the stored coordinates for a mapped Location', async () => {
+		using database = await createTestDatabase();
+		const clock = createTestClock(campusNow);
+		await insertPublicPersonalEvent(database.db, clock, {
+			id: 'event-mapped',
+			title: 'Mapped campus Event',
+			startsAt: new Date('2026-09-01T12:00:00.000Z'),
+			endsAt: new Date('2026-09-01T14:00:00.000Z'),
+			location: {
+				id: 'location-cafeteria',
+				label: 'Campus Cafeteria',
+				latitude: 50.6445,
+				longitude: 7.227
+			}
+		});
+		await expect(getPublicEvent(database.db, clock, 'event-mapped')).resolves.toMatchObject({
+			location: { label: 'Campus Cafeteria', latitude: 50.6445, longitude: 7.227 }
+		});
+	});
+
 	it('returns the full Event for a public personal record', async () => {
 		using database = await createTestDatabase();
 		const clock = createTestClock(campusNow);

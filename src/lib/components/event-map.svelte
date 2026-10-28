@@ -49,9 +49,12 @@
 	></div>
 	<div class="flex flex-col gap-2 border-t bg-background p-3 text-sm">
 		<p class="text-xs text-muted-foreground">
-			© <a class="underline underline-offset-4" href="https://www.openstreetmap.org/copyright"
+			<a class="underline underline-offset-4" href="https://openfreemap.org/">OpenFreeMap</a> · ©
+			<a class="underline underline-offset-4" href="https://openmaptiles.org/">OpenMapTiles</a>
+			· Data from
+			<a class="underline underline-offset-4" href="https://www.openstreetmap.org/copyright"
 				>OpenStreetMap</a
-			> contributors
+			>
 		</p>
 		{#if phase === 'loading'}
 			<p role="status" class="text-muted-foreground">Loading map…</p>

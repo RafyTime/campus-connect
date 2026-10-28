@@ -3,7 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 
 test.beforeEach(async ({ page }) => {
 	// Keep registration independent of tile availability, with the map's failure status present.
-	await page.route('https://tile.openstreetmap.org/**', (route) => route.abort());
+	await page.route('https://tiles.openfreemap.org/**', (route) => route.abort());
 });
 
 async function createExplorer(page: Page) {

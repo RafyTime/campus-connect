@@ -1,31 +1,78 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import type { StyleSpecification } from 'maplibre-gl';
 
 // Resolve the deployed asset to exercise script failure without depending on a build hash.
-function mapAsset() {
+function mapAssets() {
 	const manifest = JSON.parse(
 		readFileSync('.svelte-kit/output/client/.vite/manifest.json', 'utf8')
-	) as Record<string, { file: string }>;
-	return manifest['src/lib/components/event-map.ts'].file;
+	) as Record<string, { file: string; css?: string[] }>;
+	return manifest['src/lib/components/event-map.ts'];
 }
 
-async function serveTiles(page: Page) {
-	await page.route('https://tile.openstreetmap.org/**', (route) =>
-		route.fulfill({
+// Replace the external style with a small style exercising the real renderer and tile requests.
+const testStyle = {
+	version: 8,
+	sources: {
+		campus: {
+			type: 'raster',
+			tiles: ['https://tiles.openfreemap.org/test-tiles/{z}/{x}/{y}.png'],
+			tileSize: 512,
+			maxzoom: 19
+		},
+		building: {
+			type: 'geojson',
+			data: {
+				type: 'Feature',
+				properties: {},
+				geometry: {
+					type: 'Polygon',
+					coordinates: [
+						[
+							[7.2268, 50.6444],
+							[7.2272, 50.6444],
+							[7.2272, 50.6446],
+							[7.2268, 50.6446],
+							[7.2268, 50.6444]
+						]
+					]
+				}
+			}
+		}
+	},
+	layers: [
+		{ id: 'campus', type: 'raster', source: 'campus' },
+		{
+			id: 'building',
+			type: 'fill',
+			source: 'building',
+			paint: { 'fill-color': '#eaeae5', 'fill-outline-color': '#dbdbda' }
+		}
+	]
+} satisfies StyleSpecification;
+
+async function serveMap(page: Page) {
+	await page.route('https://tiles.openfreemap.org/**', (route) => {
+		if (route.request().url() === 'https://tiles.openfreemap.org/styles/positron') {
+			return route.fulfill({ json: testStyle });
+		}
+		return route.fulfill({
 			contentType: 'image/png',
 			body: Buffer.from(
-				'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=',
+				'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=',
 				'base64'
 			)
-		})
-	);
+		});
+	});
 }
 
-test('mapped Location shows one marker at the stored campus coordinates and attribution', async ({
+test('mapped Location shows Positron at zoom 16 with one centered marker and attribution', async ({
 	page
 }) => {
-	await serveTiles(page);
+	const requests: string[] = [];
+	page.on('request', (request) => requests.push(request.url()));
+	await serveMap(page);
 	await page.goto('/events/event-board-game-evening');
 	const map = page.getByRole('region', { name: 'Location map' });
 	await expect(map).toBeVisible();
@@ -35,21 +82,20 @@ test('mapped Location shows one marker at the stored campus coordinates and attr
 		'href',
 		'https://www.openstreetmap.org/copyright'
 	);
-	// At zoom 16, these independently calculated tiles surround 50.6445 N, 7.227 E.
-	const tile = map.locator('img.leaflet-tile[src$="/16/34083/22042.png"]');
-	await expect(tile).toBeVisible();
-	const tileBounds = await tile.boundingBox();
+	await expect(map.getByRole('link', { name: 'OpenMapTiles', exact: true })).toBeVisible();
+	await expect(map.getByRole('link', { name: 'OpenFreeMap', exact: true })).toBeVisible();
+	await expect(map.getByText('Loading map…')).toHaveCount(0);
+	await expect(map.getByRole('button', { name: 'Retry map' })).toHaveCount(0);
+	expect(requests).toContain('https://tiles.openfreemap.org/styles/positron');
+	// Independent Web Mercator tile containing the stored 50.6445 N, 7.227 E at zoom 16.
+	expect(requests).toContain('https://tiles.openfreemap.org/test-tiles/16/34083/22042.png');
 	const marker = await map.locator('.leaflet-marker-icon').boundingBox();
 	const bounds = await map.locator('.leaflet-container').boundingBox();
-	expect(tileBounds).not.toBeNull();
 	expect(marker).not.toBeNull();
 	expect(bounds).not.toBeNull();
-	if (marker && bounds && tileBounds) {
+	if (marker && bounds) {
 		expect(Math.abs(marker.x + 12 - (bounds.x + bounds.width / 2))).toBeLessThan(2);
-		expect(Math.abs(marker.y + 41 - (bounds.y + bounds.height / 2))).toBeLessThan(2);
-		// Independent Web Mercator projection of 50.6445 N, 7.227 E within this tile.
-		expect(Math.abs(marker.x + 12 - tileBounds.x - 162.6112)).toBeLessThan(1);
-		expect(Math.abs(marker.y + 41 - tileBounds.y - 108.57416)).toBeLessThan(1);
+		expect(Math.abs(marker.y + 12 - (bounds.y + bounds.height / 2))).toBeLessThan(2);
 	}
 });
 
@@ -58,7 +104,7 @@ test('plain-text Locations and Discover load neither Leaflet nor tiles; navigati
 }) => {
 	const resources: string[] = [];
 	page.on('request', (request) => resources.push(request.url()));
-	await serveTiles(page);
+	await serveMap(page);
 	await page.goto('/');
 	await page.getByRole('link', { name: /^Plain-text campus briefing/ }).click();
 	await expect(page.getByText('Bad Honnef town centre', { exact: true })).toBeVisible();
@@ -67,15 +113,16 @@ test('plain-text Locations and Discover load neither Leaflet nor tiles; navigati
 	expect(
 		resources.filter(
 			(url) =>
-				url.includes(mapAsset()) ||
-				url.includes('event-map.') ||
-				url.includes('tile.openstreetmap.org')
+				url.includes(mapAssets().file) ||
+				(mapAssets().css ?? []).some((asset) => url.includes(asset)) ||
+				url.includes('maplibre-gl-worker') ||
+				url.includes('tiles.openfreemap.org')
 		)
 	).toEqual([]);
 	await page.getByRole('link', { name: 'Back to Discover' }).click();
 	await page.getByRole('link', { name: /^Board game evening/ }).click();
 	await expect(page.locator('.leaflet-marker-icon')).toHaveCount(1);
-	expect(resources.some((url) => url.includes(mapAsset()))).toBe(true);
+	expect(resources.some((url) => url.includes(mapAssets().file))).toBe(true);
 	await page.getByRole('link', { name: 'Back to Discover' }).click();
 	await page.getByRole('link', { name: /^Campus welcome walk/ }).click();
 	await expect(page.getByRole('img', { name: 'Main building foyer', exact: true })).toBeVisible();
@@ -88,7 +135,7 @@ for (const viewport of [
 	{ width: 1440, height: 900 }
 ]) {
 	test(`map, attribution and keyboard access fit ${viewport.width}px`, async ({ page }) => {
-		await serveTiles(page);
+		await serveMap(page);
 		await page.setViewportSize(viewport);
 		await page.goto('/events/event-board-game-evening');
 		await expect(page.locator('.leaflet-marker-icon')).toBeVisible();
@@ -121,32 +168,42 @@ for (const viewport of [
 	});
 }
 
-for (const failure of ['tiles', 'script', 'stylesheet', 'timeout'] as const) {
+for (const failure of ['tiles', 'style', 'script', 'stylesheet', 'worker', 'timeout'] as const) {
 	test(`${failure} failure preserves Event content and Participation, and reload recovers`, async ({
 		page
 	}) => {
-		const asset = mapAsset();
-		await serveTiles(page);
+		const assets = mapAssets();
+		await serveMap(page);
 		const pattern =
 			failure === 'script'
-				? `**/${asset}`
+				? `**/${assets.file}`
 				: failure === 'stylesheet'
-					? '**/event-map.*.css'
-					: 'https://tile.openstreetmap.org/**';
-		if (failure === 'timeout') {
+					? `**/${assets.css?.[0]}`
+					: failure === 'worker'
+						? '**/*maplibre-gl-worker*.js'
+						: failure === 'style'
+							? '**/styles/positron'
+							: 'https://tiles.openfreemap.org/test-tiles/**';
+		if (failure === 'stylesheet') expect(assets.css?.length).toBeGreaterThan(0);
+		const needsClock = failure === 'timeout' || failure === 'worker';
+		if (needsClock) {
 			await page.clock.install();
-			await page.route(pattern, () => {});
-		} else {
-			await page.route(pattern, (route) => route.abort());
 		}
+		let intercepted = 0;
+		await page.route(pattern, (route) => {
+			intercepted++;
+			if (failure !== 'timeout') return route.abort();
+		});
 		await page.goto('/events/event-board-game-evening');
-		if (failure === 'timeout') {
+		if (needsClock) {
 			await expect(page.locator('.leaflet-marker-icon')).toBeVisible();
+			await expect.poll(() => intercepted).toBeGreaterThan(0);
 			await page.clock.fastForward(12_000);
 		}
 		await expect(
 			page.getByRole('region', { name: 'Location map' }).getByRole('status')
 		).toContainText('The map is unavailable');
+		expect(intercepted).toBeGreaterThan(0);
 		await expect(page.getByText('Campus Cafeteria', { exact: true })).toBeVisible();
 		await expect(page.getByText('Jonas Weber', { exact: true })).toBeVisible();
 		await expect(page.locator('article time')).toBeVisible();
@@ -157,7 +214,7 @@ for (const failure of ['tiles', 'script', 'stylesheet', 'timeout'] as const) {
 		await expect(page.getByRole('dialog', { name: 'Sign in to continue' })).toBeVisible();
 		await page.keyboard.press('Escape');
 		await page.unroute(pattern);
-		await serveTiles(page);
+		await serveMap(page);
 		await page.getByRole('button', { name: 'Retry map' }).click();
 		await expect(page.locator('.leaflet-marker-icon')).toBeVisible();
 		await expect(page.getByText('Loading map…', { exact: true })).toHaveCount(0);
