@@ -167,7 +167,7 @@ The committed release includes public personal and group Events, all three respo
 
 - Tags use a seeded normalized taxonomy of roughly 8 to 12 values. Creators choose one to three. Custom Tag creation is deferred.
 - Location stores a display label and nullable coordinates. The committed core supports curated mapped campus locations and manual plain-text locations. A plain-text location has no coordinates.
-- The Event detail page loads Leaflet and OpenStreetMap tiles only for a mapped location and always shows required attribution.
+- The Event detail page loads Leaflet with a MapLibre vector layer only for a mapped location and always shows required attribution. Following the 2026-10-28 style comparison, use the default OpenFreeMap Positron style at MapLibre zoom 16, with OpenMapTiles and OpenStreetMap attribution; no API key is required.
 - The map is visual. Routing, directions, editing coordinates, and choosing a point by dragging a marker are outside Phase 2.
 - User image uploads and arbitrary image URLs are not accepted. Seed data may contain fixed remote image URLs from constrained hosts. Every remote image has an initials, icon, or gradient fallback.
 
