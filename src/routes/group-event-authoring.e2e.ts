@@ -1,6 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
+test.use({ viewport: { width: 1440, height: 900 } });
+
 async function signIn(page: Page, name: 'lena' | 'jonas' | 'sofia' | 'mira') {
 	const emails = {
 		lena: 'lena.hartmann@example.com',

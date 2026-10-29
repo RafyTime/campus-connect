@@ -1,6 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
+test.use({ viewport: { width: 1440, height: 900 } });
+
 async function register(page: Page) {
 	await page.goto('/register');
 	await page.getByLabel('Display name').fill('Personal Creator');

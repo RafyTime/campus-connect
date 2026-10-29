@@ -1,4 +1,4 @@
-import type { Handle } from '@sveltejs/kit/hooks';
+import type { Handle, HandleServerError } from '@sveltejs/kit/hooks';
 import { building } from '$app/env';
 import { getAuth } from '#lib/server/auth.js';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
@@ -19,3 +19,10 @@ const handleBetterAuth: Handle = async ({ event, resolve }) => {
 };
 
 export const handle: Handle = handleBetterAuth;
+
+// Unexpected database errors may include query parameters; keep request diagnostics payload-free.
+export const handleError: HandleServerError = ({ kind, event }) => {
+	if (kind !== 'unknown') return;
+	console.error('Request failed', { route: event.route.id });
+	return { message: 'Campus Connect could not complete this request.' };
+};
