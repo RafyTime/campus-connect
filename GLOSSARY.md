@@ -80,7 +80,7 @@ A response mode that records a user's non-binding interest in an event.
 _Avoid_: Like
 
 **Registration**:
-A response mode that records attendance against an event's available capacity.
+A response mode that reserves a user's place against an event's available capacity. Registration does not establish attendance.
 _Avoid_: Booking
 
 **Participation**:
@@ -90,6 +90,15 @@ _Avoid_: RSVP
 **Scheduled event**:
 A published event that has not ended or been cancelled.
 _Avoid_: Active event
+
+**Upcoming event**:
+A scheduled event whose start time has not yet been reached.
+
+**Ongoing event**:
+A scheduled event whose start time has been reached but whose end time has not.
+
+**Ended event**:
+An event whose end time has been reached and that has not been cancelled.
 
 **Cancelled event**:
 An event that its creator or group manager has withdrawn without erasing its participation history.
