@@ -4,7 +4,7 @@
 
 The repository records a Railway service sourced from `main` in EU West, with a public domain and a persistent SQLite volume mounted at `/data`. Railway's Wait for CI setting gates deployment on GitHub Actions. The original auth-only migration was recorded as applied when this arrangement was documented.
 
-This upgrade was verified only in isolated local checkouts. The live service, its feature inventory, configuration, and applied migrations were not inspected. SvelteKit 3 and the required build/runtime origin settings await a separately authorized release. [Ticket 01 evidence](evidence/toolchain-upgrade-01.md) records the migration; [ticket 02 evidence](evidence/toolchain-upgrade-02.md) records standalone Node verification.
+The toolchain upgrade was originally verified in isolated local checkouts: [ticket 01 evidence](evidence/toolchain-upgrade-01.md) records the migration and [ticket 02 evidence](evidence/toolchain-upgrade-02.md) records standalone Node verification. On 2026-10-29, ticket 16's authorized release inspection confirmed CI-green core revision `ce3b7dddbaa30f30a49d7a1e12380c05e2e791bb` running on the existing single Railway instance with its SQLite volume. Runtime migration and seed commands succeeded. [The release record](evidence/phase-2/checks/16-core-release.md) separates passed smoke checks from remaining manual checks and stretch decisions.
 
 ## Continuous integration
 
@@ -53,6 +53,30 @@ After the authorized deployment, verify public Event and Group pages, registrati
 Check the actual applied migration journal before any separately authorized production migration. Do not infer its contents from the historical auth-only note. This toolchain upgrade introduces no migrations.
 
 ## Production migration procedure
+
+### Ticket 16 committed-core release
+
+Use [the ticket 16 release record](evidence/phase-2/checks/16-core-release.md) for deployment identity, smoke results, capture rehearsal and independent stretch decisions. Its checklist is separate from final submission captures.
+
+1. Confirm the working tree is clean and identify the reviewed commit. Check that its GitHub Actions quality run succeeds. Preserve the GitHub source, Wait for CI, single replica and existing `/data` volume. If Railway already queued that commit, follow its deployment ID rather than uploading a second build or redeploying an older image.
+2. Observe `SUCCESS` for that exact deployment. Verify the running service's `RAILWAY_GIT_COMMIT_SHA` matches the candidate, `DATABASE_URL` points to the attached volume, and runtime `ORIGIN` matches the public origin used during build. Record comparisons without dumping environment variables.
+3. In the running service console, inspect `__drizzle_migrations` and compare its hashes/timestamps with the committed migrations. Never infer the journal from an earlier release note. A mismatch requires investigation before migration; never delete production data or rewrite the journal to force success.
+4. From `/app` in that same running service, execute the following commands sequentially and retain their credential-free success output:
+
+   ```sh
+   bun run db:migrate
+   bun run db:seed
+   ```
+
+   The expected messages are `Applied database migrations.` and `Seeded public Events and Groups.`. Stop if either command fails. The migration runner records applied migrations and applies pending ones transactionally, including the Unicode Group-name backfill. Do not run migration or seed in build, pre-deploy, a local Railway-variable shell, or `railway run`; those do not provide the running service's volume.
+
+5. Inspect the journal again. Run the seed before smoke checking: it upserts stable demo IDs, refreshes their dates/content, and replaces memberships on seeded Groups with fixture memberships. It is safe to rerun for seed consistency, but does not preserve manual edits to those demo records. Do not seed between checking a mutation and verifying its persistence. Never run `src/lib/server/testing/seed-accounts/cli.ts` in production.
+6. Complete the release record's production, responsive, Firefox and keyboard checklist, then rehearse the planned capture scenes. Keep session values and passwords out of evidence. Do not mark a check passed from local tests alone.
+7. Record the three independent stretch decisions after the gate passes. Apply the resulting ticket statuses, Phase 3 deferrals and matrix outcomes; retain a dated decision copy in the course Drive folder. Ticket 22 owns final media after all stretch outcomes are resolved.
+
+The release quality command is `vp run quality`. It uses disposable test databases. Production build analysis must continue to work without the runtime volume: keep lazy `getDb()`/`getAuth()` and the `building` guard in the authentication hook. Database preparation belongs to explicit runtime commands, never application startup or build imports.
+
+### Future schema changes
 
 For each separately authorized future schema change:
 

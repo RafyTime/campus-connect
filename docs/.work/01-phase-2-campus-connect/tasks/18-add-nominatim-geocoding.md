@@ -8,7 +8,7 @@
 
 ## Acceptance criteria
 
-- [ ] The ticket records the geocoding gate outcome from ticket 16.
+- [x] The ticket records the geocoding gate outcome from ticket 16.
 - [ ] For a go decision, geocoding runs only after the Creator submits Search, never while typing, on page load, or through background polling.
 - [ ] For a go decision, the backend normalizes the query and checks a persistent cache keyed by normalized query and regional-scope version before calling the provider.
 - [ ] For a go decision, one global limiter permits no more than one provider request per second for the Railway application.
@@ -30,3 +30,5 @@
 - [ ] Update the acceptance-to-evidence matrix with the gate outcome and, when shipped, its test references and production evidence needs.
 
 ## Comments
+
+2026-11-01 — **Go for Phase 2; status remains ready.** [The dated decision](../../../evidence/phase-2/checks/16-stretch-decisions-2026-11-01.md) records the value judgment and complete release-evidence requirements. The existing coordinate/map path makes explicit address search a useful bounded addition. Before completion, provide replacement-provider server/browser tests, cache/scope/throttle/bounds/selection/fallback coverage, configuration and attribution documentation, passing quality/migration checks, and Railway search/publication/cache/fallback evidence with commit/date plus final media references. This gate approval is not implementation or release acceptance. Dark-mode/PWA work has higher execution priority.

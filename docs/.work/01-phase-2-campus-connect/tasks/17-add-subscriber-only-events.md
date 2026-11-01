@@ -4,11 +4,11 @@
 
 **Blocked by:** 16: Deploy the committed core and decide stretch paths.
 
-**Status:** ready
+**Status:** wontfix
 
 ## Acceptance criteria
 
-- [ ] The ticket records the subscriber-only Event gate outcome from ticket 16.
+- [x] The ticket records the subscriber-only Event gate outcome from ticket 16.
 - [ ] For a go decision, only Group owners and representatives can publish subscriber-only group Events; personal Events remain public-only.
 - [ ] For a go decision, current Group members discover and open subscriber-only Events, while outsiders do not see them in discovery.
 - [ ] For a go decision, an unauthorized direct request returns a non-disclosing not-found response.
@@ -18,7 +18,7 @@
 - [ ] For a go decision, access-aware queries, controls, errors, and empty states work at representative phone, tablet, and desktop sizes.
 - [ ] For a go decision, automated tests cover publication, discovery, direct access, Participation, visibility locking, unfollowing, retained history, and non-disclosure.
 - [ ] For a go decision, the acceptance-to-evidence matrix records tests and the required production, screenshot, and screencast evidence.
-- [ ] For a no-go decision, or when a go implementation cannot pass acceptance, the ticket is `wontfix`, its incomplete behavior is not exposed, its implementation checklist is explicitly waived in Comments, and Phase 3 and evidence records state the reason for deferral.
+- [x] For a no-go decision, or when a go implementation cannot pass acceptance, the ticket is `wontfix`, its incomplete behavior is not exposed, its implementation checklist is explicitly waived in Comments, and Phase 3 and evidence records state the reason for deferral.
 
 ## Implementation tasks
 
@@ -26,6 +26,8 @@
 - [ ] For a go decision, make discovery, direct Event retrieval, Participation, unfollowing, My activity, and My events access-aware.
 - [ ] For a go decision, extend deterministic fixtures and seed helpers with current-member, outsider, former-member participant, owner, and representative cases.
 - [ ] For a go decision, add server and browser tests for every restricted-access and retained-history rule.
-- [ ] Update the acceptance-to-evidence matrix with the gate outcome and, when shipped, its test references and production evidence needs.
+- [x] Update the acceptance-to-evidence matrix with the gate outcome and, when shipped, its test references and production evidence needs.
 
 ## Comments
+
+2026-11-01 — **No-go for Phase 2.** Subscriber-only visibility is a narrower extension to the completed public Event journey; the agreed Phase 2 priorities are clearer personal plans/navigation, themes, PWA/mobile handling and credible campus demonstration data. [Dated decision](../../../evidence/phase-2/checks/16-stretch-decisions-2026-11-01.md) and [Phase 3 deferrals](../phase-2-spec.md#phase-3-candidates) record the outcome. The gate and matrix updates are complete. All conditional go-only acceptance criteria and implementation/testing/capture checklist items are explicitly waived for Phase 2; unchecked go-only boxes do not represent incomplete shipped work. The public-only core remains the release baseline; this decision introduces no feature code.

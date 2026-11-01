@@ -4,11 +4,11 @@
 
 **Blocked by:** 19: Publish Group updates.
 
-**Status:** ready
+**Status:** wontfix
 
 ## Acceptance criteria
 
-- [ ] The ticket uses the same package gate outcome recorded by ticket 19.
+- [x] The ticket uses the same package gate outcome recorded by ticket 19.
 - [ ] For a go decision, publishing a group Event or Group update creates one stored Notification for every current subscriber except the author.
 - [ ] For a go decision, Campus Updates creates no Notifications and repeated publication handling cannot duplicate delivery for the same recipient and target.
 - [ ] For a go decision, each Notification stores its recipient, target content, creation time, and nullable read time.
@@ -19,7 +19,7 @@
 - [ ] For a go decision, automated tests cover recipient selection, author exclusion, Campus Updates exclusion, deduplication, unread counts, read operations, target authorization, responsive behavior, and failures.
 - [ ] For a go decision, Group updates and Notifications become visible only after both tickets pass their acceptance and release checks.
 - [ ] For a go decision, the acceptance-to-evidence matrix records tests and the required production, screenshot, and screencast evidence.
-- [ ] If either half cannot ship, tickets 19 and 20 are `wontfix`, their incomplete implementation is not exposed, waivers and reasons are recorded in Comments, and Phase 3 and evidence records state the deferral.
+- [x] If either half cannot ship, tickets 19 and 20 are `wontfix`, their incomplete implementation is not exposed, waivers and reasons are recorded in Comments, and Phase 3 and evidence records state the deferral.
 
 ## Implementation tasks
 
@@ -29,6 +29,8 @@
 - [ ] For a go decision, add responsive unread count, list, target navigation, mark-read, and mark-all-read behavior.
 - [ ] For a go decision, add server and browser tests for delivery, deduplication, read state, authorization, responsive behavior, and failures.
 - [ ] For a go decision, remove the package release boundary only after Group updates and Notifications both pass.
-- [ ] Update the acceptance-to-evidence matrix with the package outcome, test references, and production evidence needs.
+- [x] Update the acceptance-to-evidence matrix with the package outcome, test references, and production evidence needs.
 
 ## Comments
+
+2026-11-01 — **No-go for Phase 2.** The complete Group updates plus Notifications package is deferred together; neither half will be exposed independently in Phase 2. The immediate need is clearer existing plans and Event-state presentation. [Dated decision](../../../evidence/phase-2/checks/16-stretch-decisions-2026-11-01.md) and [Phase 3 deferrals](../phase-2-spec.md#phase-3-candidates) record the outcome. The gate and matrix updates are complete. All conditional go-only acceptance criteria and implementation/testing/capture checklist items are explicitly waived for Phase 2; unchecked go-only boxes do not represent incomplete shipped work. Tickets 19 and 20 share this outcome. The public-only core remains the release baseline; this decision introduces no feature code.

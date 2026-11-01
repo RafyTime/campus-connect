@@ -2,11 +2,13 @@
 
 **What to build:** Resolve every stretch path, document the exact Phase 2 result, and deploy the final reviewed revision. The repository and Railway application must agree about what shipped, what moved to Phase 3, and how to reproduce and operate the release.
 
-**Blocked by:** 17: Add subscriber-only Events; 18: Add Nominatim geocoding; 20: Deliver Notifications and release the stretch package.
+**Blocked by:** 17: Add subscriber-only Events; 18: Add Nominatim geocoding; 20: Deliver Notifications and release the stretch package; [Phase 2 polish 10: Verify integrated polish and prepare release handoff](../../04-phase-2-polish/tasks/10-verify-polish-and-prepare-release-handoff.md).
 
 **Status:** ready
 
 ## Acceptance criteria
+
+- [ ] The Phase 2 polish handoff is resolved, including all accepted follow-up slices, with theme, PWA/mobile, Participation presentation and demonstration-data results linked from the existing evidence matrix.
 
 - [ ] Each stretch path is either completed or explicitly `wontfix`; no incomplete stretch control or route is exposed.
 - [ ] The README documents prerequisites, environment variables, migrations, seeding, development, tests, build, run, release, and deployment.
@@ -16,7 +18,7 @@
 - [ ] The release command passes for the exact revision selected for final deployment.
 - [ ] The final reviewed revision runs on Railway, and any required production migration is applied once from the running service after a backup when meaningful data exists.
 - [ ] The idempotent seed operation leaves the final demonstration dataset in the expected state.
-- [ ] Production smoke checks cover every committed journey and each stretch path that shipped.
+- [ ] Production smoke checks cover every committed journey, each shipped stretch path and the accepted polish behavior, including themes/maps, installed mobile use, offline/update recovery and the final demonstration dataset.
 - [ ] Logs and repository content expose no passwords, session tokens, demonstration credentials, or complete authentication payloads.
 - [ ] The deployed commit, date, migration result, seed result, smoke results, and final stretch outcomes are recorded in the acceptance-to-evidence matrix.
 
@@ -37,3 +39,5 @@
 - [ ] In the deployed application, smoke-test all committed journeys and each shipped stretch path; record results, date, and deployed commit in the evidence matrix.
 
 ## Comments
+
+2026-11-01: The approved [Phase 2 polish backlog](../../04-phase-2-polish/README.md) adds its ticket 10 as a release blocker. Its candidate verification does not replace this ticket's final Railway deployment and production checks. Existing stretch blockers and the ticket 22-24 submission sequence remain intact.

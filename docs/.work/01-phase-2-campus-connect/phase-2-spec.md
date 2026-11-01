@@ -328,10 +328,14 @@ The committed release includes public personal and group Events, all three respo
 
 ## Out of Scope
 
+### Recorded Phase 2 stretch outcomes
+
+On 2026-11-01, Leo confirmed subscriber-only Events as no-go, Nominatim geocoding as go, and Group updates plus Notifications as no-go together. [The dated ticket 16 decision record](../../evidence/phase-2/checks/16-stretch-decisions-2026-11-01.md) supplies reasons, waivers and the geocoding release-evidence requirements. The [polish workstream](../04-phase-2-polish/spec.md) adds the agreed finishing work before final release; it does not duplicate geocoding.
+
 ### Phase 3 candidates
 
-- Subscriber-only Events when that independent stretch path is marked `wontfix` for Phase 2.
-- Nominatim search when the geocoding stretch path is marked `wontfix` for Phase 2.
+- Subscriber-only Events: deferred from Phase 2 on 2026-11-01 (ticket 17 `wontfix`). Restricted audiences are lower priority than polishing the public journey; preserve the complete access-aware slice for Phase 3.
+- Nominatim search only if a later decision reverses its current Phase 2 go outcome. Ticket 18 remains ready with full acceptance and release evidence required; it is not currently deferred.
 - Invite-only Events.
 - Direct Invitations and revocable share links.
 - User, Group, Post, or Event image uploads and the Railway storage integration.
@@ -340,7 +344,7 @@ The committed release includes public personal and group Events, all three respo
 - Password change or recovery, email verification or change, avatar editing, and account deletion.
 - Custom Tag management.
 - Event reopening, drafts, user-facing hard deletion, waitlists, and richer Event-change Notifications.
-- Group updates and Notifications when their complete stretch package is marked `wontfix` for Phase 2.
+- Group updates plus Notifications: deferred together from Phase 2 on 2026-11-01 (tickets 19 and 20 `wontfix`). Clearer existing plans and Event-state presentation take priority; neither package half ships independently.
 
 ### Excluded from the approved project unless it is reconceived
 
