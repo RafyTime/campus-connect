@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import AppearanceSelect from './appearance-select.svelte';
 	import { resolve } from '$app/paths';
 	import { navigating, page } from '$app/state';
 	import {
@@ -52,7 +53,9 @@
 
 <div class="flex min-h-dvh flex-col">
 	<header class="sticky top-0 z-10 border-b bg-background">
-		<div class="mx-auto flex min-h-14 w-full max-w-5xl items-center gap-3 px-4 py-2">
+		<div
+			class="mx-auto flex min-h-14 w-full max-w-5xl flex-wrap items-center gap-2 px-3 py-2 md:gap-3 md:px-4"
+		>
 			<a
 				href={resolve('/')}
 				class="inline-flex min-h-11 min-w-0 items-center truncate rounded-md font-heading text-base font-medium tracking-tight focus-visible:ring-3 focus-visible:ring-ring/30"
@@ -77,21 +80,24 @@
 				{/each}
 			</nav>
 
-			<nav aria-label="Account" class="ml-auto flex items-center gap-2">
-				{#each currentAccountDestinations as destination (destination.href)}
-					{@const current = isCurrentDestination(pathname, destination.href)}
-					<Button
-						href={resolve(destination.href)}
-						variant={destination.href === '/register' || destination.href === '/account'
-							? 'default'
-							: 'outline'}
-						class="min-h-11 min-w-11 px-3"
-						aria-current={current ? 'page' : undefined}
-					>
-						{destination.label}
-					</Button>
-				{/each}
-			</nav>
+			<div class="ml-auto flex items-center gap-1 md:gap-2">
+				<AppearanceSelect />
+				<nav aria-label="Account" class="flex items-center gap-1 md:gap-2">
+					{#each currentAccountDestinations as destination (destination.href)}
+						{@const current = isCurrentDestination(pathname, destination.href)}
+						<Button
+							href={resolve(destination.href)}
+							variant={destination.href === '/register' || destination.href === '/account'
+								? 'default'
+								: 'outline'}
+							class="min-h-11 min-w-11 px-3"
+							aria-current={current ? 'page' : undefined}
+						>
+							{destination.label}
+						</Button>
+					{/each}
+				</nav>
+			</div>
 		</div>
 	</header>
 

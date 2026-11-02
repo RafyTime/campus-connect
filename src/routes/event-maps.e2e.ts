@@ -54,7 +54,7 @@ const testStyle = {
 
 async function serveMap(page: Page) {
 	await page.route('https://tiles.openfreemap.org/**', (route) => {
-		if (route.request().url() === 'https://tiles.openfreemap.org/styles/positron') {
+		if (/\/styles\/(positron|dark)$/.test(route.request().url())) {
 			return route.fulfill({ json: testStyle });
 		}
 		return route.fulfill({
@@ -67,37 +67,74 @@ async function serveMap(page: Page) {
 	});
 }
 
-test('mapped Location shows Positron at zoom 16 with one centered marker and attribution', async ({
+test('mapped Location follows system theme and appearance overrides without losing its marker', async ({
 	page
 }) => {
+	await page.emulateMedia({ colorScheme: 'dark' });
+	await serveMap(page);
 	const requests: string[] = [];
 	page.on('request', (request) => requests.push(request.url()));
-	await serveMap(page);
 	await page.goto('/events/event-board-game-evening');
 	const map = page.getByRole('region', { name: 'Location map' });
-	await expect(map).toBeVisible();
-	await expect(map.locator('.leaflet-marker-icon')).toHaveCount(1);
-	await expect(map.getByRole('img', { name: 'Campus Cafeteria' })).toBeVisible();
-	await expect(map.getByRole('link', { name: 'OpenStreetMap' })).toHaveAttribute(
-		'href',
-		'https://www.openstreetmap.org/copyright'
-	);
-	await expect(map.getByRole('link', { name: 'OpenMapTiles', exact: true })).toBeVisible();
-	await expect(map.getByRole('link', { name: 'OpenFreeMap', exact: true })).toBeVisible();
 	await expect(map.getByText('Loading map…')).toHaveCount(0);
+	await expect(map.getByRole('img', { name: 'Campus Cafeteria' })).toBeVisible();
+	expect(requests).toContain('https://tiles.openfreemap.org/styles/dark');
+	await page.getByLabel('Appearance', { exact: true }).click();
+	await page.getByRole('option', { name: 'Light', exact: true }).click();
+	await expect
+		.poll(() => requests.includes('https://tiles.openfreemap.org/styles/positron'))
+		.toBe(true);
+	await expect(map.getByText('Loading map…')).toHaveCount(0);
+	await expect(map.locator('.leaflet-marker-icon')).toHaveCount(1);
+	await page.getByLabel('Appearance', { exact: true }).click();
+	await page.getByRole('option', { name: 'Dark', exact: true }).click();
+	await expect
+		.poll(
+			() => requests.filter((url) => url === 'https://tiles.openfreemap.org/styles/dark').length
+		)
+		.toBe(2);
+	await expect(map.getByText('Loading map…')).toHaveCount(0);
+	await expect(map.locator('.leaflet-marker-icon')).toHaveCount(1);
+	await expect(map.getByRole('link', { name: 'OpenStreetMap', exact: true })).toBeVisible();
 	await expect(map.getByRole('button', { name: 'Retry map' })).toHaveCount(0);
-	expect(requests).toContain('https://tiles.openfreemap.org/styles/positron');
-	// Independent Web Mercator tile containing the stored 50.6445 N, 7.227 E at zoom 16.
-	expect(requests).toContain('https://tiles.openfreemap.org/test-tiles/16/34083/22042.png');
-	const marker = await map.locator('.leaflet-marker-icon').boundingBox();
-	const bounds = await map.locator('.leaflet-container').boundingBox();
-	expect(marker).not.toBeNull();
-	expect(bounds).not.toBeNull();
-	if (marker && bounds) {
-		expect(Math.abs(marker.x + 12 - (bounds.x + bounds.width / 2))).toBeLessThan(2);
-		expect(Math.abs(marker.y + 12 - (bounds.y + bounds.height / 2))).toBeLessThan(2);
-	}
 });
+
+for (const colorScheme of ['light', 'dark'] as const) {
+	test(`mapped Location shows ${colorScheme === 'dark' ? 'Dark Matter' : 'Positron'} at zoom 16 with one centered marker and attribution`, async ({
+		page
+	}) => {
+		await page.emulateMedia({ colorScheme });
+		const requests: string[] = [];
+		page.on('request', (request) => requests.push(request.url()));
+		await serveMap(page);
+		await page.goto('/events/event-board-game-evening');
+		const map = page.getByRole('region', { name: 'Location map' });
+		await expect(map).toBeVisible();
+		await expect(map.locator('.leaflet-marker-icon')).toHaveCount(1);
+		await expect(map.getByRole('img', { name: 'Campus Cafeteria' })).toBeVisible();
+		await expect(map.getByRole('link', { name: 'OpenStreetMap' })).toHaveAttribute(
+			'href',
+			'https://www.openstreetmap.org/copyright'
+		);
+		await expect(map.getByRole('link', { name: 'OpenMapTiles', exact: true })).toBeVisible();
+		await expect(map.getByRole('link', { name: 'OpenFreeMap', exact: true })).toBeVisible();
+		await expect(map.getByText('Loading map…')).toHaveCount(0);
+		await expect(map.getByRole('button', { name: 'Retry map' })).toHaveCount(0);
+		expect(requests).toContain(
+			`https://tiles.openfreemap.org/styles/${colorScheme === 'dark' ? 'dark' : 'positron'}`
+		);
+		// Independent Web Mercator tile containing the stored 50.6445 N, 7.227 E at zoom 16.
+		expect(requests).toContain('https://tiles.openfreemap.org/test-tiles/16/34083/22042.png');
+		const marker = await map.locator('.leaflet-marker-icon').boundingBox();
+		const bounds = await map.locator('.leaflet-container').boundingBox();
+		expect(marker).not.toBeNull();
+		expect(bounds).not.toBeNull();
+		if (marker && bounds) {
+			expect(Math.abs(marker.x + 12 - (bounds.x + bounds.width / 2))).toBeLessThan(2);
+			expect(Math.abs(marker.y + 12 - (bounds.y + bounds.height / 2))).toBeLessThan(2);
+		}
+	});
+}
 
 test('plain-text Locations and Discover load neither Leaflet nor tiles; navigation cleans up maps', async ({
 	page
@@ -129,43 +166,48 @@ test('plain-text Locations and Discover load neither Leaflet nor tiles; navigati
 	await expect(page.locator('.leaflet-marker-icon')).toHaveCount(1);
 });
 
-for (const viewport of [
-	{ width: 360, height: 800 },
-	{ width: 768, height: 1024 },
-	{ width: 1440, height: 900 }
-]) {
-	test(`map, attribution and keyboard access fit ${viewport.width}px`, async ({ page }) => {
-		await serveMap(page);
-		await page.setViewportSize(viewport);
-		await page.goto('/events/event-board-game-evening');
-		await expect(page.locator('.leaflet-marker-icon')).toBeVisible();
-		const attribution = page.getByRole('link', { name: 'OpenStreetMap', exact: true });
-		await attribution.scrollIntoViewIfNeeded();
-		await expect(attribution).toBeInViewport();
-		const bounds = await attribution.boundingBox();
-		expect(bounds).not.toBeNull();
-		if (bounds) {
-			expect(bounds.x).toBeGreaterThanOrEqual(0);
-			expect(bounds.x + bounds.width).toBeLessThanOrEqual(viewport.width);
-		}
-		expect(
-			await page.evaluate(
-				() => document.documentElement.scrollWidth <= document.documentElement.clientWidth
-			)
-		).toBe(true);
-		await attribution.focus();
-		await expect(attribution).toBeFocused();
-		await page.keyboard.press('Tab');
-		await expect(attribution).not.toBeFocused();
-		await page.keyboard.press('Shift+Tab');
-		await expect(attribution).toBeFocused();
-		const scan = await new AxeBuilder({ page }).analyze();
-		expect(
-			scan.violations.filter((violation) =>
-				['serious', 'critical'].includes(violation.impact ?? '')
-			)
-		).toEqual([]);
-	});
+for (const colorScheme of ['light', 'dark'] as const) {
+	for (const viewport of [
+		{ width: 360, height: 800 },
+		{ width: 768, height: 1024 },
+		{ width: 1440, height: 900 }
+	]) {
+		test(`${colorScheme} map, attribution and keyboard access fit ${viewport.width}px`, async ({
+			page
+		}) => {
+			await page.emulateMedia({ colorScheme });
+			await serveMap(page);
+			await page.setViewportSize(viewport);
+			await page.goto('/events/event-board-game-evening');
+			await expect(page.locator('.leaflet-marker-icon')).toBeVisible();
+			const attribution = page.getByRole('link', { name: 'OpenStreetMap', exact: true });
+			await attribution.scrollIntoViewIfNeeded();
+			await expect(attribution).toBeInViewport();
+			const bounds = await attribution.boundingBox();
+			expect(bounds).not.toBeNull();
+			if (bounds) {
+				expect(bounds.x).toBeGreaterThanOrEqual(0);
+				expect(bounds.x + bounds.width).toBeLessThanOrEqual(viewport.width);
+			}
+			expect(
+				await page.evaluate(
+					() => document.documentElement.scrollWidth <= document.documentElement.clientWidth
+				)
+			).toBe(true);
+			await attribution.focus();
+			await expect(attribution).toBeFocused();
+			await page.keyboard.press('Tab');
+			await expect(attribution).not.toBeFocused();
+			await page.keyboard.press('Shift+Tab');
+			await expect(attribution).toBeFocused();
+			const scan = await new AxeBuilder({ page }).analyze();
+			expect(
+				scan.violations.filter((violation) =>
+					['serious', 'critical'].includes(violation.impact ?? '')
+				)
+			).toEqual([]);
+		});
+	}
 }
 
 for (const failure of ['tiles', 'style', 'script', 'stylesheet', 'worker', 'timeout'] as const) {

@@ -29,3 +29,5 @@
 ## Comments
 
 Highest execution priority. This feature does not wait for the general cleanup audit. Later navigation work must preserve its appearance control and behavior.
+
+2026-11-02: Leo selected prototype A, the visible header appearance control, then requested shadcn-svelte Select with an icon on mobile and icon plus text on larger screens. The three original variants are preserved on local throwaway branch `codex/prototype-theme-preferences`, commit `9f55346`. Provider identifiers are verified as `positron` and `dark`, the latter derived from Dark Matter. Implementation and validation are recorded in the [local check record](../../../../evidence/phase-2/checks/polish-00-theme-preferences-local.md).

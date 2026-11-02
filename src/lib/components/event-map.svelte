@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { mode } from 'mode-watcher';
 	import { Button } from '#lib/components/ui/button/index.js';
 
 	let { label, latitude, longitude }: { label: string; latitude: number; longitude: number } =
@@ -7,6 +8,8 @@
 	let phase = $state<'loading' | 'ready' | 'error'>('loading');
 
 	$effect(() => {
+		const appearance = mode.current;
+		if (!appearance) return;
 		const location = { label, latitude, longitude };
 		const container = element;
 		let disposed = false;
@@ -25,6 +28,7 @@
 				cleanup = createEventMap(
 					container,
 					location,
+					appearance,
 					() => {
 						clearTimeout(timeout);
 						if (!disposed && phase !== 'error') phase = 'ready';

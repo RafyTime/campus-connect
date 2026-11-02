@@ -11,6 +11,7 @@ const defaultZoom = 16;
 export function createEventMap(
 	element: HTMLDivElement,
 	location: { label: string; latitude: number; longitude: number },
+	appearance: 'light' | 'dark',
 	onLoad: () => void,
 	onError: () => void
 ) {
@@ -46,7 +47,7 @@ export function createEventMap(
 	try {
 		setWorkerUrl(workerUrl);
 		const layer = maplibreGL({
-			style: 'https://tiles.openfreemap.org/styles/positron',
+			style: `https://tiles.openfreemap.org/styles/${appearance === 'dark' ? 'dark' : 'positron'}`,
 			interactive: false,
 			attributionControl: false,
 			renderWorldCopies: false
