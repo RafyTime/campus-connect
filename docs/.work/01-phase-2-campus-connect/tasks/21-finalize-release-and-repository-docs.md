@@ -40,4 +40,6 @@
 
 ## Comments
 
+2026-11-02: Theme preferences and matching maps have a [local implementation and check record](../../../evidence/phase-2/checks/polish-00-theme-preferences-local.md). Final release verification must cover the saved appearance, correct first paint, themed forms/dialogs and Positron/Dark Matter maps on the deployed revision. This local record does not establish Railway acceptance or final captures.
+
 2026-11-01: The approved [Phase 2 polish backlog](../../04-phase-2-polish/README.md) adds its ticket 10 as a release blocker. Its candidate verification does not replace this ticket's final Railway deployment and production checks. Existing stretch blockers and the ticket 22-24 submission sequence remain intact.

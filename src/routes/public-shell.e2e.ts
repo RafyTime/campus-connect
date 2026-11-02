@@ -57,6 +57,90 @@ async function assertVisibleFocus(page: Page) {
 }
 
 test.describe('public Campus Connect shell', () => {
+	for (const preference of ['System', 'Light', 'Dark']) {
+		test(`${preference} appearance is correct before client modules load on a later visit`, async ({
+			page,
+			browser,
+			context
+		}) => {
+			await page.emulateMedia({ colorScheme: 'dark' });
+			await page.goto('/');
+			const appearance = page.getByRole('banner').getByLabel('Appearance', { exact: true });
+			await expect(appearance).toBeEnabled();
+			await appearance.focus();
+			await assertVisibleFocus(page);
+			await page.keyboard.press('Enter');
+			await page.getByRole('option', { name: preference, exact: true }).click();
+			await expect(appearance).toBeFocused();
+			const expectedScheme = preference === 'Light' ? 'light' : 'dark';
+			await expect
+				.poll(() =>
+					page.locator('html').evaluate((element) => getComputedStyle(element).colorScheme)
+				)
+				.toBe(expectedScheme);
+			const expectedBackground = await page
+				.locator('body')
+				.evaluate((element) => getComputedStyle(element).backgroundColor);
+			const laterVisit = await browser.newContext({
+				storageState: await context.storageState(),
+				colorScheme: preference === 'System' ? 'dark' : 'light'
+			});
+			try {
+				const initialPage = await laterVisit.newPage();
+				await initialPage.route('**/_app/immutable/**/*.js', (route) => route.abort());
+				await initialPage.goto('/', { waitUntil: 'load' });
+				await expect(
+					initialPage.getByRole('heading', { name: 'Discover', exact: true })
+				).toBeVisible();
+				expect(
+					await initialPage
+						.locator('html')
+						.evaluate((element) => getComputedStyle(element).colorScheme)
+				).toBe(expectedScheme);
+				expect(
+					await initialPage
+						.locator('body')
+						.evaluate((element) => getComputedStyle(element).backgroundColor)
+				).toBe(expectedBackground);
+			} finally {
+				await laterVisit.close();
+			}
+		});
+	}
+	test('appearance follows the device and saves an override across navigation and reload', async ({
+		page
+	}) => {
+		await page.emulateMedia({ colorScheme: 'dark' });
+		await page.goto('/');
+		const appearance = page.getByRole('banner').getByLabel('Appearance', { exact: true });
+		await expect(appearance).toBeEnabled();
+		await appearance.hover();
+		await expect(page.getByRole('tooltip', { name: 'Appearance' })).toBeVisible();
+		await expect(appearance).toContainText('System');
+		await expect
+			.poll(() => page.locator('html').evaluate((element) => getComputedStyle(element).colorScheme))
+			.toBe('dark');
+		await appearance.click();
+		await page.getByRole('option', { name: 'Light', exact: true }).click();
+		await expect
+			.poll(() => page.locator('html').evaluate((element) => getComputedStyle(element).colorScheme))
+			.toBe('light');
+		await page.getByRole('navigation').getByRole('link', { name: 'Groups', exact: true }).click();
+		await page.reload();
+		await expect(appearance).toContainText('Light');
+		await expect
+			.poll(() => page.locator('html').evaluate((element) => getComputedStyle(element).colorScheme))
+			.toBe('light');
+		await appearance.click();
+		await page.getByRole('option', { name: 'System', exact: true }).click();
+		await expect
+			.poll(() => page.locator('html').evaluate((element) => getComputedStyle(element).colorScheme))
+			.toBe('dark');
+		await page.emulateMedia({ colorScheme: 'light' });
+		await expect
+			.poll(() => page.locator('html').evaluate((element) => getComputedStyle(element).colorScheme))
+			.toBe('light');
+	});
 	test('visitor can move between Discover, Groups, Sign in, and Register', async ({ page }) => {
 		await page.setViewportSize(viewports.desktop);
 		await page.goto('/');
@@ -149,6 +233,7 @@ test.describe('public Campus Connect shell', () => {
 			await page.goto('/');
 
 			const targets = [
+				page.getByRole('banner').getByLabel('Appearance', { exact: true }),
 				...(await page.getByRole('navigation', { name: 'Primary' }).getByRole('link').all()),
 				...(await page.getByRole('navigation', { name: 'Account' }).getByRole('link').all())
 			];

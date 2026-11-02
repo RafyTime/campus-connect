@@ -207,6 +207,7 @@ test.describe('Campus Connect accounts and profiles', () => {
 			.click();
 		await page.getByRole('button', { name: 'Sign out' }).click();
 
+		await expect(page).toHaveURL('/');
 		await page.goto('/sign-in');
 		await page.getByLabel('Email').fill(email);
 		await page.getByLabel('Password').fill('wrong-password');
@@ -301,6 +302,7 @@ test.describe('Campus Connect accounts and profiles', () => {
 	}) => {
 		await page.setViewportSize(viewports.desktop);
 		await page.goto('/groups/group-film-society');
+		await expect(page.getByRole('button', { name: 'Follow' })).toBeEnabled();
 		await page.getByRole('button', { name: 'Follow' }).focus();
 		await page.keyboard.press('Enter');
 		await expect(page.getByRole('dialog', { name: 'Sign in to continue' })).toBeVisible();

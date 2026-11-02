@@ -4,7 +4,7 @@ Execution priority approved on 2026-11-01: dark mode, mobile installation, then 
 
 Work the lowest-numbered eligible ticket by default. Priority and blocking are distinct: a later ticket without blockers is technically startable, but does not outrank the preferred dark-mode/PWA work. Prototypes, architecture review and content grilling remain prerequisites within their owning tickets.
 
-All tickets use the local `ready` status; this does not mean their blockers are already resolved. No implementation or production action has been performed by publishing this backlog.
+Read each ticket's `Status` for current progress. A `ready` ticket may still have unresolved blockers. Publishing this backlog alone does not authorize production work.
 
 ## Tickets
 
