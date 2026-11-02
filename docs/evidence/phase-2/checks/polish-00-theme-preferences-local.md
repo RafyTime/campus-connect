@@ -8,7 +8,7 @@ Leo selected variant A, the visible header control, after reviewing three placem
 
 The finished control uses the configured Rhea style, Hugeicons, semantic theme tokens and a 44px trigger and options. It preserves the full brand and account links at 360px. Its accessible name is Appearance, and the menu names every choice. Keyboard focus returns to the trigger after selection. The header can wrap at narrower widths.
 
-Follow-up on 2026-11-02: Leo approved a fixed sun/moon icon on the trigger to identify Appearance independently of the selected preference. The system option now reads "System default". Mobile keeps the icon alone; larger screens show the icon and selected label. Menu choices retain their individual computer, sun and moon icons. The stored `system` value and preference behavior are unchanged. The complete quality command passed again with 183 unit/integration tests, 117 browser tests and the production build; mobile and desktop preview inspection also passed.
+Final control choice on 2026-11-02: Leo selected a fixed half-filled circle contrast icon on every screen size, an Appearance tooltip and accessible label, and System / Light / Dark menu labels. Menu choices retain their individual computer, sun and moon icons. The shared shadcn Tooltip provider wraps the application, and its trigger composes with Select on one button. The stored `system` value and preference behavior are unchanged. Mobile and desktop preview inspection confirmed the tooltip, selection and 44x44 CSS pixel trigger. The complete quality command passed with 183 unit/integration tests, 117 browser tests and the production build.
 
 ## Delivered behavior
 

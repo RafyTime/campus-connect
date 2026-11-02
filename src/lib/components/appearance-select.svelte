@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { ComputerIcon, Sun03Icon, Moon02Icon, SunMoonIcon } from '@hugeicons/core-free-icons';
+	import { ComputerIcon, Sun03Icon, Moon02Icon, ContrastIcon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { setMode, userPrefersMode } from 'mode-watcher';
 	import * as Select from '#lib/components/ui/select/index.js';
+	import * as Tooltip from '#lib/components/ui/tooltip/index.js';
 
 	const choices = [
-		{ value: 'system', label: 'System default', icon: ComputerIcon },
+		{ value: 'system', label: 'System', icon: ComputerIcon },
 		{ value: 'light', label: 'Light', icon: Sun03Icon },
 		{ value: 'dark', label: 'Dark', icon: Moon02Icon }
 	];
@@ -26,13 +27,21 @@
 	}}
 	disabled={!hydrated}
 >
-	<Select.Trigger
-		aria-label="Appearance"
-		class="size-11 min-h-11 justify-center md:w-44 md:justify-between [&>svg:last-child]:hidden md:[&>svg:last-child]:block"
-	>
-		<HugeiconsIcon icon={SunMoonIcon} aria-hidden="true" />
-		<Select.Value class="sr-only md:not-sr-only" />
-	</Select.Trigger>
+	<Tooltip.Root>
+		<Tooltip.Trigger>
+			{#snippet child({ props })}
+				<Select.Trigger
+					{...props}
+					aria-label="Appearance"
+					class="size-11 min-h-11 justify-center [&>svg:last-child]:hidden"
+				>
+					<HugeiconsIcon icon={ContrastIcon} aria-hidden="true" />
+					<Select.Value class="sr-only" />
+				</Select.Trigger>
+			{/snippet}
+		</Tooltip.Trigger>
+		<Tooltip.Content role="tooltip" side="bottom">Appearance</Tooltip.Content>
+	</Tooltip.Root>
 	<Select.Content align="end">
 		<Select.Group>
 			<Select.GroupHeading>Appearance</Select.GroupHeading>
