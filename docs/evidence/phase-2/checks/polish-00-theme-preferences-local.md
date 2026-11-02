@@ -24,6 +24,24 @@ The existing browser boundaries cover the behavior:
 
 The appearance test first failed because the control did not exist; it passed after implementation. The map test first failed because dark mode requested Positron; it passed with the verified dark style. A reused build served at a different origin rejected form submissions during an intermediate check. The complete quality run rebuilds at the matching origin rather than weakening the form security check.
 
-Complete repository quality and two-axis review results are pending.
+The first complete run passed all 183 unit/integration tests and 111 of 117 browser tests. The failures exposed an ambiguous Appearance locator while its menu closed, an existing keyboard test focusing a disabled Follow button, and client-only Tag controls accepting clicks before hydration. The locator now scopes to the banner; the keyboard test waits for the control to become enabled; the Tag fieldset stays disabled until its handlers mount. The original filled-form sequence passed after that guard. The appearance trigger's measured 32px registry height was raised to a 44px minimum and added to the existing touch-target audit. Incidental installer dependency upgrades were removed. A frozen-lockfile install passed with the original Bits UI and icon versions plus `mode-watcher`.
 
-Manual local preview uses port 4190 and a dedicated temporary prototype database. The actual Positron provider map rendered without the fallback. Automated map fixtures replace external HTTP responses and retain the real renderer and worker. No production, live database or daily-driver preview was touched. ADR 0001's lazy runtime database/authentication boundaries remain unchanged.
+The final `bun run quality` passed for implementation revision `6142217`: formatting, lint, Svelte/TypeScript with zero errors or warnings, all 183 unit/integration tests, all 117 Playwright tests and the production build. The run used the installed Chromium cache through `PLAYWRIGHT_BROWSERS_PATH`, `VITEST_MAX_WORKERS=2` and the default six browser workers. The existing lazy renderer chunk-size advisory remains. Documentation-only completion updates receive a final formatting/lint and link/diff check.
+
+The final fixes also give the loading map a valid labeled group role and semantic background before its renderer mounts. An existing account test now waits for sign-out's redirect before opening Sign in, matching its adjacent test and removing a confirmed navigation race. No assertions were removed or weakened.
+
+## Code review
+
+Review baseline: `434bbb3a42cbee79f88347916bfba7907dc05401`. The code-review skill ran independent, read-only Standards and Spec reviews of implementation commit `a5016f6`, followed by the changes through `ec0d46b` and the loading-map correction in `9b9f3a3`.
+
+### Standards
+
+No documented-standard violations or actionable code smells. The follow-up hydration guard, scoped locators and dependency restoration received no findings.
+
+### Spec
+
+No missing behavior, implementation mistakes or scope findings. The follow-up interaction fixes received no findings.
+
+Review totals: Standards 0 unresolved findings; Spec 0 unresolved findings.
+
+Manual local preview uses port 4190 and a dedicated temporary prototype database. Both actual provider maps rendered without the fallback. The mobile trigger measured 44x44 CSS pixels; desktop inspection confirmed the matching icon and text. Automated map fixtures replace external HTTP responses and retain the real renderer and worker. No production, live database or daily-driver preview was touched. ADR 0001's lazy runtime database/authentication boundaries remain unchanged.
