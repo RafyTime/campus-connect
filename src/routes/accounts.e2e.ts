@@ -207,6 +207,7 @@ test.describe('Campus Connect accounts and profiles', () => {
 			.click();
 		await page.getByRole('button', { name: 'Sign out' }).click();
 
+		await expect(page).toHaveURL('/');
 		await page.goto('/sign-in');
 		await page.getByLabel('Email').fill(email);
 		await page.getByLabel('Password').fill('wrong-password');
