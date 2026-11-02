@@ -65,7 +65,7 @@ test.describe('public Campus Connect shell', () => {
 		}) => {
 			await page.emulateMedia({ colorScheme: 'dark' });
 			await page.goto('/');
-			const appearance = page.getByLabel('Appearance', { exact: true });
+			const appearance = page.getByRole('banner').getByLabel('Appearance', { exact: true });
 			await expect(appearance).toBeEnabled();
 			await appearance.focus();
 			await assertVisibleFocus(page);
@@ -112,7 +112,7 @@ test.describe('public Campus Connect shell', () => {
 	}) => {
 		await page.emulateMedia({ colorScheme: 'dark' });
 		await page.goto('/');
-		const appearance = page.getByLabel('Appearance', { exact: true });
+		const appearance = page.getByRole('banner').getByLabel('Appearance', { exact: true });
 		await expect(appearance).toContainText('System');
 		await expect
 			.poll(() => page.locator('html').evaluate((element) => getComputedStyle(element).colorScheme))
@@ -230,6 +230,7 @@ test.describe('public Campus Connect shell', () => {
 			await page.goto('/');
 
 			const targets = [
+				page.getByRole('banner').getByLabel('Appearance', { exact: true }),
 				...(await page.getByRole('navigation', { name: 'Primary' }).getByRole('link').all()),
 				...(await page.getByRole('navigation', { name: 'Account' }).getByRole('link').all())
 			];

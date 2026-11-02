@@ -301,6 +301,7 @@ test.describe('Campus Connect accounts and profiles', () => {
 	}) => {
 		await page.setViewportSize(viewports.desktop);
 		await page.goto('/groups/group-film-society');
+		await expect(page.getByRole('button', { name: 'Follow' })).toBeEnabled();
 		await page.getByRole('button', { name: 'Follow' }).focus();
 		await page.keyboard.press('Enter');
 		await expect(page.getByRole('dialog', { name: 'Sign in to continue' })).toBeVisible();

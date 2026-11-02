@@ -29,7 +29,7 @@
 >
 	<Select.Trigger
 		aria-label="Appearance"
-		class="size-11 justify-center md:w-32 md:justify-between [&>svg:last-child]:hidden md:[&>svg:last-child]:block"
+		class="size-11 min-h-11 justify-center md:w-32 md:justify-between [&>svg:last-child]:hidden md:[&>svg:last-child]:block"
 	>
 		{#key preference}
 			<HugeiconsIcon icon={selected.icon} aria-hidden="true" />

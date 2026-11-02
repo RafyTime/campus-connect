@@ -79,14 +79,14 @@ test('mapped Location follows system theme and appearance overrides without losi
 	await expect(map.getByText('Loading map…')).toHaveCount(0);
 	await expect(map.getByRole('img', { name: 'Campus Cafeteria' })).toBeVisible();
 	expect(requests).toContain('https://tiles.openfreemap.org/styles/dark');
-	await page.getByLabel('Appearance', { exact: true }).click();
+	await page.getByRole('banner').getByLabel('Appearance', { exact: true }).click();
 	await page.getByRole('option', { name: 'Light', exact: true }).click();
 	await expect
 		.poll(() => requests.includes('https://tiles.openfreemap.org/styles/positron'))
 		.toBe(true);
 	await expect(map.getByText('Loading map…')).toHaveCount(0);
 	await expect(map.locator('.leaflet-marker-icon')).toHaveCount(1);
-	await page.getByLabel('Appearance', { exact: true }).click();
+	await page.getByRole('banner').getByLabel('Appearance', { exact: true }).click();
 	await page.getByRole('option', { name: 'Dark', exact: true }).click();
 	await expect
 		.poll(

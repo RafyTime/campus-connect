@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
@@ -45,6 +46,10 @@
 	const locationId = $derived(form.fields.locationId.value() ?? defaults.locationId);
 	let clientErrors = $state<EventFieldErrors>({});
 	let transportFailure = $state(false);
+	let hydrated = $state(false);
+	onMount(() => {
+		hydrated = true;
+	});
 	const generalIssue = $derived(
 		form.fields.allIssues()?.find((issue) => !issue.path?.length)?.message
 	);
@@ -196,7 +201,7 @@
 				{/each}
 			</Field.Group>
 		</Field.Set>
-		<Field.Set data-invalid={issues('tagIds').length > 0 || undefined}>
+		<Field.Set disabled={!hydrated} data-invalid={issues('tagIds').length > 0 || undefined}>
 			<Field.Legend>Tags</Field.Legend>
 			<Field.Description id="event-tags-help"
 				>Choose one to three from the campus list.</Field.Description
