@@ -1,18 +1,17 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { ComputerIcon, Sun03Icon, Moon02Icon } from '@hugeicons/core-free-icons';
+	import { ComputerIcon, Sun03Icon, Moon02Icon, SunMoonIcon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { setMode, userPrefersMode } from 'mode-watcher';
 	import * as Select from '#lib/components/ui/select/index.js';
 
 	const choices = [
-		{ value: 'system', label: 'System', icon: ComputerIcon },
+		{ value: 'system', label: 'System default', icon: ComputerIcon },
 		{ value: 'light', label: 'Light', icon: Sun03Icon },
 		{ value: 'dark', label: 'Dark', icon: Moon02Icon }
 	];
 	let hydrated = $state(false);
 	const preference = $derived(hydrated ? userPrefersMode.current : 'system');
-	const selected = $derived(choices.find((choice) => choice.value === preference) ?? choices[0]);
 	onMount(() => {
 		hydrated = true;
 	});
@@ -29,11 +28,9 @@
 >
 	<Select.Trigger
 		aria-label="Appearance"
-		class="size-11 min-h-11 justify-center md:w-32 md:justify-between [&>svg:last-child]:hidden md:[&>svg:last-child]:block"
+		class="size-11 min-h-11 justify-center md:w-44 md:justify-between [&>svg:last-child]:hidden md:[&>svg:last-child]:block"
 	>
-		{#key preference}
-			<HugeiconsIcon icon={selected.icon} aria-hidden="true" />
-		{/key}
+		<HugeiconsIcon icon={SunMoonIcon} aria-hidden="true" />
 		<Select.Value class="sr-only md:not-sr-only" />
 	</Select.Trigger>
 	<Select.Content align="end">

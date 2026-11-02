@@ -8,6 +8,8 @@ Leo selected variant A, the visible header control, after reviewing three placem
 
 The finished control uses the configured Rhea style, Hugeicons, semantic theme tokens and a 44px trigger and options. It preserves the full brand and account links at 360px. Its accessible name is Appearance, and the menu names every choice. Keyboard focus returns to the trigger after selection. The header can wrap at narrower widths.
 
+Follow-up on 2026-11-02: Leo approved a fixed sun/moon icon on the trigger to identify Appearance independently of the selected preference. The system option now reads "System default". Mobile keeps the icon alone; larger screens show the icon and selected label. Menu choices retain their individual computer, sun and moon icons. The stored `system` value and preference behavior are unchanged. The complete quality command passed again with 183 unit/integration tests, 117 browser tests and the production build; mobile and desktop preview inspection also passed.
+
 ## Delivered behavior
 
 Following [shadcn-svelte's dark-mode guide](https://shadcn-svelte.com/docs/dark-mode/svelte), the root layout mounts `ModeWatcher`. Its synchronous head script applies the saved device preference or system appearance before the page renders, including the native browser color scheme. The library persists System, Light or Dark locally and tracks device changes while System is selected. No account data or schema changes are involved.

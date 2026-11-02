@@ -57,7 +57,7 @@ async function assertVisibleFocus(page: Page) {
 }
 
 test.describe('public Campus Connect shell', () => {
-	for (const preference of ['System', 'Light', 'Dark']) {
+	for (const preference of ['System default', 'Light', 'Dark']) {
 		test(`${preference} appearance is correct before client modules load on a later visit`, async ({
 			page,
 			browser,
@@ -83,7 +83,7 @@ test.describe('public Campus Connect shell', () => {
 				.evaluate((element) => getComputedStyle(element).backgroundColor);
 			const laterVisit = await browser.newContext({
 				storageState: await context.storageState(),
-				colorScheme: preference === 'System' ? 'dark' : 'light'
+				colorScheme: preference === 'System default' ? 'dark' : 'light'
 			});
 			try {
 				const initialPage = await laterVisit.newPage();
@@ -113,7 +113,7 @@ test.describe('public Campus Connect shell', () => {
 		await page.emulateMedia({ colorScheme: 'dark' });
 		await page.goto('/');
 		const appearance = page.getByRole('banner').getByLabel('Appearance', { exact: true });
-		await expect(appearance).toContainText('System');
+		await expect(appearance).toContainText('System default');
 		await expect
 			.poll(() => page.locator('html').evaluate((element) => getComputedStyle(element).colorScheme))
 			.toBe('dark');
@@ -129,7 +129,7 @@ test.describe('public Campus Connect shell', () => {
 			.poll(() => page.locator('html').evaluate((element) => getComputedStyle(element).colorScheme))
 			.toBe('light');
 		await appearance.click();
-		await page.getByRole('option', { name: 'System', exact: true }).click();
+		await page.getByRole('option', { name: 'System default', exact: true }).click();
 		await expect
 			.poll(() => page.locator('html').evaluate((element) => getComputedStyle(element).colorScheme))
 			.toBe('dark');
