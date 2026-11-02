@@ -49,6 +49,8 @@
 	<div
 		bind:this={element}
 		class="relative z-0 h-64 w-full bg-muted"
+		role="group"
+		style:background-color="var(--muted)"
 		aria-label={`Map showing ${label}`}
 	></div>
 	<div class="flex flex-col gap-2 border-t bg-background p-3 text-sm">
