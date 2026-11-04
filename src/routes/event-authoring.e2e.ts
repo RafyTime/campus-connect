@@ -55,7 +55,7 @@ test('a Creator publishes, discovers, and manages a public personal Event', asyn
 		.getByRole('link', { name: 'My events', exact: true })
 		.click();
 	await expect(page.getByRole('heading', { name: title })).toBeVisible();
-	await page.getByRole('link', { name: `Edit ${title}` }).click();
+	await page.getByRole('link', { name: `Edit Event: ${title}` }).click();
 	await expect(page.getByLabel('Start', { exact: true })).toHaveValue('2030-09-02T18:00');
 	await expect(page.getByRole('checkbox', { name: 'Tech', exact: true })).toBeChecked();
 	await expect(page.getByRole('checkbox', { name: 'Social', exact: true })).toBeChecked();
@@ -201,7 +201,7 @@ test('Create, edit, and My events fit phone, tablet, and desktop and keep contro
 			scroll: document.documentElement.scrollWidth
 		}));
 		expect(listDimensions.scroll).toBeLessThanOrEqual(listDimensions.width);
-		await page.getByRole('link', { name: `Edit ${title}` }).click();
+		await page.getByRole('link', { name: `Edit Event: ${title}` }).click();
 		await expect(page.getByLabel('Location label', { exact: true })).toHaveValue('Library garden');
 		const dimensions = await page.evaluate(() => ({
 			width: document.documentElement.clientWidth,
@@ -246,7 +246,7 @@ for (const viewport of [
 				(violation) => violation.impact === 'critical' || violation.impact === 'serious'
 			)
 		).toEqual([]);
-		await page.getByRole('link', { name: `Edit ${title}` }).click();
+		await page.getByRole('link', { name: `Edit Event: ${title}` }).click();
 		await expect(page.getByLabel('Location label', { exact: true })).toHaveValue('Library garden');
 		scan = await new AxeBuilder({ page }).analyze();
 		expect(

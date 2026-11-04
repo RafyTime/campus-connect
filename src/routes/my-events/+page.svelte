@@ -42,7 +42,7 @@
 							href={`/events/${event.id}/edit`}
 							variant="outline"
 							class="min-h-11"
-							aria-label={`Edit ${event.title}`}>Edit Event</Button
+							aria-label={`Edit Event: ${event.title}`}>Edit Event</Button
 						>
 					{/if}
 				</li>

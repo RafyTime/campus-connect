@@ -153,7 +153,7 @@ for (const viewport of [
 		await expect(page.getByRole('heading', { name: title, level: 1 })).toBeVisible();
 		await page.goto('/my-events');
 		await checkLayoutAndAccessibility(page);
-		await page.getByRole('link', { name: `Edit ${title}` }).click();
+		await page.getByRole('link', { name: `Edit Event: ${title}` }).click();
 		await expect(page.getByText('Host: Film Society.', { exact: false })).toBeVisible();
 		await checkLayoutAndAccessibility(page);
 		await page.screenshot({
@@ -230,11 +230,11 @@ for (const actor of ['lena', 'jonas'] as const) {
 		await expect(visitor.getByRole('heading', { name: title })).toBeVisible();
 		await visitor.close();
 		await page.goto('/my-events');
-		await expect(page.getByRole('link', { name: `Edit ${title}` })).toBeVisible();
+		await expect(page.getByRole('link', { name: `Edit Event: ${title}` })).toBeVisible();
 		const other = await browser.newPage();
 		await signIn(other, actor === 'lena' ? 'jonas' : 'lena');
 		await other.goto('/my-events');
-		await other.getByRole('link', { name: `Edit ${title}` }).click();
+		await other.getByRole('link', { name: `Edit Event: ${title}` }).click();
 		await expect(
 			other.getByText(
 				`Host: Film Society. Published by ${actor === 'lena' ? 'Lena Hartmann' : 'Jonas Weber'}. The host cannot change.`
