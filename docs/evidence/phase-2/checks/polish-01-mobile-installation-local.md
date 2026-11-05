@@ -10,7 +10,7 @@ The approved banner appears on Discover, Groups, My activity and My events until
 
 The final spacing groups the 36px identity mark and text separately from the Install and close controls, with a larger gap between groups and 44px touch targets. The short subtitle avoids an orphaned word at 360px. The header retains its existing compact horizontal padding while accounting for cutouts.
 
-The installation sheet gives Safari's Share / Add to Home Screen / Add steps, including Open as Web App when shown. Other detected iOS browsers receive Safari guidance. Android browsers receive menu instructions until a browser-owned `beforeinstallprompt` event supplies a native Install app action. Each event is consumed once; acceptance, dismissal and failure leave an honest state. Failures offer the menu route. No native prompt opens automatically.
+The installation sheet gives all iOS browsers the same Share / Add to Home Screen / Add steps, including Open as Web App when shown. Android browsers receive menu instructions until a browser-owned `beforeinstallprompt` event supplies a native Install app action. Each event is consumed once; acceptance, dismissal and failure leave an honest state. Failures offer the menu route. No native prompt opens automatically.
 
 ## Identity and layout
 
@@ -54,11 +54,11 @@ Review totals: Standards 0 unresolved findings; Spec 0 implementation findings, 
 
 ## Candidate preparation
 
-Leo confirmed that he can run the real-device checks. Read-only Railway discovery found that the existing Campus Connect project has only a production environment. No infrastructure was changed. A source archive of reviewed code revision `573eb39` is prepared under `/tmp`, excluding local environment credentials, SQLite files and installed dependencies. Creating a separate HTTPS candidate with its own database and auth secret is the proposed next step. Approval and deployment are still pending; no push is required for a local-source candidate upload.
+Leo confirmed that he can run the real-device checks. Read-only Railway discovery found that the existing Campus Connect project has only a production environment. No infrastructure was changed. A source archive of reviewed code revision `573eb39` is prepared under `/tmp`, excluding local environment credentials, SQLite files and installed dependencies. PR #3 subsequently authorized the branch push and preview deployment. The isolated `pr-3-mobile-installation` environment uses its own service, fresh SQLite volume and new auth secret. [The HTTPS preview](https://campus-connect-pr-3-pr-3-mobile-installation.up.railway.app) follows the feature branch; production remains unchanged.
 
 ## Required candidate checks
 
-These remain unverified, without a waiver. Ticket 01 stays `ready` until its required delivery checklist is satisfied or Leo explicitly waives a gap.
+The phone checks below were subsequently reported passed by Leo, as recorded in the device-feedback section. Manual desktop Firefox remains individually unconfirmed. Ticket 01 stays `ready` until its remaining delivery checklist is satisfied or Leo explicitly waives a gap.
 
 - Isolated HTTPS candidate, Android Chrome: record device, OS and browser versions; inspect the icon, open the sheet and native installation, launch standalone, sign in and navigate, check safe areas and the home indicator where applicable, and open form/filter keyboards with essential controls reachable.
 - Isolated HTTPS candidate, iPhone Safari: record device, iOS and Safari versions; follow Share / Add to Home Screen, inspect the icon and standalone launch, exercise public and authenticated navigation, safe areas and home indicator, and keyboard-open forms/filter sheets. Do not assume Safari's existing login transfers to a newly installed app; verify sign-in in the installed context.
@@ -71,3 +71,9 @@ Keep records free of passwords, session values and private payloads. No final Ra
 - [Browser installation criteria](https://web.dev/articles/install-criteria) and [native-prompt lifecycle](https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeinstallprompt_event).
 - [Apple home-screen installation](https://support.apple.com/guide/iphone/open-as-web-app-iphea86e5236/27/ios/27).
 - [Owning ticket](../../../.work/04-phase-2-polish/tasks/01-deliver-mobile-installation-and-standalone-use.md) and [acceptance-to-evidence matrix](../../../.work/01-phase-2-campus-connect/acceptance-evidence.md).
+
+## Device feedback and compact drawer follow-up
+
+Leo reported that the requested checks worked as expected on his Pixel Android phone and his girlfriend's iPhone, including Chrome and Safari on iPhone. These checks used the PR #3 HTTPS preview at revision `174188c`; exact device/OS/browser versions were not supplied. Manual desktop Firefox verification has not been individually confirmed.
+
+Leo then approved browser-neutral iOS instructions, the application icon beside the title on both platforms, the subtitle "Internet connection required.", and shorter copy and spacing. The follow-up removes the obsolete iOS browser distinction. Svelte/TypeScript passed; all 10 focused installation and responsive/axe browser checks passed for the compact drawer. Physical installation behavior is unchanged.

@@ -8,7 +8,7 @@ const dismissalKey = 'campus-connect-install-dismissed';
 
 // One controller per layout keeps the banner and Account entry in sync without sharing SSR state.
 export class MobileInstallation {
-	platform = $state<'android' | 'ios' | 'ios-other' | null>(null);
+	platform = $state<'android' | 'ios' | null>(null);
 	standalone = $state(false);
 	dismissed = $state(false);
 	prompt = $state<InstallPrompt | null>(null);
@@ -20,13 +20,7 @@ export class MobileInstallation {
 		const ios =
 			/iPhone|iPad|iPod/.test(agent) ||
 			(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-		this.platform = ios
-			? /CriOS|FxiOS|EdgiOS|OPiOS/.test(agent)
-				? 'ios-other'
-				: 'ios'
-			: /Android/.test(agent)
-				? 'android'
-				: null;
+		this.platform = ios ? 'ios' : /Android/.test(agent) ? 'android' : null;
 		const displayMode = window.matchMedia('(display-mode: standalone)');
 		const updateDisplayMode = () => {
 			this.standalone =
@@ -83,7 +77,7 @@ export class MobileInstallation {
 			if (choice.outcome === 'accepted') this.dismiss();
 		} catch {
 			this.error =
-				'Installation could not open. Use Chrome’s menu to add Campus Connect to your home screen.';
+				'Installation could not open. Use your browser’s menu to add Campus Connect to your home screen.';
 		} finally {
 			this.pending = false;
 		}

@@ -61,39 +61,33 @@
 			showCloseButton={false}
 		>
 			<div class="mx-auto flex w-full max-w-md flex-col">
-				<Sheet.Header>
-					<Sheet.Title>Install Campus Connect</Sheet.Title>
-					<Sheet.Description
-						>Open from your home screen. An internet connection is required.</Sheet.Description
-					>
+				<Sheet.Header class="flex-row items-center gap-3 px-5 pt-5 pb-3">
+					<img src={favicon} alt="" class="size-10 shrink-0" />
+					<div class="flex min-w-0 flex-col gap-1">
+						<Sheet.Title>Install Campus Connect</Sheet.Title>
+						<Sheet.Description>Internet connection required.</Sheet.Description>
+					</div>
 				</Sheet.Header>
-				<div class="flex flex-col gap-3 px-6">
+				<div class="flex flex-col gap-2 px-5">
 					{#if installation.platform === 'ios'}
 						<p>
-							In Safari, tap <HugeiconsIcon
-								icon={Share03Icon}
-								class="inline size-4 align-text-bottom"
-							/> <strong>Share</strong>, then <strong>Add to Home Screen</strong>.
-						</p>
-						<p>Keep <strong>Open as Web App</strong> on if shown, then tap <strong>Add</strong>.</p>
-					{:else if installation.platform === 'ios-other'}
-						<p>
-							Open this page in <strong>Safari</strong>, then tap <strong>Share</strong> and
-							<strong>Add to Home Screen</strong>.
+							Tap <HugeiconsIcon icon={Share03Icon} class="inline size-4 align-text-bottom" />
+							<strong>Share → Add to Home Screen → Add</strong>. Keep
+							<strong>Open as Web App</strong> on if shown.
 						</p>
 					{:else if installation.pending}
 						<p>Confirm installation in your browser.</p>
 					{:else if installation.prompt}
-						<p>Tap <strong>Install app</strong>, then confirm in Chrome.</p>
+						<p>Tap <strong>Install app</strong>, then confirm.</p>
 					{:else}
 						<p>
-							Open your browser’s menu and choose <strong>Add to home screen</strong> or
-							<strong>Install app</strong>, then confirm.
+							Open the browser menu → <strong>Add to home screen</strong> or
+							<strong>Install app</strong>.
 						</p>
 					{/if}
 					{#if installation.error}<p role="alert">{installation.error}</p>{/if}
 				</div>
-				<Sheet.Footer>
+				<Sheet.Footer class="gap-2 px-5 pt-4 pb-5">
 					{#if installation.prompt || installation.pending}
 						<Button
 							class="min-h-11"

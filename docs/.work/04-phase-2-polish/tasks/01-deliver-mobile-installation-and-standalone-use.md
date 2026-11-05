@@ -13,9 +13,9 @@
 ## Acceptance criteria
 
 - [x] The selected prototype covers application identity/icons, installation guidance where appropriate, standalone navigation, safe areas, keyboard-open forms and filter sheets before implementation.
-- [ ] Android Chrome and iPhone Safari support the appropriate installation/home-screen flow and recognizable application identity and icons.
-- [ ] The installed application launches in standalone mode and retains the existing authenticated and public journeys.
-- [ ] Header, content and navigation account for device safe areas and the home indicator; on-screen keyboards leave essential form and filter-sheet controls reachable.
+- [x] Android Chrome and iPhone Safari support the appropriate installation/home-screen flow and recognizable application identity and icons.
+- [x] The installed application launches in standalone mode and retains the existing authenticated and public journeys.
+- [x] Header, content and navigation account for device safe areas and the home indicator; on-screen keyboards leave essential form and filter-sheet controls reachable.
 - [ ] Normal browser use, including desktop Firefox, remains available; desktop installation is not an added acceptance gate.
 - [x] Existing browser checks verify representative install metadata and layouts at 360x800, 768x1024 and 1440x900. Installed-device behavior is verified separately rather than inferred from emulated dimensions.
 - [x] The complete repository quality command passes and implementation/check evidence is recorded without credentials.
@@ -28,7 +28,7 @@
 
 ## Project delivery
 
-- [ ] In an isolated HTTPS candidate environment, manually verify Android Chrome and iPhone Safari installation, standalone launch, safe areas and keyboard-open forms/filter sheets. Record device/browser and results; any unavailable platform remains unverified until explicitly waived.
+- [x] In an isolated HTTPS candidate environment, manually verify Android Chrome and iPhone Safari installation, standalone launch, safe areas and keyboard-open forms/filter sheets. Record device/browser and results; any unavailable platform remains unverified until explicitly waived.
 - [ ] In desktop Firefox, check ordinary browser discovery, authentication and navigation. Retain a credential-free result record.
 
 ## Comments
@@ -40,3 +40,5 @@ Second execution priority. It does not have a hard dependency on dark mode: orde
 Implementation and the 14 focused browser checks are recorded in [the local evidence](../../../evidence/phase-2/checks/polish-01-mobile-installation-local.md). Independent Standards and Spec reviews found no implementation defects. Complete quality passed on `573eb39`: 183 unit/integration tests, 131 browser tests, formatting/lint, Svelte/TypeScript and production build. Three additional automated Firefox journeys passed. Installed Android/iPhone checks on an isolated HTTPS candidate and manual Firefox verification remain unverified and have not been waived. Keep the ticket ready until those delivery items are complete. No push, deployment, production data change or final submission capture occurred.
 
 Leo confirmed that he can test on physical devices. Railway has only the production environment, so a separate candidate must be created before those HTTPS checks. Only read-only infrastructure discovery has occurred. Candidate creation/deployment is pending approval; the prepared local-source archive excludes credentials and databases.
+
+2026-11-05 device feedback: Leo reported that the requested phone checks worked as expected on Pixel Android and iPhone, including iPhone Chrome and Safari, against PR #3's isolated HTTPS preview at `174188c`. Exact versions were not supplied. Manual desktop Firefox remains individually unconfirmed. He approved a compact drawer follow-up with the app icon, browser-neutral iOS guidance and shorter copy/spacing.

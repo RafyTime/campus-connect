@@ -410,7 +410,7 @@ test.describe('Android installation capability', () => {
 				.getByRole('button', { name: 'Install', exact: true })
 				.click();
 			const drawer = page.getByRole('dialog', { name: 'Install Campus Connect' });
-			await expect(drawer).toContainText('browser’s menu');
+			await expect(drawer).toContainText('browser menu');
 			let prompted = false;
 			await page.exposeFunction('nativeInstallPrompt', () => {
 				prompted = true;
@@ -448,7 +448,7 @@ test.describe('Android installation capability', () => {
 					0
 				);
 				await expect(drawer).toContainText(
-					outcome === 'failed' ? 'Installation could not open' : 'browser’s menu'
+					outcome === 'failed' ? 'Installation could not open' : 'browser menu'
 				);
 				await drawer.getByRole('button', { name: 'Done', exact: true }).click();
 				await expect(page.getByRole('heading', { name: 'Discover', exact: true })).toBeVisible();
