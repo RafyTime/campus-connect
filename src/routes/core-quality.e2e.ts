@@ -87,3 +87,72 @@ for (const colorScheme of ['light', 'dark'] as const) {
 		}
 	});
 }
+
+for (const colorScheme of ['light', 'dark'] as const) {
+	test.describe(`mobile installation in ${colorScheme} appearance`, () => {
+		test.use({
+			colorScheme,
+			userAgent:
+				'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/130.0.0.0 Mobile Safari/537.36'
+		});
+		for (const viewport of [
+			{ width: 360, height: 800 },
+			{ width: 768, height: 1024 },
+			{ width: 1440, height: 900 }
+		]) {
+			test(`banner and installation drawer fit ${viewport.width}x${viewport.height}`, async ({
+				page
+			}, testInfo) => {
+				await page.setViewportSize(viewport);
+				await page.goto('/');
+				const banner = page.getByRole('complementary', { name: 'Install Campus Connect' });
+				await expect(banner).toBeVisible();
+				await auditPage(page);
+				if (viewport.width === 360)
+					await page.screenshot({ path: testInfo.outputPath('installation-banner.png') });
+				for (const button of await banner.getByRole('button').all()) {
+					const box = await button.boundingBox();
+					expect(box?.height).toBeGreaterThanOrEqual(44);
+					expect(box?.width).toBeGreaterThanOrEqual(44);
+				}
+				await banner.getByRole('button', { name: 'Install', exact: true }).click();
+				const drawer = page.getByRole('dialog', { name: 'Install Campus Connect' });
+				await expect(drawer).toBeVisible();
+				await auditPage(page);
+				const box = await drawer.boundingBox();
+				expect(box?.y).toBeGreaterThanOrEqual(0);
+				expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(viewport.height + 1);
+				if (viewport.width === 360)
+					await page.screenshot({ path: testInfo.outputPath('installation-drawer.png') });
+				await page.keyboard.press('Escape');
+				await expect(banner.getByRole('button', { name: 'Install', exact: true })).toBeFocused();
+			});
+		}
+	});
+}
+
+test('forms and filter-sheet actions remain reachable with a reduced mobile viewport', async ({
+	page
+}) => {
+	await page.setViewportSize({ width: 360, height: 400 });
+	await page.goto('/sign-in');
+	await page.getByLabel('Email', { exact: true }).fill('mobile@example.com');
+	await page.getByLabel('Password', { exact: true }).focus();
+	const submit = page.getByRole('button', { name: 'Sign in', exact: true });
+	await submit.scrollIntoViewIfNeeded();
+	let bounds = await submit.boundingBox();
+	expect(bounds?.y).toBeGreaterThanOrEqual(0);
+	expect((bounds?.y ?? 0) + (bounds?.height ?? 0)).toBeLessThanOrEqual(400);
+	await page.goto('/');
+	await page.getByRole('button', { name: /^Filters/ }).click();
+	const sheet = page.getByRole('dialog', { name: 'Filter Events', exact: true });
+	await sheet.getByRole('button', { name: /^Date / }).click();
+	await sheet.getByRole('radio', { name: 'Choose a date', exact: true }).click();
+	await sheet.getByLabel('Choose a date', { exact: true }).focus();
+	const done = sheet.getByRole('button', { name: 'Done', exact: true });
+	bounds = await done.boundingBox();
+	expect(bounds?.y).toBeGreaterThanOrEqual(0);
+	expect((bounds?.y ?? 0) + (bounds?.height ?? 0)).toBeLessThanOrEqual(400);
+	await done.click();
+	await expect(sheet).toHaveCount(0);
+});

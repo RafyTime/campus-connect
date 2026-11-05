@@ -273,8 +273,8 @@
 					class={buttonVariants({ variant: 'outline', class: 'min-h-11' })}
 					disabled={!hydrated}>Filters{active.length ? ` · ${active.length}` : ''}</Sheet.Trigger
 				>
-				<Sheet.Content side="bottom" class="max-h-[85dvh] rounded-t-3xl">
-					<Sheet.Header>
+				<Sheet.Content side="bottom" class="viewport-sheet rounded-t-3xl">
+					<Sheet.Header class="shrink-0">
 						<Sheet.Title>Filter Events</Sheet.Title>
 						<Sheet.Description>Results update as you choose.</Sheet.Description>
 					</Sheet.Header>
@@ -304,7 +304,7 @@
 							{/each}
 						</Accordion.Root>
 					</div>
-					<Sheet.Footer>
+					<Sheet.Footer class="shrink-0">
 						<div class="flex items-center justify-between gap-2">
 							<p
 								role="status"

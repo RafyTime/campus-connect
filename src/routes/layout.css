@@ -129,3 +129,40 @@
 		@apply font-sans;
 	}
 }
+
+/* Keep launch chrome and controls clear of device cutouts and the home indicator. */
+.app-header {
+	padding-top: env(safe-area-inset-top);
+}
+.safe-inline {
+	padding-left: max(var(--safe-inline-space, 1rem), env(safe-area-inset-left));
+	padding-right: max(var(--safe-inline-space, 1rem), env(safe-area-inset-right));
+}
+.viewport-sheet[data-slot='sheet-content'] {
+	bottom: var(--visual-viewport-bottom, 0px);
+	max-height: calc(min(85dvh, var(--visual-viewport-height, 100dvh)) - env(safe-area-inset-top));
+	padding-bottom: env(safe-area-inset-bottom);
+	padding-left: env(safe-area-inset-left);
+	padding-right: env(safe-area-inset-right);
+}
+html {
+	scroll-padding-block: calc(5rem + env(safe-area-inset-top))
+		calc(6rem + env(safe-area-inset-bottom));
+}
+input,
+textarea,
+select,
+button {
+	scroll-margin-block: 5rem;
+}
+/* Focused forms need the viewport more than the fixed destination bar. */
+body:has(input:focus, textarea:focus, select:focus) [data-mobile-navigation] {
+	display: none;
+}
+@media (hover: none) and (pointer: coarse) {
+	input,
+	textarea,
+	select {
+		font-size: 1rem;
+	}
+}

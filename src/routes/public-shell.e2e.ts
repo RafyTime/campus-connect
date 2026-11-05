@@ -57,6 +57,54 @@ async function assertVisibleFocus(page: Page) {
 }
 
 test.describe('public Campus Connect shell', () => {
+	test('home-screen installation has a stable identity, launch URL and usable icons', async ({
+		page
+	}) => {
+		await page.goto('/');
+		const manifestLink = page.locator('link[rel="manifest"]');
+		await expect(manifestLink).toHaveAttribute('href', '/manifest.webmanifest');
+		const response = await page.request.get('/manifest.webmanifest');
+		expect(response.ok()).toBe(true);
+		const manifest = await response.json();
+		expect(manifest).toMatchObject({
+			id: '/',
+			name: 'Campus Connect',
+			short_name: 'Campus Connect',
+			start_url: '/',
+			scope: '/',
+			display: 'standalone'
+		});
+		for (const size of [192, 512]) {
+			const icon = manifest.icons.find(
+				(icon: { sizes: string; purpose?: string }) =>
+					icon.sizes === `${size}x${size}` && icon.purpose === 'any'
+			);
+			expect(icon).toBeDefined();
+			await page.goto(icon.src);
+			expect(
+				await page
+					.locator('img')
+					.evaluate((image: HTMLImageElement) => [image.naturalWidth, image.naturalHeight])
+			).toEqual([size, size]);
+		}
+		await page.goto('/sign-in');
+		await expect(page.locator('link[rel="manifest"]')).toHaveAttribute(
+			'href',
+			'/manifest.webmanifest'
+		);
+		await expect(page.locator('meta[name="apple-mobile-web-app-capable"]')).toHaveAttribute(
+			'content',
+			'yes'
+		);
+		const touchIcon = await page.locator('link[rel="apple-touch-icon"]').getAttribute('href');
+		expect(touchIcon).toBeTruthy();
+		await page.goto(touchIcon!);
+		expect(
+			await page
+				.locator('img')
+				.evaluate((image: HTMLImageElement) => [image.naturalWidth, image.naturalHeight])
+		).toEqual([180, 180]);
+	});
 	for (const preference of ['System', 'Light', 'Dark']) {
 		test(`${preference} appearance is correct before client modules load on a later visit`, async ({
 			page,
@@ -289,4 +337,176 @@ test.describe('public Campus Connect shell', () => {
 			timeout: 10_000
 		});
 	});
+});
+
+test.describe('mobile home-screen installation', () => {
+	test.use({
+		viewport: viewports.phone,
+		userAgent:
+			'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1'
+	});
+
+	test('installation stays on main pages, dismissal persists and Account can reopen instructions', async ({
+		page
+	}) => {
+		await page.goto('/');
+		const banner = page.getByRole('complementary', { name: 'Install Campus Connect' });
+		await expect(banner).toBeVisible();
+		await banner.getByRole('button', { name: 'Install', exact: true }).click();
+		const drawer = page.getByRole('dialog', { name: 'Install Campus Connect' });
+		await expect(drawer).toContainText('Add to Home Screen');
+		await expect(drawer).toContainText('Share');
+		await drawer.getByRole('button', { name: 'Done', exact: true }).click();
+		await page
+			.getByRole('navigation', { name: 'Primary' })
+			.getByRole('link', { name: 'Groups', exact: true })
+			.click();
+		await expect(banner).toBeVisible();
+		await page.goto('/register');
+		await expect(banner).toHaveCount(0);
+		await page.getByLabel('Display name').fill('Mobile Explorer');
+		await page.getByLabel('Email').fill(`mobile.${crypto.randomUUID()}@example.com`);
+		await page.getByLabel('Password', { exact: true }).fill('campus-connect-test');
+		await page.getByRole('button', { name: 'Create account' }).click();
+		await expect(page).toHaveURL('/');
+		for (const path of ['/my-activity', '/my-events', '/groups', '/']) {
+			await page.goto(path);
+			await expect(banner).toBeVisible();
+			await assertNoHorizontalPageScroll(page);
+		}
+		await page.goto('/create');
+		await expect(banner).toHaveCount(0);
+		await page.goto('/events/event-board-game-evening');
+		await expect(banner).toHaveCount(0);
+		await page.goto('/');
+		await banner.getByRole('button', { name: 'Dismiss installation banner' }).click();
+		await expect(banner).toHaveCount(0);
+		await page.reload();
+		await expect(banner).toHaveCount(0);
+		await page.goto('/groups');
+		await expect(banner).toHaveCount(0);
+		await page.goto('/account');
+		await page.getByRole('button', { name: 'Install Campus Connect', exact: true }).click();
+		await expect(drawer).toBeVisible();
+		await page.keyboard.press('Escape');
+		await expect(
+			page.getByRole('button', { name: 'Install Campus Connect', exact: true })
+		).toBeFocused();
+	});
+});
+
+test.describe('Android installation capability', () => {
+	test.use({
+		viewport: viewports.phone,
+		userAgent:
+			'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/130.0.0.0 Mobile Safari/537.36'
+	});
+
+	for (const outcome of ['accepted', 'dismissed', 'failed'] as const) {
+		test(`native installation ${outcome} leaves an honest, usable page`, async ({ page }) => {
+			await page.goto('/');
+			await page
+				.getByRole('complementary', { name: 'Install Campus Connect' })
+				.getByRole('button', { name: 'Install', exact: true })
+				.click();
+			const drawer = page.getByRole('dialog', { name: 'Install Campus Connect' });
+			await expect(drawer).toContainText('browser’s menu');
+			let prompted = false;
+			await page.exposeFunction('nativeInstallPrompt', () => {
+				prompted = true;
+			});
+			// Supply the browser-owned event at its boundary, without any production test hook.
+			await page.evaluate((outcome) => {
+				window.dispatchEvent(
+					Object.assign(new Event('beforeinstallprompt', { cancelable: true }), {
+						prompt: async () => {
+							if (
+								!('nativeInstallPrompt' in window) ||
+								typeof window.nativeInstallPrompt !== 'function'
+							) {
+								throw new Error('Missing browser prompt fixture');
+							}
+							await window.nativeInstallPrompt();
+							if (outcome === 'failed') throw new Error('Native prompt unavailable');
+							return { outcome };
+						}
+					})
+				);
+			}, outcome);
+			await drawer.getByRole('button', { name: 'Install app', exact: true }).click();
+			await expect.poll(() => prompted).toBe(true);
+			if (outcome === 'accepted') {
+				await expect(
+					page.getByRole('complementary', { name: 'Install Campus Connect' })
+				).toHaveCount(0);
+				await page.reload();
+				await expect(
+					page.getByRole('complementary', { name: 'Install Campus Connect' })
+				).toHaveCount(0);
+			} else {
+				await expect(drawer.getByRole('button', { name: 'Install app', exact: true })).toHaveCount(
+					0
+				);
+				await expect(drawer).toContainText(
+					outcome === 'failed' ? 'Installation could not open' : 'browser’s menu'
+				);
+				await drawer.getByRole('button', { name: 'Done', exact: true }).click();
+				await expect(page.getByRole('heading', { name: 'Discover', exact: true })).toBeVisible();
+			}
+		});
+	}
+});
+
+test('ordinary desktop browsing has no installation promotion', async ({ page }) => {
+	await page.goto('/');
+	await expect(page.getByRole('banner').getByLabel('Appearance', { exact: true })).toBeEnabled();
+	await expect(page.getByRole('complementary', { name: 'Install Campus Connect' })).toHaveCount(0);
+});
+
+test('standalone mobile launch keeps public and authenticated journeys without installation prompts', async ({
+	browser,
+	baseURL
+}) => {
+	const context = await browser.newContext({
+		baseURL,
+		viewport: viewports.phone,
+		userAgent:
+			'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1'
+	});
+	try {
+		await context.addInitScript(() =>
+			Object.defineProperty(navigator, 'standalone', { value: true })
+		);
+		const page = await context.newPage();
+		await page.goto('/');
+		await expect(page.getByRole('banner').getByLabel('Appearance', { exact: true })).toBeEnabled();
+		await expect(page.getByRole('complementary', { name: 'Install Campus Connect' })).toHaveCount(
+			0
+		);
+		await page
+			.getByRole('navigation', { name: 'Primary' })
+			.getByRole('link', { name: 'Groups', exact: true })
+			.click();
+		await expect(page.getByRole('heading', { name: 'Groups', exact: true })).toBeVisible();
+		await page.goto('/register');
+		await page.getByLabel('Display name').fill('Standalone Explorer');
+		await page.getByLabel('Email').fill(`standalone.${crypto.randomUUID()}@example.com`);
+		await page.getByLabel('Password', { exact: true }).fill('campus-connect-test');
+		await page.getByRole('button', { name: 'Create account' }).click();
+		await expect(page).toHaveURL('/');
+		await page
+			.getByRole('navigation', { name: 'Primary' })
+			.getByRole('link', { name: 'My activity', exact: true })
+			.click();
+		await expect(page).toHaveURL('/my-activity');
+		await page
+			.getByRole('navigation', { name: 'Account' })
+			.getByRole('link', { name: 'Account', exact: true })
+			.click();
+		await expect(
+			page.getByRole('button', { name: 'Install Campus Connect', exact: true })
+		).toHaveCount(0);
+	} finally {
+		await context.close();
+	}
 });
