@@ -39,7 +39,7 @@
 <svelte:head>
 	<link rel="icon" href={favicon} />
 	<link rel="manifest" href="/manifest.webmanifest" />
-	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
 	<meta name="application-name" content="Campus Connect" />
 	<meta name="apple-mobile-web-app-title" content="Campus Connect" />
 	<meta name="apple-mobile-web-app-capable" content="yes" />

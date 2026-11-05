@@ -56,6 +56,35 @@ async function assertVisibleFocus(page: Page) {
 	expect(hasVisibleFocus).toBe(true);
 }
 
+async function assertSharpLauncherIcon(page: Page, size: number) {
+	const image = page.locator('img');
+	expect(
+		await image.evaluate((image: HTMLImageElement) => [image.naturalWidth, image.naturalHeight])
+	).toEqual([size, size]);
+	// Check the downloaded pixels, not just declared dimensions: an enlarged 32px raster is blurry.
+	const edgeWidth = await image.evaluate((image: HTMLImageElement) => {
+		const canvas = document.createElement('canvas');
+		canvas.width = image.naturalWidth;
+		canvas.height = image.naturalHeight;
+		const context = canvas.getContext('2d');
+		if (!context) throw new Error('Image sharpness check needs a canvas context');
+		context.drawImage(image, 0, 0);
+		const pixels = context.getImageData(
+			0,
+			Math.floor(canvas.height / 2),
+			Math.floor(canvas.width / 2),
+			1
+		).data;
+		const red = Array.from({ length: pixels.length / 4 }, (_, x) => pixels[x * 4]);
+		const contrast = Math.max(...red) - red[0];
+		const low = red.findIndex((value) => value >= red[0] + contrast * 0.1);
+		const high = red.findIndex((value) => value >= red[0] + contrast * 0.9);
+		if (contrast < 100 || low < 0 || high < 0) throw new Error('Launcher mark is missing');
+		return high - low;
+	});
+	expect(edgeWidth, 'Native-size launcher stroke must have a crisp edge').toBeLessThanOrEqual(2);
+}
+
 test.describe('public Campus Connect shell', () => {
 	test('home-screen installation has a stable identity, launch URL and usable icons', async ({
 		page
@@ -74,18 +103,18 @@ test.describe('public Campus Connect shell', () => {
 			scope: '/',
 			display: 'standalone'
 		});
-		for (const size of [192, 512]) {
+		for (const { size, purpose } of [
+			{ size: 192, purpose: 'any' },
+			{ size: 512, purpose: 'any' },
+			{ size: 512, purpose: 'maskable' }
+		]) {
 			const icon = manifest.icons.find(
 				(icon: { sizes: string; purpose?: string }) =>
-					icon.sizes === `${size}x${size}` && icon.purpose === 'any'
+					icon.sizes === `${size}x${size}` && icon.purpose === purpose
 			);
 			expect(icon).toBeDefined();
 			await page.goto(icon.src);
-			expect(
-				await page
-					.locator('img')
-					.evaluate((image: HTMLImageElement) => [image.naturalWidth, image.naturalHeight])
-			).toEqual([size, size]);
+			await assertSharpLauncherIcon(page, size);
 		}
 		await page.goto('/sign-in');
 		await expect(page.locator('link[rel="manifest"]')).toHaveAttribute(
@@ -99,11 +128,7 @@ test.describe('public Campus Connect shell', () => {
 		const touchIcon = await page.locator('link[rel="apple-touch-icon"]').getAttribute('href');
 		expect(touchIcon).toBeTruthy();
 		await page.goto(touchIcon!);
-		expect(
-			await page
-				.locator('img')
-				.evaluate((image: HTMLImageElement) => [image.naturalWidth, image.naturalHeight])
-		).toEqual([180, 180]);
+		await assertSharpLauncherIcon(page, 180);
 	});
 	for (const preference of ['System', 'Light', 'Dark']) {
 		test(`${preference} appearance is correct before client modules load on a later visit`, async ({

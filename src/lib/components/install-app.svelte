@@ -65,7 +65,7 @@
 					<img src={favicon} alt="" class="size-10 shrink-0" />
 					<div class="flex min-w-0 flex-col gap-1">
 						<Sheet.Title>Install Campus Connect</Sheet.Title>
-						<Sheet.Description>Internet connection required.</Sheet.Description>
+						<Sheet.Description>Campus events, right on your home screen.</Sheet.Description>
 					</div>
 				</Sheet.Header>
 				<div class="flex flex-col gap-2 px-5">
