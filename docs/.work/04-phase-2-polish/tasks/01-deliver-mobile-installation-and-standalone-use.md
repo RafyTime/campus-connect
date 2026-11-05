@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready
+**Status:** completed
 
 **Category:** enhancement
 
@@ -29,7 +29,7 @@
 ## Project delivery
 
 - [x] In an isolated HTTPS candidate environment, manually verify Android Chrome and iPhone Safari installation, standalone launch, safe areas and keyboard-open forms/filter sheets. Record device/browser and results; any unavailable platform remains unverified until explicitly waived.
-- [ ] In desktop Firefox, check ordinary browser discovery, authentication and navigation. Retain a credential-free result record.
+- [x] In desktop Firefox, check ordinary browser discovery, authentication and navigation. Retain a credential-free result record.
 
 ## Comments
 
