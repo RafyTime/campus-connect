@@ -1,0 +1,17 @@
+{
+	"id": "/",
+	"name": "Campus Connect",
+	"short_name": "Campus Connect",
+	"description": "Discover Events and Groups at IU Campus Bad Honnef.",
+	"lang": "en",
+	"start_url": "/",
+	"scope": "/",
+	"display": "standalone",
+	"background_color": "#fafaf9",
+	"theme_color": "#292524",
+	"icons": [
+		{ "src": "/icons/campus-connect-192.png?v=2", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+		{ "src": "/icons/campus-connect-512.png?v=2", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+		{ "src": "/icons/campus-connect-maskable-512.png?v=2", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+	]
+}

@@ -4,6 +4,7 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { signOutAccount, updateDisplayName } from '#lib/accounts.remote.js';
+	import InstallApp from '#lib/components/install-app.svelte';
 	import AccountPage from '#lib/components/account-page.svelte';
 
 	let { data }: { data: { displayName: string } } = $props();
@@ -41,6 +42,8 @@
 			Save display name
 		</Button>
 	</form>
+
+	<InstallApp />
 
 	<form {...signOutAccount}>
 		<Button

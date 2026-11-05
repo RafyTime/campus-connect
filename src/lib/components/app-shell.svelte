@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import InstallApp from './install-app.svelte';
 	import AppearanceSelect from './appearance-select.svelte';
 	import { resolve } from '$app/paths';
 	import { navigating, page } from '$app/state';
@@ -52,9 +53,9 @@
 </a>
 
 <div class="flex min-h-dvh flex-col">
-	<header class="sticky top-0 z-10 border-b bg-background">
+	<header class="app-header sticky top-0 z-10 border-b bg-background">
 		<div
-			class="mx-auto flex min-h-14 w-full max-w-5xl flex-wrap items-center gap-2 px-3 py-2 md:gap-3 md:px-4"
+			class="safe-inline mx-auto flex min-h-14 w-full max-w-5xl flex-wrap items-center gap-2 px-3 py-2 [--safe-inline-space:0.75rem] md:gap-3 md:px-4 md:[--safe-inline-space:1rem]"
 		>
 			<a
 				href={resolve('/')}
@@ -101,12 +102,14 @@
 		</div>
 	</header>
 
+	<InstallApp banner />
+
 	<main
 		id="main-content"
 		tabindex="-1"
 		aria-busy={isNavigating}
 		class={[
-			'mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-6 pb-24 focus-visible:ring-3 focus-visible:ring-ring/30',
+			'safe-inline mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-6 pb-[calc(6rem+env(safe-area-inset-bottom))] focus-visible:ring-3 focus-visible:ring-ring/30',
 			user ? 'lg:py-8 lg:pb-8' : 'md:py-8 md:pb-8'
 		]}
 	>
@@ -133,12 +136,13 @@
 
 	<nav
 		aria-label="Primary"
+		data-mobile-navigation
 		class={[
 			'fixed inset-x-0 bottom-0 z-10 border-t bg-background pb-[env(safe-area-inset-bottom)]',
 			user ? 'lg:hidden' : 'md:hidden'
 		]}
 	>
-		<div class="flex items-stretch gap-1 px-2 py-1">
+		<div class="safe-inline flex items-stretch gap-1 px-2 py-1">
 			{#each currentPrimaryDestinations as destination (destination.href)}
 				{@const current = isCurrentDestination(pathname, destination.href)}
 				<Button

@@ -120,6 +120,8 @@ for (const viewport of [
 	test(`Group creation, management, and form states fit ${viewport.width}px without serious accessibility violations`, async ({
 		page
 	}) => {
+		// Several route-level axe scans need the same shared-runner budget as core-quality.
+		test.setTimeout(60_000);
 		await page.setViewportSize(viewport);
 		await signIn(page, 'jonas');
 		await page.goto('/create');
