@@ -18,6 +18,8 @@ process.once('exit', () => {
 });
 
 export default defineConfig({
+	// Keep multi-route accessibility audits within their budgets on shared CI runners.
+	workers: process.env.CI ? 2 : undefined,
 	use: { baseURL: publicOrigin },
 	webServer: {
 		command: `vp run db:migrate && bun src/lib/server/seed/cli.ts && bun src/lib/server/testing/seed-accounts/cli.ts && ${serverCommand}`,
