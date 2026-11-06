@@ -32,4 +32,14 @@
 
 ## Comments
 
+2026-11-06: Leo confirmed the offline/update interaction decisions before prototyping:
+
+- Keep loaded pages and entered text on connectivity loss, with an offline notice. Use a full fallback only when a requested page cannot load. Displayed information may be stale.
+- Reconnection clears the notice without reloading or submitting. Retry loads the originally requested page.
+- Never claim an unconfirmed mutation succeeded or automatically repeat it. After reconnection, check current server state before offering another attempt when the result is uncertain.
+- Reuse the install banner's appearance for updates, with update priority when both prompts are eligible. Offer Refresh and Later; Later or close dismisses for the session, and Account can reopen the update prompt.
+- Confirm before discarding an edited form to refresh. Draft persistence across refresh is not promised. Other open tabs must not reload automatically or lose their forms.
+
+Prototype review is still pending. These reversible interaction decisions do not require an ADR or new domain terminology.
+
 Third execution priority. Ticket 01 supplies the installed application against which the update and offline journeys are verified. It is not blocked by general architecture cleanup.
