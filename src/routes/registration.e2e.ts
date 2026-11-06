@@ -36,9 +36,15 @@ for (const width of [360, 768, 1440]) {
 			else await route.continue();
 		});
 		await button.click();
-		await expect(page.getByText('Could not update your registration. Try again.')).toBeVisible();
-		await expect(button).toBeEnabled();
+		await expect(
+			page.getByText(
+				"We couldn't confirm your registration change. Check the current state before trying again."
+			)
+		).toBeVisible();
+		await expect(button).toBeDisabled();
 		await page.unroute('**/_app/remote/**');
+		await page.getByRole('button', { name: 'Check current state', exact: true }).click();
+		await expect(button).toBeEnabled();
 		let release!: () => void;
 		const held = new Promise<void>((resolve) => {
 			release = resolve;

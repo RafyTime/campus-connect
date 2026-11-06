@@ -39,6 +39,8 @@ test('visitors, subscribers, and unrelated Users cannot publish or manage for th
 			await page.goto('/create');
 		}
 		// A forged browser choice must still be rejected by the application operation.
+		// Wait for hydration before mutating options owned by the component.
+		await expect(page.getByRole('checkbox', { name: 'Tech', exact: true })).toBeEnabled();
 		await page.getByLabel('Host', { exact: true }).evaluate((select) => {
 			const option = document.createElement('option');
 			option.value = 'group-film-society';
@@ -81,13 +83,18 @@ test('Group validation and request failure preserve host and input for recovery'
 		else await route.continue();
 	});
 	await page.getByRole('button', { name: 'Publish Event' }).click();
-	await expect(page.getByText('The request failed. Try again.')).toBeVisible();
+	await expect(
+		page.getByText(
+			"We couldn't confirm your Event was saved. Check saved Events before trying again."
+		)
+	).toBeVisible();
 	await expect(page.getByLabel('Host', { exact: true })).toHaveValue('group-film-society');
 	await expect(page.getByLabel('Title', { exact: true })).toHaveValue(title);
-	await expect(page.getByRole('button', { name: 'Publish Event' })).toBeEnabled();
+	await expect(page.getByRole('button', { name: 'Publish Event' })).toBeDisabled();
 	await expect(page.getByRole('checkbox', { name: 'Arts', exact: true })).toBeChecked();
 	await expect(page.getByRole('checkbox', { name: 'Tech', exact: true })).toBeChecked();
 	await page.unroute('**/_app/remote/**');
+	await page.getByRole('button', { name: 'Check saved Events' }).click();
 	await page.getByRole('button', { name: 'Publish Event' }).click();
 	await expect(page.getByRole('heading', { name: title, level: 1 })).toBeVisible();
 });
@@ -148,9 +155,14 @@ for (const viewport of [
 			else await route.continue();
 		});
 		await page.getByRole('button', { name: 'Publish Event' }).click();
-		await expect(page.getByText('The request failed. Try again.')).toBeVisible();
+		await expect(
+			page.getByText(
+				"We couldn't confirm your Event was saved. Check saved Events before trying again."
+			)
+		).toBeVisible();
 		await checkLayoutAndAccessibility(page);
 		await page.unroute('**/_app/remote/**');
+		await page.getByRole('button', { name: 'Check saved Events' }).click();
 		await page.getByRole('button', { name: 'Publish Event' }).click();
 		await expect(page.getByRole('heading', { name: title, level: 1 })).toBeVisible();
 		await page.goto('/my-events');

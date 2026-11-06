@@ -115,10 +115,18 @@ for (const viewport of viewports) {
 			else await route.continue();
 		});
 		await page.getByRole('button', { name: 'Express interest', exact: true }).click();
-		await expect(page.getByText('Could not update your interest. Try again.')).toBeVisible();
-		await expect(page.getByRole('button', { name: 'Express interest', exact: true })).toBeEnabled();
+		await expect(
+			page.getByText(
+				"We couldn't confirm your interest change. Check the current state before trying again."
+			)
+		).toBeVisible();
+		await expect(
+			page.getByRole('button', { name: 'Express interest', exact: true })
+		).toBeDisabled();
 		await noOverflow(page);
 		await page.unroute('**/_app/remote/**');
+		await page.getByRole('button', { name: 'Check current state', exact: true }).click();
+		await expect(page.getByRole('button', { name: 'Express interest', exact: true })).toBeEnabled();
 		await page.goto('/my-activity');
 		await expect(page.getByText('No activity yet')).toBeVisible();
 	});

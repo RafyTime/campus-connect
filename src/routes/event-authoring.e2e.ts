@@ -26,6 +26,34 @@ async function fillEvent(page: Page, title: string) {
 	await page.getByLabel('Location', { exact: true }).selectOption('location-library');
 }
 
+test('a lost publication response preserves the draft and checks for the saved Event before retrying', async ({
+	page
+}) => {
+	await register(page);
+	await page.goto('/create');
+	const title = `Unconfirmed publication ${crypto.randomUUID().slice(0, 8)}`;
+	await fillEvent(page, title);
+	let mutations = 0;
+	await page.route('**/_app/remote/**', async (route) => {
+		if (route.request().method() === 'POST') {
+			mutations++;
+			await route.fetch();
+			await route.abort();
+		} else await route.continue();
+	});
+	await page.getByRole('button', { name: 'Publish Event' }).click();
+	await expect(page.getByRole('alert')).toContainText("couldn't confirm");
+	await expect(page.getByLabel('Title', { exact: true })).toHaveValue(title);
+	await expect(page.getByRole('button', { name: 'Publish Event' })).toBeDisabled();
+	await page.getByRole('button', { name: 'Check saved Events' }).click();
+	await expect(page.getByRole('link', { name: 'Review saved Event' })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Publish Event' })).toBeDisabled();
+	expect(mutations).toBe(1);
+	await page.unroute('**/_app/remote/**');
+	await page.goto('/my-events');
+	await expect(page.getByRole('link', { name: new RegExp(`^${title}`) })).toHaveCount(1);
+});
+
 test('a Creator publishes, discovers, and manages a public personal Event', async ({
 	page,
 	browser
@@ -104,14 +132,19 @@ test('validation and request failures preserve input and allow correction', asyn
 		else await route.continue();
 	});
 	await page.getByRole('button', { name: 'Publish Event' }).click();
-	await expect(page.getByText('The request failed. Try again.')).toBeVisible();
+	await expect(
+		page.getByText(
+			"We couldn't confirm your Event was saved. Check saved Events before trying again."
+		)
+	).toBeVisible();
 	await expect(page.getByLabel('Title', { exact: true })).toHaveValue(
 		'Failed request campus Event'
 	);
-	await expect(page.getByRole('button', { name: 'Publish Event' })).toBeEnabled();
+	await expect(page.getByRole('button', { name: 'Publish Event' })).toBeDisabled();
 	await expect(page.getByRole('checkbox', { name: 'Tech', exact: true })).toBeChecked();
 	await expect(page.getByRole('checkbox', { name: 'Social', exact: true })).toBeChecked();
 	await page.unroute('**/_app/remote/**');
+	await page.getByRole('button', { name: 'Check saved Events' }).click();
 	await page.getByRole('button', { name: 'Publish Event' }).click();
 	await expect(
 		page.getByRole('heading', { name: 'Failed request campus Event', level: 1 })
