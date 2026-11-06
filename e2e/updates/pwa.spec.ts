@@ -76,10 +76,37 @@ test.afterAll(async () => {
 	);
 });
 
+test('a Tags-only Event form edit is protected during an update', async ({ page }) => {
+	active = 4194;
+	await page.goto('/register');
+	await page.getByLabel('Display name').fill('Tags Creator');
+	await page.getByLabel('Email').fill(`tags.${crypto.randomUUID()}@example.com`);
+	await page.getByLabel('Password', { exact: true }).fill('campus-connect-test');
+	await page.getByRole('button', { name: 'Create account' }).click();
+	await expect(page).toHaveURL('/');
+	await page.goto('/create');
+	await page.getByRole('checkbox', { name: 'Tech', exact: true }).check();
+	await page.evaluate(async () => {
+		await navigator.serviceWorker.ready;
+	});
+	active = 4195;
+	await page.evaluate(async () => {
+		await (await navigator.serviceWorker.getRegistration())?.update();
+	});
+	const banner = page.getByRole('complementary', { name: 'Update available' });
+	await expect(banner).toBeVisible({ timeout: 20_000 });
+	await banner.getByRole('button', { name: 'Refresh', exact: true }).click();
+	const confirmation = page.getByRole('dialog', { name: 'Refresh and discard changes?' });
+	await expect(confirmation).toBeVisible();
+	await confirmation.getByRole('button', { name: 'Keep editing' }).click();
+	await expect(page.getByRole('checkbox', { name: 'Tech', exact: true })).toBeChecked();
+});
+
 test('an existing installation updates between two builds without losing another tab or a postponed form', async ({
 	page,
 	context
 }) => {
+	active = 4194;
 	const versions = ['a', 'b'].map(
 		(candidate) =>
 			JSON.parse(readFileSync(join(directory, candidate, 'client/_app/version.json'), 'utf8'))

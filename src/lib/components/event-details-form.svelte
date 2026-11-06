@@ -1,5 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { getAppUpdates } from '#lib/app-updates.svelte.js';
+	import { getConnectivity } from '#lib/connectivity.svelte.js';
+	import { Alert02Icon } from '@hugeicons/core-free-icons';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
@@ -8,7 +12,7 @@
 	import * as NativeSelect from '#lib/components/ui/native-select/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
-	import { createEventForm, editEventForm } from '#lib/events.remote.js';
+	import { createEventForm, editEventForm, loadMyEvents } from '#lib/events.remote.js';
 	import {
 		parseEventDetails,
 		responseModes,
@@ -45,7 +49,42 @@
 	const responseMode = $derived(form.fields.responseMode.value() ?? defaults.responseMode);
 	const locationId = $derived(form.fields.locationId.value() ?? defaults.locationId);
 	let clientErrors = $state<EventFieldErrors>({});
+	const updates = getAppUpdates();
 	let transportFailure = $state(false);
+	let uncertain = $state(false);
+	let checking = $state(false);
+	let recoveryMessage = $state('');
+	let attempted = $state<
+		Extract<ReturnType<typeof parseEventDetails>, { ok: true }>['value'] | null
+	>(null);
+	let attemptedHost = '';
+	let savedMatches = $state<Awaited<ReturnType<typeof loadMyEvents>>>([]);
+	const connection = getConnectivity();
+	async function checkSavedEvents() {
+		if (checking || !connection.online || !attempted) return;
+		checking = true;
+		try {
+			const events = loadMyEvents();
+			await events.refresh();
+			savedMatches = (await events).filter((event) =>
+				mode === 'edit'
+					? event.id === initial?.id
+					: event.title === attempted?.title &&
+						event.startsAt.getTime() === attempted.startsAt.getTime() &&
+						(attemptedHost
+							? event.host.type === 'group' && event.host.id === attemptedHost
+							: event.host.type === 'personal')
+			);
+			uncertain = mode === 'create' && savedMatches.length > 0;
+			recoveryMessage = savedMatches.length
+				? 'A saved Event may match your request. Review it before making another change.'
+				: 'No matching saved Event was found. Review your draft before trying again.';
+		} catch {
+			recoveryMessage = 'Could not check saved Events. Reconnect and check again.';
+		} finally {
+			checking = false;
+		}
+	}
 	let hydrated = $state(false);
 	onMount(() => {
 		hydrated = true;
@@ -63,7 +102,10 @@
 
 <form
 	{...form.enhance(async (submission) => {
+		if (uncertain) return;
 		transportFailure = false;
+		recoveryMessage = '';
+		savedMatches = [];
 		const values = { ...defaults, ...submission.fields.value() };
 		const parsed = parseEventDetails(
 			{ ...values, capacity: responseMode === 'registration' ? values.capacity : '' },
@@ -77,9 +119,12 @@
 			return;
 		}
 		try {
+			attempted = parsed.value;
+			attemptedHost = values.hostGroupId;
 			await submission.submit();
 		} catch {
 			transportFailure = true;
+			uncertain = true;
 		}
 	})}
 	class="flex w-full min-w-0 flex-col gap-6"
@@ -89,11 +134,27 @@
 	{#if mode === 'edit'}<input {...editForm.fields.eventId.as('hidden', initial?.id ?? '')} />{/if}
 	{#if transportFailure || generalIssue}
 		<Alert.Root variant="destructive">
+			<HugeiconsIcon icon={Alert02Icon} aria-hidden="true" />
 			<Alert.Title>Could not save Event</Alert.Title>
 			<Alert.Description
-				>{transportFailure ? 'The request failed. Try again.' : generalIssue}</Alert.Description
+				>{transportFailure
+					? recoveryMessage ||
+						"We couldn't confirm your Event was saved. Check saved Events before trying again."
+					: generalIssue}</Alert.Description
 			>
 		</Alert.Root>
+		{#if transportFailure}
+			<div class="flex flex-wrap gap-2">
+				<Button
+					variant="outline"
+					disabled={checking || !connection.online}
+					onclick={checkSavedEvents}>Check saved Events</Button
+				>
+				{#each savedMatches as event (event.id)}
+					<Button href={`/events/${event.id}`} variant="outline">Review saved Event</Button>
+				{/each}
+			</div>
+		{/if}
 	{/if}
 	{#if locked}
 		<Alert.Root>
@@ -214,6 +275,7 @@
 							{...form.fields.tagIds.as('checkbox', tag.id, defaults.tagIds.includes(tag.id))}
 							type="button"
 							onCheckedChange={(checked) => {
+								updates.dirty = true;
 								const selected = form.fields.tagIds.value() ?? defaults.tagIds;
 								form.fields.tagIds.set(
 									checked ? [...selected, tag.id] : selected.filter((id) => id !== tag.id)
@@ -324,7 +386,11 @@
 		{/if}
 	</Field.Group>
 	<div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-		<Button type="submit" class="min-h-11" disabled={Boolean(form.pending)}>
+		<Button
+			type="submit"
+			class="min-h-11"
+			disabled={Boolean(form.pending) || uncertain || checking}
+		>
 			{#if form.pending}<span data-icon="inline-start"
 					><Spinner role="presentation" aria-hidden="true" /></span
 				>{/if}

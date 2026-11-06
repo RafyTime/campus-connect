@@ -13,9 +13,9 @@ Loaded pages and entered form text remain visible on connectivity loss. An icon 
 - SvelteKit bundles and registers a module service worker. It caches immutable build assets and an embedded, self-contained offline page. Application HTML, remote queries, API responses, mutations, images and map tiles are not cached by the worker.
 - Build assets from earlier releases remain available while old documents may still import them. A natural activation with no open window clients removes older Campus Connect shell caches. Explicit activation while tabs remain open preserves those caches. Browser storage eviction can still remove assets.
 - Online/offline browser events drive notices. They indicate connectivity, not guaranteed server availability. Transport failures remain explicit even when the browser reports online.
-- Offline form submission is blocked before the form handler runs. Interest and registration controls also guard offline button actions. An unconfirmed Participation mutation disables further changes until Check current state succeeds. A failed check retains the last confirmed state and remains retryable. No action is queued or automatically repeated.
+- Offline form submission is blocked before the form handler runs. Interest and registration controls also guard offline button actions. An unconfirmed Participation mutation disables further changes until Check current state succeeds. A failed check retains the last confirmed state and remains retryable. No action is queued or automatically repeated. Unconfirmed Event publication also blocks another submission until Check saved Events reads current server state. Matching title, start time and host produce a Review saved Event link instead of another publication; no match permits an explicit retry. This conservative match is a review aid, not a new exactly-once publication guarantee.
 - The waiting worker activates only after Refresh. Only the requesting document reloads. Checks run on app startup, reconnection, foregrounding and a one-minute interval while visible. SvelteKit version detection also exposes releases through its existing update state.
-- Form changes are tracked in memory. Draft persistence across refresh is not promised. No database schema, dependencies, production deployment or live-data operation was added.
+- Form changes are tracked in memory. Event Tag changes explicitly mark the form edited because their custom checkbox does not emit native input/change events. Draft persistence across refresh is not promised. No database schema, dependencies, production deployment or live-data operation was added.
 
 ## Automated verification
 
@@ -25,7 +25,7 @@ The existing built-application Playwright boundary is the agreed seam. All fixtu
 
 `bun run test:updates` builds two candidates sequentially with distinct SvelteKit versions, copies their Node outputs into a temporary directory, and serves them behind one local origin on ports 4193–4195. It uses a temporary SQLite database, synthetic form text and a test-only auth secret. The candidates and database are removed afterward. It exercises a waiting release during form entry, dismissal, a new session, cancelled confirmation, explicit activation, an unchanged second tab, offline refresh protection, and update-banner bounds/accessibility in both themes at 360×800, 768×1024 and 1440×900.
 
-Focused offline/recovery tests and the initial two-build update journey passed. Final full-quality and review results are recorded below when complete.
+Focused offline/recovery tests, 16 personal/Group authoring journeys and the initial two-build update journey passed. The publication test confirms that a committed Event whose response is lost is offered for review without a second publication. A Tags-only update journey covers the custom-control dirty-tracking fix. Final full-quality and review results are recorded below when complete.
 
 ## Delivery still required
 
@@ -41,3 +41,7 @@ Final Railway verification and submission captures remain with original tickets 
 - [Acceptance-to-evidence matrix](../../../.work/01-phase-2-campus-connect/acceptance-evidence.md)
 - [SvelteKit service workers](https://svelte.dev/docs/kit/service-workers)
 - [Service worker lifecycle](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/Using_Service_Workers)
+
+## Review corrections
+
+The initial Standards and Spec reviews both identified the custom Tag dirty-tracking gap. The Spec review also identified the unconfirmed-publication retry risk. Both received focused browser reproductions before correction. Final review and quality outcomes follow below.
