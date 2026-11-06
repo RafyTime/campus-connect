@@ -1,6 +1,8 @@
 <script lang="ts">
-	import { page } from '$app/state';
-	import { Cancel01Icon, Share03Icon } from '@hugeicons/core-free-icons';
+	import { page, updated } from '$app/state';
+	import AppBanner from './app-banner.svelte';
+	import { getAppUpdates } from '#lib/app-updates.svelte.js';
+	import { Share03Icon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Button, buttonVariants } from '#lib/components/ui/button/index.js';
 	import * as Sheet from '#lib/components/ui/sheet/index.js';
@@ -9,6 +11,7 @@
 
 	let { banner = false }: { banner?: boolean } = $props();
 	const installation = getMobileInstallation();
+	const updates = getAppUpdates();
 	let open = $state(false);
 	const mainPage = $derived(
 		['/', '/groups', '/my-activity', '/my-events'].includes(page.url.pathname)
@@ -16,40 +19,22 @@
 	const visible = $derived(
 		installation.platform &&
 			!installation.standalone &&
-			(!banner || (mainPage && !installation.dismissed))
+			(!banner || (mainPage && !installation.dismissed && !(updates.available || updated.current)))
 	);
 </script>
 
 {#if visible}
 	<Sheet.Root bind:open>
 		{#if banner}
-			<aside
-				aria-label="Install Campus Connect"
-				class="border-b bg-secondary text-secondary-foreground"
+			<AppBanner
+				label="Install Campus Connect"
+				title="Campus Connect"
+				description="Add to home screen."
+				dismissLabel="Dismiss installation banner"
+				ondismiss={() => installation.dismiss()}
 			>
-				<div class="safe-inline mx-auto flex w-full max-w-5xl items-center gap-4 px-4 py-3">
-					<div class="flex min-w-0 flex-1 items-center gap-2.5">
-						<img src={favicon} alt="" class="size-9 shrink-0" />
-						<div class="flex min-w-0 flex-col gap-0.5">
-							<p class="text-sm font-medium">Campus Connect</p>
-							<p class="text-xs leading-4">Add to home screen.</p>
-						</div>
-					</div>
-					<div class="flex shrink-0 items-center gap-1">
-						<Sheet.Trigger class={buttonVariants({ class: 'min-h-11 px-4' })}>Install</Sheet.Trigger
-						>
-						<Button
-							variant="ghost"
-							size="icon"
-							class="size-11"
-							aria-label="Dismiss installation banner"
-							onclick={() => installation.dismiss()}
-						>
-							<HugeiconsIcon icon={Cancel01Icon} />
-						</Button>
-					</div>
-				</div>
-			</aside>
+				<Sheet.Trigger class={buttonVariants({ class: 'min-h-11 px-4' })}>Install</Sheet.Trigger>
+			</AppBanner>
 		{:else}
 			<Sheet.Trigger class={buttonVariants({ variant: 'outline', class: 'min-h-11' })}
 				>Install Campus Connect</Sheet.Trigger

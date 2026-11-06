@@ -12,19 +12,19 @@
 
 ## Acceptance criteria
 
-- [ ] The selected prototype covers lost connectivity, retry, update availability and update handling during form entry before implementation.
-- [ ] When connectivity prevents application use, a useful offline fallback explains the state and offers a working retry path.
-- [ ] Event data and actions remain online. Offline attempts never imply confirmed registration or successful Participation changes, and no mutation queue, push notifications or offline maps are added.
-- [ ] An available release exposes a clear refresh action without forcing a reload while a User fills out a form.
+- [x] The selected prototype covers lost connectivity, retry, update availability and update handling during form entry before implementation.
+- [x] When connectivity prevents application use, a useful offline fallback explains the state and offers a working retry path.
+- [x] Event data and actions remain online. Offline attempts never imply confirmed registration or successful Participation changes, and no mutation queue, push notifications or offline maps are added.
+- [x] An available release exposes a clear refresh action without forcing a reload while a User fills out a form.
 - [ ] An existing installation can receive the new release without reinstalling; declining or postponing refresh does not itself interrupt the active form.
-- [ ] Browser-level verification exercises offline/reconnection behavior and an update between two candidate builds, including update availability during form entry.
+- [x] Browser-level verification exercises offline/reconnection behavior and an update between two candidate builds, including update availability during form entry.
 - [ ] The complete repository quality command passes and update/offline evidence is recorded without retaining credentials or private application payloads.
 
 ## Implementation tasks
 
-- [ ] Prototype offline and update interactions and choose a bounded implementation suited to the existing application.
-- [ ] Implement the fallback/retry and update behavior without expanding into offline data workflows.
-- [ ] Extend existing browser tests to cover offline failure/recovery and observable update transitions.
+- [x] Prototype offline and update interactions and choose a bounded implementation suited to the existing application.
+- [x] Implement the fallback/retry and update behavior without expanding into offline data workflows.
+- [x] Extend existing browser tests to cover offline failure/recovery and observable update transitions.
 
 ## Project delivery
 
@@ -45,3 +45,7 @@ Prototype review is still pending. These reversible interaction decisions do not
 Third execution priority. Ticket 01 supplies the installed application against which the update and offline journeys are verified. It is not blocked by general architecture cleanup.
 
 2026-11-06 prototype review: Leo accepted the interactions with these revisions: remove Later and use the banner close action to postpone for the session; remove the Account update section; show a still-pending update again next session; add disconnected-network and warning icons beside offline notices and failed/unconfirmed actions. Add a brief Back online notice after reconnection, with no reload or submission. The revised prototype uses four seconds for this notice and remains pending final review before implementation.
+
+2026-11-06 final prototype approval: Leo approved the revised prototype and authorized implementation. This supersedes the pending-review notes above and the initial Later/Account decisions. The primary-source prototype is preserved on `chore/prototype-offline-updates` at `eeb3b0e`, in `src/lib/prototypes/offline-updates.prototype.html`. Implementation begins after that commit. Browser journeys remain the agreed automated seam; physical Android/iPhone installed upgrade checks require isolated candidate builds and remain separate delivery evidence.
+
+2026-11-06 implementation: Offline fallback/Retry, four-second reconnection feedback, the shared update banner and explicit refresh, form protection and Participation reconciliation are implemented. The focused 20 browser journeys passed. See [local evidence](../../../evidence/phase-2/checks/polish-02-offline-updates-local.md). Keep Status ready until the physical Android/iPhone upgrade delivery requirement is verified or explicitly waived.

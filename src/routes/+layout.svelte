@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { Connectivity, setConnectivity } from '#lib/connectivity.svelte.js';
+	import { AppUpdates, setAppUpdates } from '#lib/app-updates.svelte.js';
+	import { afterNavigate } from '$app/navigation';
 	import { MobileInstallation, setMobileInstallation } from '#lib/mobile-installation.svelte.js';
 	import { ModeWatcher } from 'mode-watcher';
 	import favicon from '#lib/assets/favicon.svg';
@@ -8,6 +11,16 @@
 	import './layout.css';
 
 	let { children, data } = $props();
+	const connection = new Connectivity();
+	setConnectivity(connection);
+	onMount(() => connection.mount());
+	const updates = new AppUpdates();
+	setAppUpdates(updates);
+	onMount(() => updates.mount());
+	afterNavigate(() => {
+		updates.dirty = false;
+		connection.blockedSubmission = false;
+	});
 	const installation = new MobileInstallation();
 	setMobileInstallation(installation);
 	onMount(() => installation.mount());

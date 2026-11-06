@@ -40,6 +40,8 @@
 
 ## Comments
 
+2026-11-06: Offline recovery and safe updates have a [local implementation and verification record](../../../evidence/phase-2/checks/polish-02-offline-updates-local.md). Final release checks must verify offline Retry at the requested URL, the brief reconnect notice, unconfirmed Participation recovery, update dismissal and explicit refresh during form entry, and preservation of other open forms. Physical Android/iPhone existing-installation upgrade checks remain required on an isolated HTTPS candidate before ticket 02 can close; local browser checks do not replace final deployed verification or captures.
+
 2026-11-02: Theme preferences and matching maps have a [local implementation and check record](../../../evidence/phase-2/checks/polish-00-theme-preferences-local.md). Final release verification must cover the saved appearance, correct first paint, themed forms/dialogs and Positron/Dark Matter maps on the deployed revision. This local record does not establish Railway acceptance or final captures.
 
 2026-11-01: The approved [Phase 2 polish backlog](../../04-phase-2-polish/README.md) adds its ticket 10 as a release blocker. Its candidate verification does not replace this ticket's final Railway deployment and production checks. Existing stretch blockers and the ticket 22-24 submission sequence remain intact.
