@@ -43,3 +43,5 @@
 Prototype review is still pending. These reversible interaction decisions do not require an ADR or new domain terminology.
 
 Third execution priority. Ticket 01 supplies the installed application against which the update and offline journeys are verified. It is not blocked by general architecture cleanup.
+
+2026-11-06 prototype review: Leo accepted the interactions with these revisions: remove Later and use the banner close action to postpone for the session; remove the Account update section; show a still-pending update again next session; add disconnected-network and warning icons beside offline notices and failed/unconfirmed actions. Add a brief Back online notice after reconnection, with no reload or submission. The revised prototype uses four seconds for this notice and remains pending final review before implementation.

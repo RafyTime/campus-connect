@@ -147,6 +147,26 @@
 			border-bottom: 1px solid #fde68a;
 			font-size: 13px;
 		}
+		.status-icon {
+			width: 20px;
+			height: 20px;
+			flex-shrink: 0;
+			vertical-align: middle;
+			margin-right: 8px;
+		}
+		.notice {
+			display: flex;
+			align-items: center;
+		}
+		.notice.reconnected {
+			background: #ecfdf5;
+			border-color: #a7f3d0;
+			color: #065f46;
+		}
+		.action-error {
+			margin-top: 16px;
+			color: #b45309;
+		}
 		.card {
 			padding: 18px;
 			border: 1px solid #e7e5e4;
@@ -379,6 +399,8 @@
 		// Pure, in-memory transition model. This file is a disposable interaction demo.
 		const initial = () => ({
 			online: true,
+			reconnected: false,
+			actionError: '',
 			page: 'browse',
 			requested: 'Discover',
 			title: '',
@@ -393,16 +415,18 @@
 			message: 'Ready to explore.'
 		});
 		function transition(previous, action, payload) {
-			const s = { ...previous, confirm: false };
+			const s = { ...previous };
 			const dirty = () => Boolean(s.title || s.description);
 			switch (action) {
 				case 'reset':
 					return initial();
 				case 'offline':
 					s.online = false;
+					s.reconnected = false;
 					s.message = 'Connection lost. Loaded content and form text stay in place.';
 					break;
 				case 'online':
+					s.reconnected = !s.online || s.reconnected;
 					s.online = true;
 					s.message =
 						s.result === 'uncertain'
@@ -435,17 +459,23 @@
 					break;
 				case 'later':
 					s.dismissed = true;
-					s.message = 'Update postponed for this session. Reopen it from Account.';
+					s.message =
+						'Update postponed for this session. The banner returns next session if still pending.';
 					break;
-				case 'reopen':
+				case 'session':
 					s.dismissed = false;
-					s.message = 'Update notice reopened.';
+					s.message =
+						'New session simulated. Pending update notice returns; draft retained for review.';
+					break;
+				case 'hide-reconnected':
+					s.reconnected = false;
 					break;
 				case 'edit':
 					s.title = payload.title;
 					s.description = payload.description;
 					return s;
 				case 'fill':
+					s.requested = 'Create Event';
 					s.page = 'form';
 					s.title = 'Board game evening';
 					s.description = 'Bring your favourite game.';
@@ -463,6 +493,7 @@
 					}
 					return transition(s, 'discard');
 				case 'discard':
+					s.confirm = false;
 					if (!s.online) {
 						s.message = 'Offline. Refresh postponed and form retained.';
 						break;
@@ -476,6 +507,7 @@
 						'This tab refreshed. The other tab still has its form and chooses when to refresh.';
 					break;
 				case 'keep':
+					s.confirm = false;
 					s.message = 'Refresh cancelled. Keep editing.';
 					break;
 				case 'register':
@@ -499,6 +531,9 @@
 					}
 					break;
 				case 'submit':
+					s.actionError = s.online
+						? ''
+						: 'You are offline. Event not published. Your text is retained.';
 					s.message = s.online
 						? 'Prototype only. No Event was published.'
 						: 'You are offline. Event not published; your text is retained.';
@@ -525,14 +560,12 @@
 			{
 				name: 'Edited form',
 				description:
-					'An update arrives while you are writing. Later and cancelled refresh both preserve your text.',
+					'An update arrives while you are writing. Dismissal and cancelled refresh both preserve your text.',
 				steps: [
 					['Enter an Event draft', 'fill'],
 					['Make update available', 'update'],
-					['Choose Later', 'later'],
-					['Open Account', 'account'],
-					['Reopen update', 'reopen'],
-					['Return to form', 'form'],
+					['Dismiss with ×', 'later'],
+					['Simulate next session', 'session'],
 					['Choose Refresh', 'refresh'],
 					['Keep editing', 'keep']
 				]
@@ -564,42 +597,70 @@
 			['Enter draft', 'fill'],
 			['Check: registered', 'confirmed'],
 			['Check: not registered', 'absent'],
+			['Simulate next session', 'session'],
 			['Reset', 'reset']
 		];
 		const $ = (id) => document.getElementById(id);
 		const escapeText = (value) =>
 			String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;');
+		let reconnectTimer;
+		const icon = (kind) =>
+			'<svg class="status-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+			{
+				offline:
+					'<path d="m3 3 18 18M2 8.8a16 16 0 0 1 3-1.9m4-1.3A16 16 0 0 1 22 8.8M5 12a11 11 0 0 1 3-1.7m4-.6a11 11 0 0 1 7 2.3M8.5 15.5a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1"/>',
+				warning: '<path d="m12 3 10 18H2L12 3Z M12 9v5m0 3v.1"/>',
+				connected: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>'
+			}[kind] +
+			'</svg>';
 		function dispatch(action, payload) {
+			const wasOffline = !state.online;
 			state = transition(state, action, payload);
+			if (action === 'offline' || action === 'reset') clearTimeout(reconnectTimer);
+			if (action === 'online' && wasOffline) {
+				clearTimeout(reconnectTimer);
+				reconnectTimer = setTimeout(() => dispatch('hide-reconnected'), 4000);
+			}
 			render();
 		}
 		function render() {
 			$('banner').innerHTML =
 				state.update && !state.dismissed
-					? '<aside class="banner" aria-label="Update available"><div class="identity"><span class="icon" aria-hidden="true">CC</span><div><strong class="small">Update available</strong><div class="small">Refresh when you\'re ready.</div></div></div><div class="row" style="gap:4px"><button class="primary" data-action="refresh">Refresh</button><button class="ghost" data-action="later">Later</button><button class="ghost" data-action="later" aria-label="Dismiss update banner">×</button></div></aside>'
+					? '<aside class="banner" aria-label="Update available"><div class="identity"><span class="icon" aria-hidden="true">CC</span><div><strong class="small">Update available</strong><div class="small">Refresh when you\'re ready.</div></div></div><div class="row" style="gap:4px"><button class="primary" data-action="refresh">Refresh</button><button class="ghost" data-action="later" aria-label="Dismiss update banner">×</button></div></aside>'
 					: '';
 			$('connection').innerHTML =
 				!state.online && state.page !== 'fallback'
-					? '<div class="notice">You\'re offline. Displayed information may be out of date. Changes need a connection.</div>'
-					: '';
+					? '<div class="notice">' +
+						icon('offline') +
+						"<span>You're offline. Displayed information may be out of date. Changes need a connection.</span></div>"
+					: state.reconnected
+						? '<div class="notice reconnected">' +
+							icon('connected') +
+							'<span>Back online.</span></div>'
+						: '';
 			const content = $('content');
 			// Keep live form controls mounted while connectivity and update notices change.
 			if (content.dataset.page !== state.page) {
 				content.dataset.page = state.page;
 				if (state.page === 'fallback')
 					content.innerHTML =
-						'<div class="offline"><div class="symbol" aria-hidden="true">↯</div><h2>You\'re offline</h2><p class="muted">Campus Connect needs a connection to load this page. Reconnect, then try again.</p><button class="primary" data-action="retry">Retry</button></div>';
+						'<div class="offline"><div class="symbol">' +
+						icon('offline') +
+						'</div><h2>You\'re offline</h2><p class="muted">Campus Connect needs a connection to load this page. Reconnect, then try again.</p><button class="primary" data-action="retry">Retry</button></div>';
 				if (state.page === 'browse')
 					content.innerHTML =
 						'<h2>Discover</h2><p class="muted">Find your next campus Event.</p><article class="card"><small class="muted">REPRESENTATIVE DEMO EVENT</small><h2 style="margin-top:12px">Board game evening</h2><p>Friday · 18:00<br>Common room</p><p class="muted">Meet new people over a game.</p><div id="participation"></div></article>';
 				if (state.page === 'form')
 					content.innerHTML =
-						'<h2>Create Event</h2><label>Title<input id="title" placeholder="Give your Event a name"></label><label>Description<textarea id="description" placeholder="What should people know?"></textarea></label><button class="primary" data-action="submit">Publish Event</button>';
+						'<h2>Create Event</h2><label>Title<input id="title" placeholder="Give your Event a name"></label><label>Description<textarea id="description" placeholder="What should people know?"></textarea></label><button class="primary" data-action="submit">Publish Event</button><div id="action-error" role="status"></div>';
 				if (state.page === 'account')
 					content.innerHTML =
-						'<h2>Account</h2><div class="card"><h3>Application updates</h3><div id="account-update"></div></div>';
+						'<h2>Account</h2><p class="muted">Manage your profile and appearance.</p>';
 			}
 			if (state.page === 'form') {
+				$('action-error').innerHTML = state.actionError
+					? '<p class="action-error">' + icon('warning') + escapeText(state.actionError) + '</p>'
+					: '';
 				if ($('title').value !== state.title) $('title').value = state.title;
 				if ($('description').value !== state.description)
 					$('description').value = state.description;
@@ -609,14 +670,13 @@
 					state.result === 'confirmed'
 						? '<strong>Registered</strong>'
 						: state.result === 'uncertain'
-							? '<p role="status">We couldn\'t confirm your registration. Reconnect so we can check before you try again.</p>'
+							? '<p role="status">' +
+								icon('warning') +
+								"We couldn't confirm your registration. Reconnect so we can check before you try again.</p>"
 							: '<button class="primary" data-action="register">Register</button>';
-			if (state.page === 'account')
-				$('account-update').innerHTML = state.update
-					? '<p>A new version is available.</p><button data-action="reopen">Show update notice</button>'
-					: '<p class="muted">You\'re up to date.</p>';
 			const fields = {
 				Connection: state.online ? 'Online' : 'Offline',
+				'Reconnect notice': state.reconnected ? 'Visible for 4 seconds' : 'Hidden',
 				Page: state.page,
 				'Requested page': state.requested,
 				'Unsaved form': state.title || state.description ? 'Yes' : 'No',
