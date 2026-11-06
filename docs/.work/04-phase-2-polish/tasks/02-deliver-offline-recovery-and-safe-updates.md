@@ -18,7 +18,7 @@
 - [x] An available release exposes a clear refresh action without forcing a reload while a User fills out a form.
 - [ ] An existing installation can receive the new release without reinstalling; declining or postponing refresh does not itself interrupt the active form.
 - [x] Browser-level verification exercises offline/reconnection behavior and an update between two candidate builds, including update availability during form entry.
-- [ ] The complete repository quality command passes and update/offline evidence is recorded without retaining credentials or private application payloads.
+- [x] The complete repository quality command passes and update/offline evidence is recorded without retaining credentials or private application payloads.
 
 ## Implementation tasks
 
@@ -49,3 +49,5 @@ Third execution priority. Ticket 01 supplies the installed application against w
 2026-11-06 final prototype approval: Leo approved the revised prototype and authorized implementation. This supersedes the pending-review notes above and the initial Later/Account decisions. The primary-source prototype is preserved on `chore/prototype-offline-updates` at `eeb3b0e`, in `src/lib/prototypes/offline-updates.prototype.html`. Implementation begins after that commit. Browser journeys remain the agreed automated seam; physical Android/iPhone installed upgrade checks require isolated candidate builds and remain separate delivery evidence.
 
 2026-11-06 implementation: Offline fallback/Retry, four-second reconnection feedback, the shared update banner and explicit refresh, form protection and Participation reconciliation are implemented. The focused 20 browser journeys passed. See [local evidence](../../../evidence/phase-2/checks/polish-02-offline-updates-local.md). Keep Status ready until the physical Android/iPhone upgrade delivery requirement is verified or explicitly waived.
+
+2026-11-06 final local verification: Complete `bun run quality` passed with `CI=1`, using the configured two browser workers: formatting/lint, Svelte/TypeScript and worker typechecking, 183 unit/integration tests, 137 browser journeys, two real two-build upgrade journeys, and production build. Standards and Spec follow-up reviews have zero unresolved implementation findings at `ca11926`. The final verification also includes an explicit hydration wait before the existing authorization test injects a forged browser option. Event publication now checks saved Events before another attempt after an uncertain response; custom Tag edits trigger refresh confirmation. No push, PR, deployment or live-data change occurred. Physical Android/iPhone upgrade delivery remains unverified and unwaived.

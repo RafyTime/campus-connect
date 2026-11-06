@@ -80,6 +80,8 @@ The Node adapter no longer consumes its former `ORIGIN` setting. The application
 
 Run custom package tasks with `vp run <name>`, such as `vp run test:install`. `vp run check` runs Svelte/type checking. `vp run lint` checks formatting, Oxlint, and Svelte-aware ESLint template rules. `vp run test` includes unit, browser-component, and end-to-end tests; `vp run test:e2e` runs the end-to-end suite alone. Built-ins such as `vp check`, `vp lint`, and `vp test` do not invoke these custom tasks. Use `vp run quality` for acceptance.
 
+`vp run test:updates` builds two isolated candidates and verifies offline-safe, user-controlled updates across browser tabs. It is included in `vp run test` and uses a temporary database and local ports 4193–4195. It rebuilds the local `build` output, so run it separately from any other local build or preview session. Physical Android/iPhone installed upgrades remain a separate manual check.
+
 ## Quality checks
 
 ```sh

@@ -39,6 +39,8 @@ test('visitors, subscribers, and unrelated Users cannot publish or manage for th
 			await page.goto('/create');
 		}
 		// A forged browser choice must still be rejected by the application operation.
+		// Wait for hydration before mutating options owned by the component.
+		await expect(page.getByRole('checkbox', { name: 'Tech', exact: true })).toBeEnabled();
 		await page.getByLabel('Host', { exact: true }).evaluate((select) => {
 			const option = document.createElement('option');
 			option.value = 'group-film-society';

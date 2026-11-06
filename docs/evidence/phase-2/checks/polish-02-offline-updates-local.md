@@ -25,7 +25,7 @@ The existing built-application Playwright boundary is the agreed seam. All fixtu
 
 `bun run test:updates` builds two candidates sequentially with distinct SvelteKit versions, copies their Node outputs into a temporary directory, and serves them behind one local origin on ports 4193–4195. It uses a temporary SQLite database, synthetic form text and a test-only auth secret. The candidates and database are removed afterward. It exercises a waiting release during form entry, dismissal, a new session, cancelled confirmation, explicit activation, an unchanged second tab, offline refresh protection, and update-banner bounds/accessibility in both themes at 360×800, 768×1024 and 1440×900.
 
-Focused offline/recovery tests, 16 personal/Group authoring journeys and the initial two-build update journey passed. The publication test confirms that a committed Event whose response is lost is offered for review without a second publication. A Tags-only update journey covers the custom-control dirty-tracking fix. Final full-quality and review results are recorded below when complete.
+Focused offline/recovery tests, 16 personal/Group authoring journeys and the initial two-build update journey passed. The publication test confirms that a committed Event whose response is lost is offered for review without a second publication. A Tags-only update journey covers the custom-control dirty-tracking fix. The complete quality result and final review outcomes are recorded below.
 
 ## Delivery still required
 
@@ -44,4 +44,28 @@ Final Railway verification and submission captures remain with original tickets 
 
 ## Review corrections
 
-The initial Standards and Spec reviews both identified the custom Tag dirty-tracking gap. The Spec review also identified the unconfirmed-publication retry risk. Both received focused browser reproductions before correction. Final review and quality outcomes follow below.
+The initial Standards and Spec reviews both identified the custom Tag dirty-tracking gap. The Spec review also identified the unconfirmed-publication retry risk. Both received focused browser reproductions before correction.
+
+## Standards
+
+Follow-up review of `ca11926` found no unresolved documented standards or correctness findings. The Tag checkbox explicitly marks the form dirty, and a two-build browser journey verifies confirmation before a Tags-only edit can be discarded. The lazy-runtime and Unicode uniqueness ADRs remain intact.
+
+## Spec
+
+Follow-up review of `ca11926` found no remaining implementation findings. Uncertain publication preserves the draft, requires a saved-Event check, and offers a matching Event for review. The lost-response journey verifies one mutation and one saved Event. Physical Android/iPhone upgrade delivery remains unverified and unwaived.
+
+Review totals: Standards 0 unresolved; Spec 0 unresolved implementation findings.
+
+## Complete quality result
+
+`bun run quality` passed with `CI=1`, using the repository's configured two Playwright workers. The verified application source is `ca11926`; the final record also includes a test-only hydration wait and README command documentation.
+
+- Formatting, Oxlint, Svelte-aware ESLint, Svelte/TypeScript and the worker's TypeScript check passed with no errors.
+- All 183 unit/integration tests passed across 18 files.
+- All 137 built-application browser journeys passed.
+- Both isolated two-build upgrade journeys passed, including Tags-only edits, offline refresh protection, other-tab preservation and both-theme bounds/accessibility at the three accepted sizes.
+- The production Node build, including the module service worker, passed. The existing large map-renderer chunk warning remains.
+
+Browser verification used Playwright Chromium revision 1248, Chrome for Testing 156.0.8078.4, on Windows. A full six-worker run exposed an existing authorization test mutating a native select before hydration; the test now waits for enabled live Tag controls before injecting its forged option. The authorization assertions are unchanged. Final quality passed with the configured CI concurrency.
+
+Updated local Markdown links and the final diff were checked. The test fixtures retain no real credentials or private application payloads. No push, PR, candidate deployment, production deployment or live-data change occurred. The owning ticket stays ready for its unwaived physical-device delivery requirement.
