@@ -109,16 +109,29 @@ for (const viewport of viewports) {
 		await noOverflow(page);
 		await register(page);
 		await page.goto('/events/event-board-game-evening');
+		let failedCommands = 0;
 		await page.route('**/_app/remote/**', async (route) => {
-			if (route.request().method() === 'POST')
+			if (route.request().method() === 'POST') {
+				failedCommands++;
 				await route.fulfill({ status: 500, body: 'unavailable' });
-			else await route.continue();
+			} else await route.continue();
 		});
 		await page.getByRole('button', { name: 'Express interest', exact: true }).click();
-		await expect(page.getByText('Could not update your interest. Try again.')).toBeVisible();
-		await expect(page.getByRole('button', { name: 'Express interest', exact: true })).toBeEnabled();
+		await expect
+			.poll(() => failedCommands, {
+				message: 'The simulated failure must intercept the interest command'
+			})
+			.toBe(1);
+		await expect(page.getByRole('region', { name: 'Event interest' })).toContainText(
+			"We couldn't confirm your interest change. Check the current state before trying again."
+		);
+		await expect(
+			page.getByRole('button', { name: 'Express interest', exact: true })
+		).toBeDisabled();
 		await noOverflow(page);
 		await page.unroute('**/_app/remote/**');
+		await page.getByRole('button', { name: 'Check current state', exact: true }).click();
+		await expect(page.getByRole('button', { name: 'Express interest', exact: true })).toBeEnabled();
 		await page.goto('/my-activity');
 		await expect(page.getByText('No activity yet')).toBeVisible();
 	});

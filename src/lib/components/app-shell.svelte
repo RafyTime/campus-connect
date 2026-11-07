@@ -1,6 +1,8 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import InstallApp from './install-app.svelte';
+	import ConnectionNotice from './connection-notice.svelte';
+	import UpdateApp from './update-app.svelte';
 	import AppearanceSelect from './appearance-select.svelte';
 	import { resolve } from '$app/paths';
 	import { navigating, page } from '$app/state';
@@ -102,7 +104,9 @@
 		</div>
 	</header>
 
+	<UpdateApp />
 	<InstallApp banner />
+	<ConnectionNotice />
 
 	<main
 		id="main-content"

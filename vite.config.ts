@@ -44,6 +44,7 @@ export default defineConfig(({ mode }) => ({
 	plugins: lazyPlugins(() => [
 		tailwindcss(),
 		sveltekit({
+			version: { pollInterval: 60_000 },
 			adapter: adapter(),
 			paths: { origin: loadEnv(mode, process.cwd(), '').ORIGIN },
 			experimental: {
