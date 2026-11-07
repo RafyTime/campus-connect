@@ -32,6 +32,8 @@
 
 ## Comments
 
+2026-11-07: Fixed Greptile's early-edit refresh-protection finding. A real two-build browser test first reproduced lost text when typing and blur both finish before hydration. Mount-time field/default comparison and preserving dirty state through initial navigation now protect that text. Typechecking and all three upgrade journeys passed. GitHub's separate intermittent interest-failure browser assertion remains under investigation. Physical-device delivery remains unverified and unwaived.
+
 2026-11-06: Leo confirmed the offline/update interaction decisions before prototyping:
 
 - Keep loaded pages and entered text on connectivity loss, with an offline notice. Use a full fallback only when a requested page cannot load. Displayed information may be stale.

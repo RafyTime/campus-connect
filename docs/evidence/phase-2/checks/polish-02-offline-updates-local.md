@@ -56,6 +56,14 @@ Follow-up review of `ca11926` found no remaining implementation findings. Uncert
 
 Review totals: Standards 0 unresolved; Spec 0 unresolved implementation findings.
 
+## PR review follow-up, 2026-11-07
+
+Greptile identified a missed case: a User finishes typing and blurs a server-rendered form field before hydration. Neither event reaches the update controller, and the initial navigation reset previously erased any early dirty state. The two-build browser reproduction failed because Refresh reloaded immediately without confirmation. Leaving the field focused had hidden this bug by emitting a later change event when Refresh was clicked.
+
+The controller now compares editable native fields with their defaults when mounting, and the initial `enter` navigation preserves that result. Later navigations still clear the old form's dirty state. No field contents are stored by the update controller. The new journey holds client scripts during typing and blur, verifies the confirmation and retained text, then verifies that navigating away permits refresh without an obsolete warning. Typechecking and all three real two-build upgrade journeys passed.
+
+GitHub CI now starts after the billing issue was resolved, but its interest-failure journey intermittently misses the expected uncertainty message. That separate CI failure remains under investigation; this follow-up does not claim CI is green.
+
 ## Complete quality result
 
 `bun run quality` passed with `CI=1`, using the repository's configured two Playwright workers. The verified application source is `ca11926`; the final record also includes a test-only hydration wait and README command documentation.

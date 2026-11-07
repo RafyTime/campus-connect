@@ -9,6 +9,38 @@ export class AppUpdates {
 	#registration: ServiceWorkerRegistration | undefined;
 
 	mount() {
+		// Input/change events that finished before hydration cannot reach our listeners.
+		this.dirty ||= Array.from(
+			document.querySelectorAll('form input, form textarea, form select')
+		).some((field) => {
+			if (field instanceof HTMLInputElement) {
+				if (
+					field.disabled ||
+					field.readOnly ||
+					field.type === 'hidden' ||
+					field.getAttribute('aria-hidden') === 'true'
+				)
+					return false;
+				if (field.type === 'checkbox' || field.type === 'radio')
+					return field.checked !== field.defaultChecked;
+				if (field.type === 'file') return Boolean(field.files?.length);
+				if (['submit', 'reset', 'button', 'image'].includes(field.type)) return false;
+				return field.value !== field.defaultValue;
+			}
+			if (field instanceof HTMLTextAreaElement)
+				return !field.disabled && !field.readOnly && field.value !== field.defaultValue;
+			if (field instanceof HTMLSelectElement && !field.disabled) {
+				const options = Array.from(field.options);
+				const implicitDefault =
+					!field.multiple && !options.some((option) => option.defaultSelected)
+						? options.find((option) => !option.disabled)
+						: undefined;
+				return options.some(
+					(option) => option.selected !== (option.defaultSelected || option === implicitDefault)
+				);
+			}
+			return false;
+		});
 		let disposed = false;
 		let watchedWorker: ServiceWorker | null = null;
 		const detect = () => {

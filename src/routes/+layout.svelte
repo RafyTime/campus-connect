@@ -17,8 +17,9 @@
 	const updates = new AppUpdates();
 	setAppUpdates(updates);
 	onMount(() => updates.mount());
-	afterNavigate(() => {
-		updates.dirty = false;
+	afterNavigate(({ type }) => {
+		// Initial hydration must retain edits detected in the server-rendered form.
+		if (type !== 'enter') updates.dirty = false;
 		connection.blockedSubmission = false;
 	});
 	const installation = new MobileInstallation();

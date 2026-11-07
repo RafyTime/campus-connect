@@ -102,6 +102,53 @@ test('a Tags-only Event form edit is protected during an update', async ({ page 
 	await expect(page.getByRole('checkbox', { name: 'Tech', exact: true })).toBeChecked();
 });
 
+test('form text entered before hydration remains protected during an update', async ({ page }) => {
+	active = 4194;
+	let release = () => {};
+	const scriptsHeld = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+	try {
+		await page.route('**/_app/immutable/**/*.js', async (route) => {
+			await scriptsHeld;
+			await route.continue();
+		});
+		const navigation = page.goto('/register');
+		await page.getByLabel('Display name').fill('Typed before hydration');
+		// Finish editing before hydration, so a later blur cannot mark the form dirty for us.
+		await page.getByRole('heading', { name: 'Register', exact: true }).click();
+		await expect(page.getByLabel('Appearance', { exact: true })).toBeDisabled();
+		release();
+		await navigation;
+		await expect(page.getByLabel('Appearance', { exact: true })).toBeEnabled();
+		await expect(page.getByLabel('Display name')).toHaveValue('Typed before hydration');
+		await page.evaluate(async () => {
+			await navigator.serviceWorker.ready;
+		});
+		active = 4195;
+		await page.evaluate(async () => {
+			await (await navigator.serviceWorker.getRegistration())?.update();
+		});
+		const banner = page.getByRole('complementary', { name: 'Update available' });
+		await expect(banner).toBeVisible({ timeout: 20_000 });
+		await banner.getByRole('button', { name: 'Refresh', exact: true }).click();
+		const confirmation = page.getByRole('dialog', { name: 'Refresh and discard changes?' });
+		await expect(confirmation).toBeVisible();
+		await confirmation.getByRole('button', { name: 'Keep editing' }).click();
+		await expect(page.getByLabel('Display name')).toHaveValue('Typed before hydration');
+		await page
+			.getByRole('navigation', { name: 'Primary' })
+			.getByRole('link', { name: 'Groups', exact: true })
+			.click();
+		const refreshed = page.waitForEvent('domcontentloaded');
+		await banner.getByRole('button', { name: 'Refresh', exact: true }).click();
+		await refreshed;
+		await expect(page.getByRole('heading', { name: 'Groups', exact: true })).toBeVisible();
+	} finally {
+		release();
+	}
+});
+
 test('an existing installation updates between two builds without losing another tab or a postponed form', async ({
 	page,
 	context
