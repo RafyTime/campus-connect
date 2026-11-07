@@ -20,7 +20,9 @@ process.once('exit', () => {
 export default defineConfig({
 	// Keep multi-route accessibility audits within their budgets on shared CI runners.
 	workers: process.env.CI ? 2 : undefined,
-	use: { baseURL: publicOrigin },
+	// Request-mocking journeys must not race a worker taking ownership of network traffic.
+	// The dedicated offline and upgrade journeys explicitly enable real service workers.
+	use: { baseURL: publicOrigin, serviceWorkers: 'block' },
 	webServer: {
 		command: `vp run db:migrate && bun src/lib/server/seed/cli.ts && bun src/lib/server/testing/seed-accounts/cli.ts && ${serverCommand}`,
 		url: publicOrigin,

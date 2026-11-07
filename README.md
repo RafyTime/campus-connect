@@ -82,6 +82,8 @@ Run custom package tasks with `vp run <name>`, such as `vp run test:install`. `v
 
 `vp run test:updates` builds two isolated candidates and verifies offline-safe, user-controlled updates across browser tabs. It is included in `vp run test` and uses a temporary database and local ports 4193–4195. It rebuilds the local `build` output, so run it separately from any other local build or preview session. Physical Android/iPhone installed upgrades remain a separate manual check.
 
+Ordinary browser journeys block service workers so request mocks cannot be bypassed during worker activation. The real offline-fallback journey and the separate two-build upgrade suite explicitly enable service workers.
+
 ## Quality checks
 
 ```sh

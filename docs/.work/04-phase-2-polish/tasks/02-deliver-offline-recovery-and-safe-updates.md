@@ -32,6 +32,8 @@
 
 ## Comments
 
+2026-11-07 CI correction: Reproduced the intermittent interest-failure journey locally. Its simulated 500 handler intercepted zero commands while the UI confirmed a real successful interest change. Ordinary browser journeys now block service workers to isolate their request mocks; real offline-fallback and upgrade coverage explicitly enables workers. The test asserts one intercepted command and reports the actual interest-region text. All 60 targeted repetitions and complete `CI=1 vp run quality` passed: 183 unit/integration tests, 137 browser journeys, three upgrade journeys and production build. Remote CI confirmation is pending this correction's push. No application behavior changed in this CI correction.
+
 2026-11-07: Fixed Greptile's early-edit refresh-protection finding. A real two-build browser test first reproduced lost text when typing and blur both finish before hydration. Mount-time field/default comparison and preserving dirty state through initial navigation now protect that text. Typechecking and all three upgrade journeys passed. GitHub's separate intermittent interest-failure browser assertion remains under investigation. Physical-device delivery remains unverified and unwaived.
 
 2026-11-06: Leo confirmed the offline/update interaction decisions before prototyping:

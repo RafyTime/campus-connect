@@ -97,25 +97,29 @@ test('offline client navigation offers Retry for the destination', async ({ page
 	await expect(page.getByRole('heading', { name: 'Groups', exact: true })).toBeVisible();
 });
 
-test('an installed browser gets an offline fallback and retries the original address', async ({
-	page,
-	context
-}) => {
-	await page.goto('/');
-	await page.evaluate(async () => {
-		await navigator.serviceWorker.ready;
+test.describe('real service-worker offline recovery', () => {
+	test.use({ serviceWorkers: 'allow' });
+
+	test('an installed browser gets an offline fallback and retries the original address', async ({
+		page,
+		context
+	}) => {
+		await page.goto('/');
+		await page.evaluate(async () => {
+			await navigator.serviceWorker.ready;
+		});
+		await page.reload();
+		await context.setOffline(true);
+		await page.goto('/events/event-board-game-evening?from=offline');
+		await expect(page.getByRole('heading', { name: "You're offline" })).toBeVisible();
+		await page.getByRole('button', { name: 'Retry', exact: true }).click();
+		await expect(page.getByRole('heading', { name: "You're offline" })).toBeVisible();
+		await context.setOffline(false);
+		await expect(page.getByRole('status')).toContainText('Back online');
+		await page.getByRole('button', { name: 'Retry', exact: true }).click();
+		await expect(
+			page.getByRole('heading', { name: 'Board game evening', exact: true })
+		).toBeVisible();
+		await expect(page).toHaveURL('/events/event-board-game-evening?from=offline');
 	});
-	await page.reload();
-	await context.setOffline(true);
-	await page.goto('/events/event-board-game-evening?from=offline');
-	await expect(page.getByRole('heading', { name: "You're offline" })).toBeVisible();
-	await page.getByRole('button', { name: 'Retry', exact: true }).click();
-	await expect(page.getByRole('heading', { name: "You're offline" })).toBeVisible();
-	await context.setOffline(false);
-	await expect(page.getByRole('status')).toContainText('Back online');
-	await page.getByRole('button', { name: 'Retry', exact: true }).click();
-	await expect(
-		page.getByRole('heading', { name: 'Board game evening', exact: true })
-	).toBeVisible();
-	await expect(page).toHaveURL('/events/event-board-game-evening?from=offline');
 });

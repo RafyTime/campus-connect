@@ -64,6 +64,16 @@ The controller now compares editable native fields with their defaults when moun
 
 GitHub CI now starts after the billing issue was resolved, but its interest-failure journey intermittently misses the expected uncertainty message. That separate CI failure remains under investigation; this follow-up does not claim CI is green.
 
+## CI request-interception follow-up, 2026-11-07
+
+The CI browser failure was reproduced locally once in 36 repetitions. Counting intercepted commands showed zero calls to the simulated 500 handler, while the visible Event interest control reported Interest saved and offered Withdraw interest. The real request succeeded; the test had not exercised its intended failure path. This is separate from Greptile's early-edit protection finding.
+
+Ordinary Playwright journeys now block service workers to isolate request mocks from worker activation/network ownership. The real offline-fallback journey and the two-build upgrade configuration explicitly allow workers. No offline or upgrade assertions were removed, and no application behavior was changed for this CI correction. The failing test also asserts that its handler intercepted exactly one command and checks the interest region's actual text, so any future fixture miss is reported directly.
+
+All 60 repetitions passed with this isolation in place. Complete `CI=1 vp run quality` then passed: formatting/lint, Svelte/TypeScript and worker typechecking, 183 unit/integration tests, all 137 browser journeys, all three real two-build upgrade journeys, and the production build. [Playwright's network guidance](https://playwright.dev/docs/network#missing-network-events-and-service-workers) documents the request-mocking/service-worker boundary.
+
+The already-pushed Greptile-only revision `0d0460b` independently demonstrated the intermittent behavior on GitHub: its [push run passed](https://github.com/RafyTime/campus-connect/actions/runs/42419016862), while its [PR run failed the same interest assertion at 1440px](https://github.com/RafyTime/campus-connect/actions/runs/42419023502). The separate request-mocking correction is locally verified; remote confirmation follows its push. No physical-device delivery gap has been waived.
+
 ## Complete quality result
 
 `bun run quality` passed with `CI=1`, using the repository's configured two Playwright workers. The verified application source is `ca11926`; the final record also includes a test-only hydration wait and README command documentation.
