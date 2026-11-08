@@ -301,7 +301,7 @@ test('address searches are explicit and selected coordinates survive publication
 	await address.fill('Bonn browser');
 	await expect(page.getByRole('option', { name: 'Bonn test address' })).toHaveCount(0);
 	await page.getByRole('button', { name: 'Search', exact: true }).click();
-	await expect(page.getByRole('status')).toContainText('Select a result');
+	await expect(page.getByRole('main').getByRole('status')).toContainText('Select a result');
 	await page.getByLabel('Location', { exact: true }).selectOption({ label: 'Bonn test address' });
 	await page.getByRole('button', { name: 'Publish Event' }).click();
 	await expect(page.getByText('Bonn test address', { exact: true })).toBeVisible();
@@ -309,9 +309,11 @@ test('address searches are explicit and selected coordinates survive publication
 	await expect(page.getByText('Bonn test address', { exact: true })).toBeVisible();
 	await page.goto('/create');
 	await fillEvent(page, 'Manual after provider failure');
+	// Let the global provider interval elapse before exercising the 503 path.
+	await page.waitForTimeout(1100);
 	await page.getByLabel('Search for an address').fill('failure browser');
 	await page.getByRole('button', { name: 'Search', exact: true }).click();
-	await expect(page.getByRole('status')).toContainText(/unavailable|busy/);
+	await expect(page.getByRole('main').getByRole('status')).toContainText(/unavailable/);
 	await page.getByLabel('Location', { exact: true }).selectOption('manual');
 	await page.getByLabel('Location label').fill('Courtyard');
 	await page.getByRole('button', { name: 'Publish Event' }).click();

@@ -17,7 +17,11 @@ export const searchEventLocations = command(
 				nominatimProvider,
 				geocodingScope()
 			);
-		} catch {
+		} catch (error) {
+			console.error(
+				'Address search configuration failed',
+				error instanceof Error ? error.name : 'Unknown error'
+			);
 			return { ok: false, reason: 'unavailable' };
 		}
 	}

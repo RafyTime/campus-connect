@@ -162,3 +162,28 @@ it('supports idempotent deterministic cache fixtures without provider traffic', 
 	);
 	expect(result).toMatchObject({ ok: true, results: [{ id: 'geocode:bonn-fixture' }] });
 });
+
+it('does not hold the database while a provider is unavailable and limits concurrent searches globally', async () => {
+	using database = await createTestDatabase();
+	const clock = createTestClock('2026-09-01');
+	let complete!: (value: unknown) => void;
+	let entered!: () => void;
+	const started = new Promise<void>((resolve) => {
+		entered = resolve;
+	});
+	const pending = searchLocations(database.db, clock, { id: 'creator' }, 'Slow provider', () => {
+		entered();
+		return new Promise((resolve) => {
+			complete = resolve;
+		});
+	});
+	await started;
+	expect(
+		await searchLocations(database.db, clock, { id: 'other' }, 'Other query', async () => [])
+	).toEqual({ ok: false, reason: 'rate-limited' });
+	// A real database operation completes before the unresolved provider request.
+	const { seedEventAuthoringOptions } = await import('#lib/server/seed.js');
+	await seedEventAuthoringOptions(database.db);
+	complete([]);
+	expect(await pending).toEqual({ ok: true, results: [] });
+});

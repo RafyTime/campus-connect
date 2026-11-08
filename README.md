@@ -136,8 +136,8 @@ Queries use Unicode normalization, collapsed whitespace and lowercase. Successfu
 responses, including empty results, are cached indefinitely. Failed requests are
 not cached. Search returns at most five permitted fields per result and times out
 after five seconds. There are no automatic retries. Busy searches ask the Creator
-to try again or use plain text. The database serializes uncached provider requests;
-a slow search can delay other database operations by up to the timeout. Apply the
+to try again or use plain text. The database atomically reserves provider slots and releases the queue before
+network I/O, so provider timeouts do not block manual publication. Apply the
 generated migration using the normal runtime migration procedure before release.
 Do not delete the address cache while Events still reference selected results.
 

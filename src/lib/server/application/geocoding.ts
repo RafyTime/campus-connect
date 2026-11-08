@@ -28,9 +28,9 @@ export async function searchLocations(
 	if (query.length < 3 || query.length > 200) return { ok: false, reason: 'invalid' };
 	const key = JSON.stringify([scope, query]);
 	try {
-		// Hold the application database queue during the provider request. This avoids
-		// duplicate cache misses and ensures actual request starts are globally spaced.
-		return await db.withTransaction(async (tx) => {
+		// Reserve the global request slot atomically, then release the database
+		// before external I/O so provider failures cannot block Event publication.
+		const reservation = await db.withTransaction(async (tx): Promise<GeocodingSearch | null> => {
 			const cached = await tx.query.geocodingCache.findFirst({
 				where: eq(geocodingCache.key, key)
 			});
@@ -45,53 +45,65 @@ export async function searchLocations(
 				.insert(geocodingThrottle)
 				.values({ id: 'global', requestedAt: now })
 				.onConflictDoUpdate({ target: geocodingThrottle.id, set: { requestedAt: now } });
-			try {
-				const raw = await provider(query, scope);
-				if (!Array.isArray(raw)) return { ok: false, reason: 'unavailable' };
-				const results: GeocodingResult[] = [];
-				for (const value of raw as unknown[]) {
-					if (!value || typeof value !== 'object') continue;
-					const item = value as Record<string, unknown>;
-					const address = item.address;
-					if (
-						!item ||
-						typeof item !== 'object' ||
-						typeof item.display_name !== 'string' ||
-						!item.display_name.trim() ||
-						item.display_name.length > 1000 ||
-						!address ||
-						typeof address !== 'object' ||
-						!('country_code' in address) ||
-						address.country_code !== 'de'
-					)
-						continue;
-					const latitude = typeof item.lat === 'string' && item.lat.trim() ? Number(item.lat) : NaN;
-					const longitude =
-						typeof item.lon === 'string' && item.lon.trim() ? Number(item.lon) : NaN;
-					if (
-						!Number.isFinite(latitude) ||
-						!Number.isFinite(longitude) ||
-						latitude < scope.south ||
-						latitude > scope.north ||
-						longitude < scope.west ||
-						longitude > scope.east
-					)
-						continue;
-					results.push({
-						id: 'geocode:' + crypto.randomUUID(),
-						label: item.display_name.trim(),
-						latitude,
-						longitude
-					});
-					if (results.length === 5) break;
-				}
-				await tx.insert(geocodingCache).values({ key, results });
-				return { ok: true, results };
-			} catch {
-				return { ok: false, reason: 'unavailable' };
-			}
+			return null;
 		});
-	} catch {
+		if (reservation) return reservation;
+		try {
+			const raw = await provider(query, scope);
+			if (!Array.isArray(raw)) return { ok: false, reason: 'unavailable' };
+			const results: GeocodingResult[] = [];
+			for (const value of raw as unknown[]) {
+				if (!value || typeof value !== 'object') continue;
+				const item = value as Record<string, unknown>;
+				const address = item.address;
+				if (
+					!item ||
+					typeof item !== 'object' ||
+					typeof item.display_name !== 'string' ||
+					!item.display_name.trim() ||
+					item.display_name.length > 1000 ||
+					!address ||
+					typeof address !== 'object' ||
+					!('country_code' in address) ||
+					address.country_code !== 'de'
+				)
+					continue;
+				const latitude = typeof item.lat === 'string' && item.lat.trim() ? Number(item.lat) : NaN;
+				const longitude = typeof item.lon === 'string' && item.lon.trim() ? Number(item.lon) : NaN;
+				if (
+					!Number.isFinite(latitude) ||
+					!Number.isFinite(longitude) ||
+					latitude < scope.south ||
+					latitude > scope.north ||
+					longitude < scope.west ||
+					longitude > scope.east
+				)
+					continue;
+				results.push({
+					id: 'geocode:' + crypto.randomUUID(),
+					label: item.display_name.trim(),
+					latitude,
+					longitude
+				});
+				if (results.length === 5) break;
+			}
+			await db.insert(geocodingCache).values({ key, results }).onConflictDoNothing();
+			const stored = await db.query.geocodingCache.findFirst({
+				where: eq(geocodingCache.key, key)
+			});
+			return { ok: true, results: stored?.results ?? results };
+		} catch (error) {
+			console.error(
+				'Address provider request failed',
+				error instanceof Error ? error.name : 'Unknown error'
+			);
+			return { ok: false, reason: 'unavailable' };
+		}
+	} catch (error) {
+		console.error(
+			'Address search storage failed',
+			error instanceof Error ? error.name : 'Unknown error'
+		);
 		return { ok: false, reason: 'unavailable' };
 	}
 }

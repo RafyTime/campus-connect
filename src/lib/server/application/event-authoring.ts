@@ -330,7 +330,7 @@ export async function getEventForManagement(
 	});
 	if (!row) return { ok: false, reason: 'not-found' };
 	if (!(await canManageEvent(db, actor, row.post))) return { ok: false, reason: 'forbidden' };
-	const curated =
+	const mapped =
 		row.locationId.startsWith('geocode:') ||
 		campusLocations.some((place) => place.id === row.locationId);
 	return {
@@ -348,8 +348,8 @@ export async function getEventForManagement(
 			tagIds: row.eventTags.map((link) => link.tagId),
 			responseMode: row.responseMode,
 			capacity: row.capacity === null ? '' : String(row.capacity),
-			locationId: curated ? row.locationId : 'manual',
-			manualLocation: curated ? '' : row.location.label,
+			locationId: mapped ? row.locationId : 'manual',
+			manualLocation: mapped ? '' : row.location.label,
 			status:
 				row.status === 'cancelled' ? 'cancelled' : row.endsAt <= clock.now() ? 'ended' : 'scheduled'
 		}
