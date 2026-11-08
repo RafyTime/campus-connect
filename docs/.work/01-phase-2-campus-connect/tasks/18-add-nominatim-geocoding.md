@@ -32,3 +32,11 @@
 ## Comments
 
 2026-11-01 — **Go for Phase 2; status remains ready.** [The dated decision](../../../evidence/phase-2/checks/16-stretch-decisions-2026-11-01.md) records the value judgment and complete release-evidence requirements. The existing coordinate/map path makes explicit address search a useful bounded addition. Before completion, provide replacement-provider server/browser tests, cache/scope/throttle/bounds/selection/fallback coverage, configuration and attribution documentation, passing quality/migration checks, and Railway search/publication/cache/fallback evidence with commit/date plus final media references. This gate approval is not implementation or release acceptance. Dark-mode/PWA work has higher execution priority.
+
+2026-11-08 — Implementation on `feat/nominatim-geocoding`. Added protected explicit
+search, persistent cache and global limiter, configurable bounded provider,
+server-validated selection persistence and manual fallback. Server and browser
+tests replace the public provider. See README configuration and the updated
+acceptance evidence record. Production checks and final media evidence remain
+pending; this ticket stays ready until release acceptance. No production service
+or database was accessed.

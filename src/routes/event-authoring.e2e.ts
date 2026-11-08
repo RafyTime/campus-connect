@@ -289,3 +289,31 @@ for (const viewport of [
 		).toEqual([]);
 	});
 }
+
+test('address searches are explicit and selected coordinates survive publication; provider failure permits manual publication', async ({
+	page
+}) => {
+	await page.setViewportSize({ width: 360, height: 800 });
+	await register(page);
+	await page.goto('/create');
+	await fillEvent(page, 'Address search publication');
+	const address = page.getByLabel('Search for an address');
+	await address.fill('Bonn browser');
+	await expect(page.getByRole('option', { name: 'Bonn test address' })).toHaveCount(0);
+	await page.getByRole('button', { name: 'Search', exact: true }).click();
+	await expect(page.getByRole('status')).toContainText('Select a result');
+	await page.getByLabel('Location', { exact: true }).selectOption({ label: 'Bonn test address' });
+	await page.getByRole('button', { name: 'Publish Event' }).click();
+	await expect(page.getByText('Bonn test address', { exact: true })).toBeVisible();
+	await page.reload();
+	await expect(page.getByText('Bonn test address', { exact: true })).toBeVisible();
+	await page.goto('/create');
+	await fillEvent(page, 'Manual after provider failure');
+	await page.getByLabel('Search for an address').fill('failure browser');
+	await page.getByRole('button', { name: 'Search', exact: true }).click();
+	await expect(page.getByRole('status')).toContainText(/unavailable|busy/);
+	await page.getByLabel('Location', { exact: true }).selectOption('manual');
+	await page.getByLabel('Location label').fill('Courtyard');
+	await page.getByRole('button', { name: 'Publish Event' }).click();
+	await expect(page.getByText('Courtyard', { exact: true })).toBeVisible();
+});

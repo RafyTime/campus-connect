@@ -19,6 +19,7 @@ import {
 	type ManagedEvent
 } from '#lib/event-authoring.js';
 import { getPublicEvent } from './events';
+import { findGeocodingSelection } from './geocoding';
 
 export async function getEventAuthoringOptions(
 	db: Pick<Database, 'select'>,
@@ -160,9 +161,11 @@ export async function editEvent(
 			// The write lock also serializes these checks with Participation changes.
 			if (row.participations.length) {
 				const changed = parsed.value;
-				const sameLocation = campusLocations.some((place) => place.id === row.locationId)
-					? changed.locationId === row.locationId
-					: changed.locationId === 'manual' && changed.manualLocation === row.location.label;
+				const sameLocation =
+					row.locationId.startsWith('geocode:') ||
+					campusLocations.some((place) => place.id === row.locationId)
+						? changed.locationId === row.locationId
+						: changed.locationId === 'manual' && changed.manualLocation === row.location.label;
 				const lockedFields = {
 					...(changed.responseMode !== row.responseMode
 						? { responseMode: 'Response mode is locked after Participation.' }
@@ -246,9 +249,23 @@ export async function cancelEvent(
 }
 
 async function persistEventLocation(
-	db: Pick<Database, 'insert'>,
+	db: Pick<Database, 'insert' | 'select'>,
 	details: { locationId: string; manualLocation: string }
 ) {
+	if (details.locationId.startsWith('geocode:')) {
+		const selected = await findGeocodingSelection(db, details.locationId);
+		if (!selected) throw new Error('Geocoding selection no longer available');
+		await db
+			.insert(location)
+			.values({
+				id: selected.id,
+				label: selected.label,
+				latitude: selected.latitude,
+				longitude: selected.longitude
+			})
+			.onConflictDoNothing();
+		return selected.id;
+	}
 	if (details.locationId !== 'manual') return details.locationId;
 	// A new row keeps shared and curated Locations unchanged for other Events.
 	const id = crypto.randomUUID();
@@ -268,7 +285,8 @@ async function validateOptions(
 			? { tagIds: 'Choose Tags from the campus list.' }
 			: {}),
 		...(details.locationId !== 'manual' &&
-		!options.locations.some((place) => place.id === details.locationId)
+		!options.locations.some((place) => place.id === details.locationId) &&
+		!(await findGeocodingSelection(db, details.locationId))
 			? { locationId: 'Choose a campus Location or a plain-text Location.' }
 			: {})
 	};
@@ -312,7 +330,9 @@ export async function getEventForManagement(
 	});
 	if (!row) return { ok: false, reason: 'not-found' };
 	if (!(await canManageEvent(db, actor, row.post))) return { ok: false, reason: 'forbidden' };
-	const curated = campusLocations.some((place) => place.id === row.locationId);
+	const curated =
+		row.locationId.startsWith('geocode:') ||
+		campusLocations.some((place) => place.id === row.locationId);
 	return {
 		ok: true,
 		event: {

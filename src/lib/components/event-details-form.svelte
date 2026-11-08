@@ -1,5 +1,37 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { searchEventLocations } from '#lib/geocoding.remote.js';
+	import type { GeocodingResult } from '#lib/geocoding.js';
+	let addressQuery = $state('');
+	let searchPending = $state(false);
+	let searchMessage = $state('');
+	let addressResults = $state<GeocodingResult[]>([]);
+	async function searchAddress() {
+		if (searchPending) return;
+		searchPending = true;
+		const selected = addressResults.find((result) => result.id === locationId);
+		addressResults = selected ? [selected] : [];
+		try {
+			const result = await searchEventLocations(addressQuery);
+			if (result.ok) {
+				addressResults =
+					selected && !result.results.some((item) => item.id === selected.id)
+						? [selected, ...result.results]
+						: result.results;
+				searchMessage = result.results.length
+					? 'Select a result in Location.'
+					: 'No addresses found. You can use a plain-text Location.';
+			} else
+				searchMessage =
+					result.reason === 'rate-limited'
+						? 'Search is busy. Try again shortly or use a plain-text Location.'
+						: 'Address search unavailable. You can use a plain-text Location.';
+		} catch {
+			searchMessage = 'Address search unavailable. You can use a plain-text Location.';
+		} finally {
+			searchPending = false;
+		}
+	}
 	import { getAppUpdates } from '#lib/app-updates.svelte.js';
 	import { getConnectivity } from '#lib/connectivity.svelte.js';
 	import { Alert02Icon } from '@hugeicons/core-free-icons';
@@ -340,6 +372,38 @@
 				<Field.Error id="event-capacity-error" errors={issues('capacity')} />
 			</Field.Field>
 		{/if}
+		{#if !locked}
+			<Field.Field>
+				<Field.Label for="address-query">Search for an address</Field.Label>
+				<Input
+					id="address-query"
+					bind:value={addressQuery}
+					maxlength={200}
+					class="min-h-11"
+					onkeydown={(event) => {
+						if (event.key === 'Enter') {
+							event.preventDefault();
+							void searchAddress();
+						}
+					}}
+				/>
+				<Button
+					type="button"
+					variant="outline"
+					class="min-h-11"
+					disabled={searchPending || !hydrated || !connection.online}
+					onclick={searchAddress}>{searchPending ? 'Searching…' : 'Search'}</Button
+				>
+				<Field.Description
+					>Search Germany within the Bonn-Cologne region. Do not submit private or confidential
+					information. Address data © <a
+						href="https://www.openstreetmap.org/copyright"
+						class="underline">OpenStreetMap contributors</a
+					>.</Field.Description
+				>
+				<p role="status">{searchMessage}</p>
+			</Field.Field>
+		{/if}
 		<Field.Field data-invalid={issues('locationId').length > 0 || undefined}>
 			<Field.Label for="event-location">Location</Field.Label>
 			<NativeSelect.Root
@@ -360,6 +424,12 @@
 						>{location.label}</NativeSelect.Option
 					>{/each}
 				<NativeSelect.Option value="manual">Plain-text Location</NativeSelect.Option>
+				{#if defaults.locationId.startsWith('geocode:') && !addressResults.some((result) => result.id === defaults.locationId)}
+					<NativeSelect.Option value={defaults.locationId}>Saved address</NativeSelect.Option>
+				{/if}
+				{#each addressResults as result (result.id)}
+					<NativeSelect.Option value={result.id}>{result.label}</NativeSelect.Option>
+				{/each}
 			</NativeSelect.Root>
 			<Field.Error id="event-location-error" errors={issues('locationId')} />
 		</Field.Field>

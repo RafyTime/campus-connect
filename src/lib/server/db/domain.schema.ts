@@ -217,3 +217,15 @@ export const participation = sqliteTable(
 export const participationRelations = relations(participation, ({ one }) => ({
 	event: one(event, { fields: [participation.eventId], references: [event.id] })
 }));
+
+// The singleton throttle is shared by all requests and survives process restarts.
+export const geocodingThrottle = sqliteTable('geocoding_throttle', {
+	id: text('id').primaryKey(),
+	requestedAt: integer('requested_at').notNull()
+});
+export const geocodingCache = sqliteTable('geocoding_cache', {
+	key: text('key').primaryKey(),
+	results: text('results', { mode: 'json' })
+		.$type<import('#lib/geocoding.js').GeocodingResult[]>()
+		.notNull()
+});

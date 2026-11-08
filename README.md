@@ -109,3 +109,38 @@ The committed migrations create Better Auth's `user`, `session`, `account`, and 
 If `vp run db:migrate` reports that a table already exists, this SQLite file was created before tracked migrations (for example by an earlier `db:push`). Delete or rename `local.db` and run `vp run db:migrate` again. Local SQLite is disposable; tests do not use this file.
 
 For production SQLite, first deploy the committed migration, then run `bun run db:migrate` once from the Railway service console. Run `bun run db:seed` from the same runtime when demonstration content is required. The `/data` volume is available only at runtime, so do not migrate in Railway's build or pre-deploy phase. See [deployment.md](docs/deployment.md) for the full process.
+
+### Explicit address search
+
+Signed-in Creators can submit Search in Event authoring, then choose an address
+under Location. Typing and page loads never contact Nominatim. Plain-text
+Locations remain available when search is empty, busy, invalid or unavailable.
+
+Read the [Nominatim usage policy](https://operations.osmfoundation.org/policies/nominatim/).
+This application uses explicit searches only, an identifying User-Agent, persistent
+caching and a global maximum of one provider request per second. Keep the existing
+single-instance SQLite deployment. Do not send private or confidential addresses.
+Address results are © OpenStreetMap contributors, licensed under
+[ODbL](https://www.openstreetmap.org/copyright).
+
+Optional runtime environment variables:
+
+- `NOMINATIM_BASE_URL`: complete search endpoint, defaults to
+  `https://nominatim.openstreetmap.org/search`. Replace the provider here without rebuilding.
+- `GEOCODING_BOUNDS`: west,south,east,north, defaults to `6.7,50.5,7.5,51.1`,
+  a bounding rectangle around greater Bonn-Cologne. Germany is also checked on each result.
+- `GEOCODING_SCOPE_VERSION`: defaults to `bonn-cologne-v1`. Increment when changing
+  regional policy. Both version and actual bounds form part of the persistent cache key.
+
+Queries use Unicode normalization, collapsed whitespace and lowercase. Successful
+responses, including empty results, are cached indefinitely. Failed requests are
+not cached. Search returns at most five permitted fields per result and times out
+after five seconds. There are no automatic retries. Busy searches ask the Creator
+to try again or use plain text. The database serializes uncached provider requests;
+a slow search can delay other database operations by up to the timeout. Apply the
+generated migration using the normal runtime migration procedure before release.
+Do not delete the address cache while Events still reference selected results.
+
+Browser acceptance tests use a local replacement provider on port 4197 and never
+the public service. Set `PLAYWRIGHT_PORT` to isolate the test application if the
+default preview port is occupied.
