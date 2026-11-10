@@ -44,9 +44,12 @@ or database was accessed.
 2026-11-10 — **Prototype verdict: A everywhere, with B's preview on desktop.**
 Throwaway variants are kept on branch `feat/event-location-prototype` (`3670bfb`). The
 question was which layout best connects choosing a place with confirming it, without
-hiding the rest of the Event. A single-page form won: address results appear as wrapping
-cards, and the chosen place is confirmed by an inline map with a Google Maps link.
-From `lg` upward, a sticky Discover card previews the Event as it is edited. The preview
-reuses `EventCard` and has no second map. The guided steps (C) were rejected because
-they add steps without clarifying anything. The desktop preview ships in this ticket's
-PR as a cosmetic layer over the location flow.
+hiding the rest of the Event. A single-page form won. It has three sections: The plan;
+Time and responses; and Where are we meeting? On campus, Address and Plain text tabs
+replace the separate search field and Location dropdown. A chosen address collapses into
+a confirmation card with a Change action that keeps the previous results. Places with
+coordinates show an inline map and a Google Maps link. Before a choice there is no
+placeholder map. The form uses styled selects for consistency with the rest of the app.
+From `lg` upward, a sticky Discover card previews the Event. It reuses `EventCard`. The
+guided steps (C) were rejected because they add steps without clarifying anything. The
+desktop preview ships in this ticket's PR as a cosmetic layer over the location flow.
