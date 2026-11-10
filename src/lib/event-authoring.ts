@@ -44,6 +44,7 @@ export type ManagedEvent = EventFormValues & {
 	author: { id: string; displayName: string };
 	status: PublicEventSummary['status'];
 	participationLocked: boolean;
+	location: { label: string; latitude: number | null; longitude: number | null };
 };
 
 export function formatCampusInput(date: Date): string {

@@ -355,6 +355,11 @@ export async function getEventForManagement(
 			capacity: row.capacity === null ? '' : String(row.capacity),
 			locationId: mapped ? row.locationId : 'manual',
 			manualLocation: mapped ? '' : row.location.label,
+			location: {
+				label: row.location.label,
+				latitude: row.location.latitude,
+				longitude: row.location.longitude
+			},
 			status:
 				row.status === 'cancelled' ? 'cancelled' : row.endsAt <= clock.now() ? 'ended' : 'scheduled'
 		}

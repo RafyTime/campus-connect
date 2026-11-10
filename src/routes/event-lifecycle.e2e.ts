@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { chooseOption, usePlainTextLocation } from './event-form.testing';
 
 async function register(page: Page) {
 	await page.goto('/register');
@@ -42,10 +43,9 @@ for (const viewport of [
 		await page.getByLabel('Start', { exact: true }).fill('2030-09-02T18:00');
 		await page.getByLabel('End', { exact: true }).fill('2030-09-02T20:00');
 		await page.getByRole('checkbox', { name: 'Tech', exact: true }).check();
-		await page.getByLabel('Response mode', { exact: true }).selectOption('registration');
+		await chooseOption(page, 'Response mode', 'Registration');
 		await page.getByLabel('Capacity', { exact: true }).fill('2');
-		await page.getByLabel('Location', { exact: true }).selectOption('manual');
-		await page.getByLabel('Location label', { exact: true }).fill('Library garden');
+		await usePlainTextLocation(page, 'Library garden');
 		await page.getByRole('button', { name: 'Publish Event' }).click();
 		await expect(page.getByRole('heading', { name: title, level: 1 })).toBeVisible();
 		const eventUrl = page.url();
@@ -61,7 +61,7 @@ for (const viewport of [
 			await expect(page.getByLabel('Start', { exact: true })).toHaveAttribute('readonly', '');
 			await expect(page.getByLabel('End', { exact: true })).toHaveAttribute('readonly', '');
 			await expect(page.getByLabel('Response mode', { exact: true })).toBeDisabled();
-			await expect(page.getByLabel('Location', { exact: true })).toBeDisabled();
+			await expect(page.getByRole('tab', { name: 'On campus' })).toBeDisabled();
 			await expect(page.getByLabel('Location label', { exact: true })).toHaveAttribute(
 				'readonly',
 				''
