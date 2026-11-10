@@ -74,3 +74,10 @@
 		{/if}
 	</div>
 </section>
+<Button
+	href={`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`}
+	target="_blank"
+	rel="noopener noreferrer"
+	variant="outline"
+	class="min-h-11 self-start">Open in Google Maps</Button
+>

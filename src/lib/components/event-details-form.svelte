@@ -702,20 +702,11 @@
 			</Tabs.Root>
 			<Field.Error id="event-location-error" errors={issues('locationId')} />
 			{#if mappedPlace}
-				<div class="flex min-w-0 flex-col gap-3">
-					<EventMap
-						label={mappedPlace.label}
-						latitude={mappedPlace.latitude}
-						longitude={mappedPlace.longitude}
-					/>
-					<Button
-						href={`https://www.google.com/maps/search/?api=1&query=${mappedPlace.latitude},${mappedPlace.longitude}`}
-						target="_blank"
-						rel="noopener noreferrer"
-						variant="outline"
-						class="min-h-11 self-start">Open in Google Maps</Button
-					>
-				</div>
+				<EventMap
+					label={mappedPlace.label}
+					latitude={mappedPlace.latitude}
+					longitude={mappedPlace.longitude}
+				/>
 			{/if}
 		</Field.Set>
 

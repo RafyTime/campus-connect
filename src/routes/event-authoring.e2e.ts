@@ -313,6 +313,10 @@ test('address searches are explicit and selected coordinates survive publication
 		page.getByRole('heading', { name: 'Address search publication', level: 1 })
 	).toBeVisible();
 	await expect(page.getByText('Bonn test address', { exact: true })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Open in Google Maps' })).toHaveAttribute(
+		'href',
+		/google\.com\/maps/
+	);
 	await page.reload();
 	await expect(page.getByText('Bonn test address', { exact: true })).toBeVisible();
 	await page.goto('/create');
