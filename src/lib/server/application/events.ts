@@ -5,15 +5,16 @@ import { discoveryDatePresets, discoveryResponseModes } from '#lib/event-filter-
 import type { Clock } from '#lib/server/clock.js';
 import type { Database } from '#lib/server/db/index.js';
 import { event, group, tag } from '#lib/server/db/schema.js';
-import { responseModeLabel } from '#lib/event-labels.js';
+import { capacityStateLabel } from '#lib/event-labels.js';
 import type {
 	PublicEventDetail,
 	PublicEventStatus,
 	PublicEventSummary,
 	PublicResponseMode
 } from '#lib/public-event.js';
-import { formatCampusExactTime, formatCampusSchedule } from './campus-time';
-import { displayInitials, imageAttribution, publicImageUrl } from './remote-images';
+import { formatCampusExactTime, formatCampusSchedule } from '#lib/campus-time.js';
+import { displayInitials } from '#lib/display-initials.js';
+import { imageAttribution, publicImageUrl } from './remote-images';
 
 export type {
 	PublicEventDetail,
@@ -195,7 +196,7 @@ function toSummary(row: LoadedEvent, now: Date): PublicEventSummary {
 			.map((eventTag) => ({ id: eventTag.tag.id, name: eventTag.tag.name }))
 			.sort((left, right) => left.name.localeCompare(right.name)),
 		responseMode: row.responseMode,
-		capacityState: capacityState(
+		capacityState: capacityStateLabel(
 			row.responseMode,
 			row.capacity === null
 				? null
@@ -227,10 +228,4 @@ function publicStatus(
 	if (storedStatus === 'cancelled') return 'cancelled';
 	if (endsAt.getTime() <= now.getTime()) return 'ended';
 	return 'scheduled';
-}
-
-function capacityState(responseMode: PublicResponseMode, capacity: number | null): string {
-	if (responseMode !== 'registration') return responseModeLabel(responseMode);
-	if (capacity === null || capacity <= 0) return 'Full';
-	return capacity === 1 ? '1 place remaining' : `${capacity} places remaining`;
 }
