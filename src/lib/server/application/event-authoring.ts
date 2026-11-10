@@ -8,7 +8,8 @@ import {
 	groupMembership,
 	location,
 	post,
-	tag
+	tag,
+	user
 } from '#lib/server/db/schema.js';
 import { campusLocations, campusTags } from '#lib/server/campus-catalog.js';
 import {
@@ -18,7 +19,8 @@ import {
 	type EventSaveResult,
 	type ManagedEvent
 } from '#lib/event-authoring.js';
-import { getPublicEvent } from './events';
+import { getPublicEvent, postHost, toPublicHost } from './events';
+import { findGeocodingSelection } from './geocoding';
 
 export async function getEventAuthoringOptions(
 	db: Pick<Database, 'select'>,
@@ -36,7 +38,12 @@ export async function getEventAuthoringOptions(
 			)
 			.orderBy(asc(tag.name)),
 		db
-			.select({ id: location.id, label: location.label })
+			.select({
+				id: location.id,
+				label: location.label,
+				latitude: location.latitude,
+				longitude: location.longitude
+			})
 			.from(location)
 			.where(
 				inArray(
@@ -46,13 +53,31 @@ export async function getEventAuthoringOptions(
 			)
 			.orderBy(asc(location.label))
 	]);
-	return { tags, locations, groups: await authorizedGroupHosts(db, actor) };
+	const { groups, hosts } = await authorizedHosts(db, actor);
+	return { tags, locations, groups, hosts };
 }
 
-async function authorizedGroupHosts(db: Pick<Database, 'select'>, actor: { id: string } | null) {
-	if (!actor) return [];
+async function authorizedHosts(db: Pick<Database, 'select'>, actor: { id: string } | null) {
+	if (!actor) return { groups: [], hosts: [] };
+	const [[author], groups] = await Promise.all([
+		db
+			.select({ id: user.id, name: user.name, image: user.image })
+			.from(user)
+			.where(eq(user.id, actor.id)),
+		authorizedGroupHosts(db, actor)
+	]);
+	return {
+		groups: groups.map(({ id, name }) => ({ id, name })),
+		hosts: [
+			...(author ? [toPublicHost('personal', author)] : []),
+			...groups.map((group) => toPublicHost('group', group))
+		]
+	};
+}
+
+async function authorizedGroupHosts(db: Pick<Database, 'select'>, actor: { id: string }) {
 	return db
-		.select({ id: group.id, name: group.name })
+		.select({ id: group.id, name: group.name, image: group.imageUrl })
 		.from(group)
 		.innerJoin(groupMembership, eq(groupMembership.groupId, group.id))
 		.where(
@@ -160,9 +185,11 @@ export async function editEvent(
 			// The write lock also serializes these checks with Participation changes.
 			if (row.participations.length) {
 				const changed = parsed.value;
-				const sameLocation = campusLocations.some((place) => place.id === row.locationId)
-					? changed.locationId === row.locationId
-					: changed.locationId === 'manual' && changed.manualLocation === row.location.label;
+				const sameLocation =
+					row.locationId.startsWith('geocode:') ||
+					campusLocations.some((place) => place.id === row.locationId)
+						? changed.locationId === row.locationId
+						: changed.locationId === 'manual' && changed.manualLocation === row.location.label;
 				const lockedFields = {
 					...(changed.responseMode !== row.responseMode
 						? { responseMode: 'Response mode is locked after Participation.' }
@@ -246,9 +273,23 @@ export async function cancelEvent(
 }
 
 async function persistEventLocation(
-	db: Pick<Database, 'insert'>,
+	db: Pick<Database, 'insert' | 'select'>,
 	details: { locationId: string; manualLocation: string }
 ) {
+	if (details.locationId.startsWith('geocode:')) {
+		const selected = await findGeocodingSelection(db, details.locationId);
+		if (!selected) throw new Error('Geocoding selection no longer available');
+		await db
+			.insert(location)
+			.values({
+				id: selected.id,
+				label: selected.label,
+				latitude: selected.latitude,
+				longitude: selected.longitude
+			})
+			.onConflictDoNothing();
+		return selected.id;
+	}
 	if (details.locationId !== 'manual') return details.locationId;
 	// A new row keeps shared and curated Locations unchanged for other Events.
 	const id = crypto.randomUUID();
@@ -268,7 +309,8 @@ async function validateOptions(
 			? { tagIds: 'Choose Tags from the campus list.' }
 			: {}),
 		...(details.locationId !== 'manual' &&
-		!options.locations.some((place) => place.id === details.locationId)
+		!options.locations.some((place) => place.id === details.locationId) &&
+		!(await findGeocodingSelection(db, details.locationId))
 			? { locationId: 'Choose a campus Location or a plain-text Location.' }
 			: {})
 	};
@@ -312,14 +354,18 @@ export async function getEventForManagement(
 	});
 	if (!row) return { ok: false, reason: 'not-found' };
 	if (!(await canManageEvent(db, actor, row.post))) return { ok: false, reason: 'forbidden' };
-	const curated = campusLocations.some((place) => place.id === row.locationId);
+	const mapped =
+		row.locationId.startsWith('geocode:') ||
+		campusLocations.some((place) => place.id === row.locationId);
 	return {
 		ok: true,
 		event: {
 			id: row.id,
 			participationLocked: row.participations.length > 0,
+			registrationCount: row.participations.filter((record) => record.kind === 'registration')
+				.length,
 			hostGroupId: row.post.groupId ?? '',
-			hostName: row.post.group?.name ?? row.post.author.name,
+			host: postHost(row.post),
 			author: { id: row.post.authorId, displayName: row.post.author.name },
 			title: row.post.title,
 			description: row.description,
@@ -328,8 +374,13 @@ export async function getEventForManagement(
 			tagIds: row.eventTags.map((link) => link.tagId),
 			responseMode: row.responseMode,
 			capacity: row.capacity === null ? '' : String(row.capacity),
-			locationId: curated ? row.locationId : 'manual',
-			manualLocation: curated ? '' : row.location.label,
+			locationId: mapped ? row.locationId : 'manual',
+			manualLocation: mapped ? '' : row.location.label,
+			location: {
+				label: row.location.label,
+				latitude: row.location.latitude,
+				longitude: row.location.longitude
+			},
 			status:
 				row.status === 'cancelled' ? 'cancelled' : row.endsAt <= clock.now() ? 'ended' : 'scheduled'
 		}

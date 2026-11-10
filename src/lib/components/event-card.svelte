@@ -6,13 +6,11 @@
 	import { responseModeLabel } from '#lib/event-labels.js';
 	import type { PublicEventSummary } from '#lib/public-event.js';
 
-	let { event }: { event: PublicEventSummary } = $props();
+	// A preview renders the same card without linking to an unsaved Event.
+	let { event, preview = false }: { event: PublicEventSummary; preview?: boolean } = $props();
 </script>
 
-<a
-	href={resolve('/events/[eventId]', { eventId: event.id })}
-	class="block h-full rounded-[min(var(--radius-4xl),24px)] focus-visible:ring-3 focus-visible:ring-ring/30"
->
+{#snippet card()}
 	<Card.Root class="flex h-full flex-col">
 		<Card.Header>
 			<Card.Title>
@@ -50,4 +48,15 @@
 			</div>
 		</Card.Content>
 	</Card.Root>
-</a>
+{/snippet}
+
+{#if preview}
+	{@render card()}
+{:else}
+	<a
+		href={resolve('/events/[eventId]', { eventId: event.id })}
+		class="block h-full rounded-[min(var(--radius-4xl),24px)] focus-visible:ring-3 focus-visible:ring-ring/30"
+	>
+		{@render card()}
+	</a>
+{/if}

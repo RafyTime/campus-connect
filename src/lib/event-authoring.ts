@@ -1,5 +1,5 @@
 import { fromDate, parseDateTime, toCalendarDateTime, toZoned } from '@internationalized/date';
-import type { PublicEventSummary, PublicResponseMode } from './public-event';
+import type { PublicEventHost, PublicEventSummary, PublicResponseMode } from './public-event';
 
 export const campusTimeZone = 'Europe/Berlin';
 export const responseModes = ['announcement', 'interest', 'registration'] as const;
@@ -35,22 +35,26 @@ export type EventSaveResult =
 	  };
 export type EventAuthoringOptions = {
 	groups: { id: string; name: string }[];
+	/** The actor's personal Host first, then their Group Hosts, as Discover shows them. */
+	hosts: PublicEventHost[];
 	tags: { id: string; name: string }[];
-	locations: { id: string; label: string }[];
+	locations: { id: string; label: string; latitude: number | null; longitude: number | null }[];
 };
 export type ManagedEvent = EventFormValues & {
 	id: string;
-	hostName: string;
+	host: PublicEventHost;
 	author: { id: string; displayName: string };
 	status: PublicEventSummary['status'];
 	participationLocked: boolean;
+	registrationCount: number;
+	location: { label: string; latitude: number | null; longitude: number | null };
 };
 
 export function formatCampusInput(date: Date): string {
 	return toCalendarDateTime(fromDate(date, campusTimeZone)).toString().slice(0, 16);
 }
 
-function parseCampusInput(value: unknown): Date | null {
+export function parseCampusInput(value: unknown): Date | null {
 	if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return null;
 	try {
 		// Reject skipped and repeated clock times rather than silently shifting an Event.

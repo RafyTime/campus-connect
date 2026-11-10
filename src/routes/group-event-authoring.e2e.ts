@@ -1,5 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { chooseOption, usePlainTextLocation } from './event-form.testing';
+
+// The styled Host select submits through this hidden field.
+const hostInput = (page: Page) => page.locator('input[type="hidden"][name^="hostGroupId"]');
 
 test.use({ viewport: { width: 1440, height: 900 } });
 
@@ -27,9 +31,10 @@ test('visitors, subscribers, and unrelated Users cannot publish or manage for th
 	for (const actor of ['sofia', 'mira'] as const) {
 		await signIn(page, actor);
 		await page.goto('/create');
-		await expect(
-			page.getByLabel('Host', { exact: true }).locator('option[value="group-film-society"]')
-		).toHaveCount(0);
+		await expect(page.getByLabel('Host', { exact: true })).toBeEnabled();
+		await page.getByLabel('Host', { exact: true }).click();
+		await expect(page.getByRole('option', { name: 'Film Society' })).toHaveCount(0);
+		await page.keyboard.press('Escape');
 		if (actor === 'sofia') {
 			await expect(
 				page.getByText('You do not own or represent any Groups. You can publish a personal Event.')
@@ -41,18 +46,16 @@ test('visitors, subscribers, and unrelated Users cannot publish or manage for th
 		// A forged browser choice must still be rejected by the application operation.
 		// Wait for hydration before mutating options owned by the component.
 		await expect(page.getByRole('checkbox', { name: 'Tech', exact: true })).toBeEnabled();
-		await page.getByLabel('Host', { exact: true }).evaluate((select) => {
-			const option = document.createElement('option');
-			option.value = 'group-film-society';
-			option.textContent = 'Film Society';
-			select.append(option);
+		await fillEvent(page, `Forbidden Group Event ${actor}`, false);
+		await hostInput(page).evaluate((input: HTMLInputElement) => {
+			input.value = 'group-film-society';
+			input.dispatchEvent(new Event('input', { bubbles: true }));
 		});
-		await fillEvent(page, `Forbidden Group Event ${actor}`);
 		await page.getByRole('button', { name: 'Publish Event' }).click();
 		await expect(
 			page.getByText('You do not have permission to publish or manage Events for this host.')
 		).toBeVisible();
-		await expect(page.getByLabel('Host', { exact: true })).toHaveValue('group-film-society');
+		await expect(hostInput(page)).toHaveValue('group-film-society');
 		await expect(page.getByLabel('Title', { exact: true })).toHaveValue(
 			`Forbidden Group Event ${actor}`
 		);
@@ -71,10 +74,10 @@ test('Group validation and request failure preserve host and input for recovery'
 }) => {
 	await signIn(page, 'jonas');
 	await page.goto('/create');
-	await page.getByLabel('Host', { exact: true }).selectOption('group-film-society');
+	await chooseOption(page, 'Host', 'Film Society');
 	await page.getByRole('button', { name: 'Publish Event' }).click();
 	await expect(page.getByText('Enter a title between 5 and 100 characters.')).toBeVisible();
-	await expect(page.getByLabel('Host', { exact: true })).toHaveValue('group-film-society');
+	await expect(page.getByLabel('Host', { exact: true })).toContainText('Film Society');
 	const title = `Recoverable film night ${crypto.randomUUID().slice(0, 8)}`;
 	await fillEvent(page, title);
 	await page.route('**/_app/remote/**', async (route) => {
@@ -88,7 +91,7 @@ test('Group validation and request failure preserve host and input for recovery'
 			"We couldn't confirm your Event was saved. Check saved Events before trying again."
 		)
 	).toBeVisible();
-	await expect(page.getByLabel('Host', { exact: true })).toHaveValue('group-film-society');
+	await expect(page.getByLabel('Host', { exact: true })).toContainText('Film Society');
 	await expect(page.getByLabel('Title', { exact: true })).toHaveValue(title);
 	await expect(page.getByRole('button', { name: 'Publish Event' })).toBeDisabled();
 	await expect(page.getByRole('checkbox', { name: 'Arts', exact: true })).toBeChecked();
@@ -206,8 +209,8 @@ async function checkLayoutAndAccessibility(page: Page) {
 	).toEqual([]);
 }
 
-async function fillEvent(page: Page, title: string) {
-	await page.getByLabel('Host', { exact: true }).selectOption('group-film-society');
+async function fillEvent(page: Page, title: string, chooseHost = true) {
+	if (chooseHost) await chooseOption(page, 'Host', 'Film Society');
 	await page.getByLabel('Title', { exact: true }).fill(title);
 	await page
 		.getByLabel('Description', { exact: true })
@@ -216,9 +219,9 @@ async function fillEvent(page: Page, title: string) {
 	await page.getByLabel('End', { exact: true }).fill('2030-09-02T20:00');
 	await page.getByRole('checkbox', { name: 'Arts', exact: true }).check();
 	await page.getByRole('checkbox', { name: 'Tech', exact: true }).check();
-	await page.getByLabel('Response mode', { exact: true }).selectOption('registration');
+	await chooseOption(page, 'Response mode', 'Registration');
 	await page.getByLabel('Capacity', { exact: true }).fill('12');
-	await page.getByLabel('Location', { exact: true }).selectOption('location-library');
+	await chooseOption(page, 'Campus place', 'Campus Library');
 }
 
 for (const actor of ['lena', 'jonas'] as const) {
@@ -260,9 +263,8 @@ for (const actor of ['lena', 'jonas'] as const) {
 		await other.getByRole('checkbox', { name: 'Tech', exact: true }).uncheck();
 		await other.getByRole('checkbox', { name: 'Social', exact: true }).check();
 		await other.getByLabel('Title', { exact: true }).fill(`${title} outdoors`);
-		await other.getByLabel('Response mode', { exact: true }).selectOption('interest');
-		await other.getByLabel('Location', { exact: true }).selectOption('manual');
-		await other.getByLabel('Location label', { exact: true }).fill('Library garden');
+		await chooseOption(other, 'Response mode', 'Interest');
+		await usePlainTextLocation(other, 'Library garden');
 		await other.getByRole('button', { name: 'Save changes' }).click();
 		await expect(other.getByRole('heading', { name: `${title} outdoors`, level: 1 })).toBeVisible();
 		await other.reload();

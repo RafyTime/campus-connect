@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { chooseOption, usePlainTextLocation } from './event-form.testing';
 
 // These audits traverse several routes and scan them in the shared release runner.
 test.setTimeout(60_000);
@@ -58,7 +59,7 @@ test('Explorer authenticates from a protected action, follows and joins a public
 		await expect(creator.getByRole('heading', { name: groupName, level: 1 })).toBeVisible();
 		groupUrl = creator.url();
 		await creator.goto('/create');
-		await creator.getByLabel('Host', { exact: true }).selectOption(groupUrl.split('/').at(-1)!);
+		await chooseOption(creator, 'Host', groupName);
 		await creator.getByLabel('Title', { exact: true }).fill(title);
 		await creator
 			.getByLabel('Description', { exact: true })
@@ -66,9 +67,8 @@ test('Explorer authenticates from a protected action, follows and joins a public
 		await creator.getByLabel('Start', { exact: true }).fill('2030-09-02T18:00');
 		await creator.getByLabel('End', { exact: true }).fill('2030-09-02T20:00');
 		await creator.getByRole('checkbox', { name: 'Social', exact: true }).check();
-		await creator.getByLabel('Response mode', { exact: true }).selectOption('interest');
-		await creator.getByLabel('Location', { exact: true }).selectOption('manual');
-		await creator.getByLabel('Location label', { exact: true }).fill('Library garden');
+		await chooseOption(creator, 'Response mode', 'Interest');
+		await usePlainTextLocation(creator, 'Library garden');
 		await creator.getByRole('button', { name: 'Publish Event' }).click();
 		await expect(creator.getByRole('heading', { name: title, level: 1 })).toBeVisible();
 	} finally {

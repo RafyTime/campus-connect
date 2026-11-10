@@ -91,7 +91,7 @@ describe('Event lifecycle', () => {
 			});
 			expect(await getEventForManagement(database.db, clock, creator, id)).toMatchObject({
 				ok: true,
-				event: { participationLocked: true }
+				event: { participationLocked: true, registrationCount: mode === 'registration' ? 1 : 0 }
 			});
 		}
 	);

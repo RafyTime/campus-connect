@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { chooseOption, usePlainTextLocation } from './event-form.testing';
 
 test.use({ viewport: { width: 1440, height: 900 } });
 
@@ -21,9 +22,9 @@ async function fillEvent(page: Page, title: string) {
 	await page.getByLabel('End', { exact: true }).fill('2030-09-02T20:00');
 	await page.getByRole('checkbox', { name: 'Tech', exact: true }).check();
 	await page.getByRole('checkbox', { name: 'Social', exact: true }).check();
-	await page.getByLabel('Response mode', { exact: true }).selectOption('registration');
+	await chooseOption(page, 'Response mode', 'Registration');
 	await page.getByLabel('Capacity', { exact: true }).fill('12');
-	await page.getByLabel('Location', { exact: true }).selectOption('location-library');
+	await chooseOption(page, 'Campus place', 'Campus Library');
 }
 
 test('a lost publication response preserves the draft and checks for the saved Event before retrying', async ({
@@ -90,9 +91,8 @@ test('a Creator publishes, discovers, and manages a public personal Event', asyn
 	await page.getByRole('checkbox', { name: 'Social', exact: true }).uncheck();
 	await page.getByRole('checkbox', { name: 'Outdoors', exact: true }).check();
 	await page.getByLabel('Title', { exact: true }).fill(`${title} outdoors`);
-	await page.getByLabel('Response mode', { exact: true }).selectOption('interest');
-	await page.getByLabel('Location', { exact: true }).selectOption('manual');
-	await page.getByLabel('Location label', { exact: true }).fill('Garden beside the library');
+	await chooseOption(page, 'Response mode', 'Interest');
+	await usePlainTextLocation(page, 'Garden beside the library');
 	await page.getByRole('button', { name: 'Save changes' }).click();
 	await expect(page.getByRole('heading', { name: `${title} outdoors`, level: 1 })).toBeVisible();
 	await page.reload();
@@ -209,7 +209,7 @@ test('Create, edit, and My events fit phone, tablet, and desktop and keep contro
 		for (const control of [
 			page.getByLabel('Start', { exact: true }),
 			page.getByLabel('Response mode', { exact: true }),
-			page.getByLabel('Location', { exact: true }),
+			page.getByRole('tab', { name: 'On campus' }),
 			page.getByRole('button', { name: 'Publish Event' })
 		]) {
 			expect((await control.boundingBox())?.height).toBeGreaterThanOrEqual(44);
@@ -217,8 +217,7 @@ test('Create, edit, and My events fit phone, tablet, and desktop and keep contro
 	}
 	const title = `Responsive personal Event ${crypto.randomUUID().slice(0, 8)}`;
 	await fillEvent(page, title);
-	await page.getByLabel('Location', { exact: true }).selectOption('manual');
-	await page.getByLabel('Location label', { exact: true }).fill('Library garden');
+	await usePlainTextLocation(page, 'Library garden');
 	await page.getByRole('button', { name: 'Publish Event' }).click();
 	await expect(page.getByRole('heading', { name: title, level: 1 })).toBeVisible();
 	for (const viewport of [
@@ -256,8 +255,7 @@ for (const viewport of [
 		await page.goto('/create');
 		const title = `Accessible campus Event ${crypto.randomUUID().slice(0, 8)}`;
 		await fillEvent(page, title);
-		await page.getByLabel('Location', { exact: true }).selectOption('manual');
-		await page.getByLabel('Location label', { exact: true }).fill('Library garden');
+		await usePlainTextLocation(page, 'Library garden');
 		let scan = await new AxeBuilder({ page }).analyze();
 		expect(
 			scan.violations.filter(
@@ -289,3 +287,62 @@ for (const viewport of [
 		).toEqual([]);
 	});
 }
+
+test('address searches are explicit and selected coordinates survive publication; provider failure permits manual publication', async ({
+	page
+}) => {
+	await page.setViewportSize({ width: 360, height: 800 });
+	await register(page);
+	await page.goto('/create');
+	await fillEvent(page, 'Address search publication');
+	await page.getByRole('tab', { name: 'Address' }).click();
+	await page.getByLabel('Search for an address').fill('Bonn browser');
+	await expect(page.getByRole('button', { name: /^Bonn test address/ })).toHaveCount(0);
+	await page.getByRole('button', { name: 'Search', exact: true }).click();
+	await expect(page.locator('#address-search-status')).toContainText('1 address found');
+	await page.getByRole('button', { name: /^Bonn test address/ }).click();
+	await expect(page.getByText('Meeting at')).toBeVisible();
+	await expect(page.getByRole('list', { name: 'Address results' })).toHaveCount(0);
+	await expect(page.getByRole('region', { name: 'Location map' })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Open in Google Maps' })).toHaveAttribute(
+		'href',
+		/google\.com\/maps/
+	);
+	await page.getByRole('button', { name: 'Publish Event' }).click();
+	await expect(
+		page.getByRole('heading', { name: 'Address search publication', level: 1 })
+	).toBeVisible();
+	await expect(page.getByText('Bonn test address', { exact: true })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Open in Google Maps' })).toHaveAttribute(
+		'href',
+		/google\.com\/maps/
+	);
+	await page.reload();
+	await expect(page.getByText('Bonn test address', { exact: true })).toBeVisible();
+	await page.goto('/create');
+	await fillEvent(page, 'Manual after provider failure');
+	// Let the global provider interval elapse before exercising the 503 path.
+	await page.waitForTimeout(1100);
+	await page.getByRole('tab', { name: 'Address' }).click();
+	await page.getByLabel('Search for an address').fill('failure browser');
+	await page.getByRole('button', { name: 'Search', exact: true }).click();
+	await expect(page.locator('#address-search-status')).toContainText(/unavailable/);
+	await page.getByRole('button', { name: 'use a plain-text Location' }).click();
+	await page.getByLabel('Location label').fill('Courtyard');
+	await page.getByRole('button', { name: 'Publish Event' }).click();
+	await expect(page.getByText('Courtyard', { exact: true })).toBeVisible();
+});
+
+test('desktop authoring previews the Event as it will appear in Discover', async ({ page }) => {
+	await page.setViewportSize({ width: 1280, height: 900 });
+	await register(page);
+	await page.goto('/create');
+	const preview = page.getByRole('complementary', { name: 'Discover preview' });
+	await expect(preview).toContainText('Your Event title');
+	await fillEvent(page, 'Preview picnic');
+	await expect(preview).toContainText('Preview picnic');
+	await expect(preview).toContainText('Campus Library');
+	await expect(preview).toContainText('12 places remaining');
+	await page.setViewportSize({ width: 390, height: 844 });
+	await expect(preview).toBeHidden();
+});

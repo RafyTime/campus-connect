@@ -10,7 +10,8 @@ import type {
 	PublicGroupDetail,
 	PublicGroupSummary
 } from '#lib/public-group.js';
-import { displayInitials, imageAttribution, publicImageUrl } from './remote-images';
+import { displayInitials } from '#lib/display-initials.js';
+import { imageAttribution, publicImageUrl } from './remote-images';
 import { discoverPublicEventsForGroup } from './events';
 import { groupNameKey } from '#lib/server/group-name.js';
 

@@ -121,3 +121,19 @@ Ticket 22 will replace every placeholder below after the final Railway release. 
 | CAP-06   | My activity with interest, registration, and retained state | Planned: course Drive full-resolution PNG            | Planned: repository optimized clean and annotated PNG           | pending         | pending      | CORE-11, CORE-12, CORE-13                                                                 |
 | CAP-07   | Shipped stretch scenes only                                 | Conditional: course Drive full-resolution PNG files  | Conditional: repository optimized clean and annotated PNG files | pending         | pending      | STRETCH-SUBSCRIBER-17, STRETCH-GEOCODING-18, STRETCH-UPDATES-19, STRETCH-NOTIFICATIONS-20 |
 | VIDEO-01 | 95 to 110 second final Railway journey                      | Planned: course Drive narration source and H.264 MP4 | Planned: embedded MP4 in final PPTX; repository shot list only  | pending         | pending      | CORE-02 through CORE-14 and shipped stretch rows                                          |
+
+### Ticket 18 address search
+
+The gate is go. Server evidence is in
+`src/lib/server/application/geocoding.spec.ts` and the existing Event authoring
+suite. Coverage includes normalization, persistent cache, scope versioning,
+global throttling, permitted fields, Germany and bounds filtering, five-result
+limit, explicit selection, forged selection rejection, saved coordinates,
+manual publication and provider failures. The address-search journey in
+`src/routes/event-authoring.e2e.ts` uses a local replacement provider at phone width.
+
+Release evidence remains pending: on Railway record search, repeated cache-hit
+search, selected-address publication and provider-failure/manual publication
+against the deployed commit with date. Capture final authoring and mapped Event
+screenshots and the address-search screencast scene under ticket 22. Local tests
+do not replace these production and final-media checks.
