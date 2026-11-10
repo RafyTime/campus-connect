@@ -1,5 +1,5 @@
 import { fromDate, parseDateTime, toCalendarDateTime, toZoned } from '@internationalized/date';
-import type { PublicEventSummary, PublicResponseMode } from './public-event';
+import type { PublicEventHost, PublicEventSummary, PublicResponseMode } from './public-event';
 
 export const campusTimeZone = 'Europe/Berlin';
 export const responseModes = ['announcement', 'interest', 'registration'] as const;
@@ -35,12 +35,14 @@ export type EventSaveResult =
 	  };
 export type EventAuthoringOptions = {
 	groups: { id: string; name: string }[];
+	/** The actor's personal Host first, then their Group Hosts, as Discover shows them. */
+	hosts: PublicEventHost[];
 	tags: { id: string; name: string }[];
 	locations: { id: string; label: string; latitude: number | null; longitude: number | null }[];
 };
 export type ManagedEvent = EventFormValues & {
 	id: string;
-	hostName: string;
+	host: PublicEventHost;
 	author: { id: string; displayName: string };
 	status: PublicEventSummary['status'];
 	participationLocked: boolean;

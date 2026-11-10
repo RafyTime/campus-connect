@@ -5,6 +5,7 @@ import { seedCampusConnect } from '#lib/server/seed.js';
 import { and, eq } from 'drizzle-orm';
 import { groupMembership } from '#lib/server/db/schema.js';
 import { discoverPublicEventsForGroup, getPublicEvent } from './events';
+import { wikimediaHostPortraitUrl } from './remote-images';
 import {
 	createEvent,
 	editEvent,
@@ -98,8 +99,12 @@ describe('public group Event authoring', () => {
 		using database = await createTestDatabase();
 		await seedCampusConnect(database.db, clock);
 		for (const id of ['user-lena', 'user-jonas']) {
-			expect((await getEventAuthoringOptions(database.db, { id })).groups).toEqual([
-				{ id: 'group-film-society', name: 'Film Society' }
+			const options = await getEventAuthoringOptions(database.db, { id });
+			expect(options.groups).toEqual([{ id: 'group-film-society', name: 'Film Society' }]);
+			// The Discover preview shows the same Host image as the published card.
+			expect(options.hosts).toMatchObject([
+				{ type: 'personal', id },
+				{ type: 'group', id: 'group-film-society', imageUrl: wikimediaHostPortraitUrl }
 			]);
 		}
 		for (const actor of [{ id: 'user-sofia' }, { id: 'user-campus-office' }, null]) {
@@ -165,7 +170,7 @@ describe('public group Event authoring', () => {
 				ok: true,
 				event: {
 					hostGroupId: 'group-film-society',
-					hostName: 'Film Society',
+					host: { type: 'group', displayName: 'Film Society' },
 					author: { id: 'user-jonas' },
 					title: 'Updated film discussion'
 				}

@@ -8,7 +8,8 @@ import {
 	groupMembership,
 	location,
 	post,
-	tag
+	tag,
+	user
 } from '#lib/server/db/schema.js';
 import { campusLocations, campusTags } from '#lib/server/campus-catalog.js';
 import {
@@ -18,7 +19,7 @@ import {
 	type EventSaveResult,
 	type ManagedEvent
 } from '#lib/event-authoring.js';
-import { getPublicEvent } from './events';
+import { getPublicEvent, postHost, toPublicHost } from './events';
 import { findGeocodingSelection } from './geocoding';
 
 export async function getEventAuthoringOptions(
@@ -52,13 +53,31 @@ export async function getEventAuthoringOptions(
 			)
 			.orderBy(asc(location.label))
 	]);
-	return { tags, locations, groups: await authorizedGroupHosts(db, actor) };
+	const { groups, hosts } = await authorizedHosts(db, actor);
+	return { tags, locations, groups, hosts };
 }
 
-async function authorizedGroupHosts(db: Pick<Database, 'select'>, actor: { id: string } | null) {
-	if (!actor) return [];
+async function authorizedHosts(db: Pick<Database, 'select'>, actor: { id: string } | null) {
+	if (!actor) return { groups: [], hosts: [] };
+	const [[author], groups] = await Promise.all([
+		db
+			.select({ id: user.id, name: user.name, image: user.image })
+			.from(user)
+			.where(eq(user.id, actor.id)),
+		authorizedGroupHosts(db, actor)
+	]);
+	return {
+		groups: groups.map(({ id, name }) => ({ id, name })),
+		hosts: [
+			...(author ? [toPublicHost('personal', author)] : []),
+			...groups.map((group) => toPublicHost('group', group))
+		]
+	};
+}
+
+async function authorizedGroupHosts(db: Pick<Database, 'select'>, actor: { id: string }) {
 	return db
-		.select({ id: group.id, name: group.name })
+		.select({ id: group.id, name: group.name, image: group.imageUrl })
 		.from(group)
 		.innerJoin(groupMembership, eq(groupMembership.groupId, group.id))
 		.where(
@@ -344,7 +363,7 @@ export async function getEventForManagement(
 			id: row.id,
 			participationLocked: row.participations.length > 0,
 			hostGroupId: row.post.groupId ?? '',
-			hostName: row.post.group?.name ?? row.post.author.name,
+			host: postHost(row.post),
 			author: { id: row.post.authorId, displayName: row.post.author.name },
 			title: row.post.title,
 			description: row.description,

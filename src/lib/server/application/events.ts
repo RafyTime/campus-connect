@@ -157,30 +157,25 @@ type LoadedEvent = {
 	participations: { kind: 'interest' | 'registration' }[];
 };
 
-function toHost(row: LoadedEvent): PublicEventSummary['host'] {
-	if (row.post.group) {
-		const imageUrl = publicImageUrl(row.post.group.imageUrl);
+type HostSource = { id: string; name: string; image: string | null };
 
-		return {
-			type: 'group',
-			id: row.post.group.id,
-			displayName: row.post.group.name,
-			imageUrl,
-			imageAttribution: imageAttribution(imageUrl),
-			initials: displayInitials(row.post.group.name)
-		};
-	}
-
-	const imageUrl = publicImageUrl(row.post.author.image);
-
+/** Public Host shape for a personal or Group Host; `image` may be any stored URL. */
+export function toPublicHost(type: PublicEventSummary['host']['type'], source: HostSource) {
+	const imageUrl = publicImageUrl(source.image);
 	return {
-		type: 'personal',
-		id: row.post.author.id,
-		displayName: row.post.author.name,
+		type,
+		id: source.id,
+		displayName: source.name,
 		imageUrl,
 		imageAttribution: imageAttribution(imageUrl),
-		initials: displayInitials(row.post.author.name)
-	};
+		initials: displayInitials(source.name)
+	} satisfies PublicEventSummary['host'];
+}
+
+export function postHost(post: Pick<LoadedEvent['post'], 'author' | 'group'>) {
+	return post.group
+		? toPublicHost('group', { ...post.group, image: post.group.imageUrl })
+		: toPublicHost('personal', post.author);
 }
 
 function toSummary(row: LoadedEvent, now: Date): PublicEventSummary {
@@ -190,7 +185,7 @@ function toSummary(row: LoadedEvent, now: Date): PublicEventSummary {
 		startsAt: row.startsAt,
 		endsAt: row.endsAt,
 		scheduleLabel: formatCampusSchedule(row.startsAt, row.endsAt),
-		host: toHost(row),
+		host: postHost(row.post),
 		locationLabel: row.location.label,
 		tags: row.eventTags
 			.map((eventTag) => ({ id: eventTag.tag.id, name: eventTag.tag.name }))

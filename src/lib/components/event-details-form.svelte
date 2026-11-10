@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
-	import { page } from '$app/state';
 	import { Alert02Icon, Tick02Icon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { getAppUpdates } from '#lib/app-updates.svelte.js';
@@ -174,11 +173,19 @@
 	const previewEvent = $derived.by((): PublicEventSummary => {
 		const startsAt = parseCampusInput(form.fields.startsAt.value() ?? defaults.startsAt);
 		const endsAt = parseCampusInput(form.fields.endsAt.value() ?? defaults.endsAt);
-		const hostName =
-			initial?.hostName ??
-			options.groups.find((group) => group.id === hostGroupId)?.name ??
-			page.data.user?.displayName ??
-			'You';
+		const host = initial?.host ??
+			options.hosts.find((option) =>
+				hostGroupId
+					? option.type === 'group' && option.id === hostGroupId
+					: option.type === 'personal'
+			) ?? {
+				type: 'personal',
+				id: 'preview',
+				displayName: 'You',
+				imageUrl: null,
+				imageAttribution: null,
+				initials: displayInitials('You')
+			};
 		const tagIds = form.fields.tagIds.value() ?? defaults.tagIds;
 		const manualLocation = form.fields.manualLocation.value() ?? defaults.manualLocation;
 		return {
@@ -188,14 +195,7 @@
 			endsAt: endsAt ?? new Date(),
 			scheduleLabel:
 				startsAt && endsAt ? formatCampusSchedule(startsAt, endsAt) : 'Add a start and end',
-			host: {
-				type: hostGroupId ? 'group' : 'personal',
-				id: hostGroupId,
-				displayName: hostName,
-				imageUrl: null,
-				imageAttribution: null,
-				initials: displayInitials(hostName)
-			},
+			host,
 			locationLabel:
 				locationMode === 'manual'
 					? manualLocation.trim() || 'Plain-text Location'
@@ -368,8 +368,8 @@
 					</Field.Field>
 				{:else if initial}
 					<p class="text-muted-foreground">
-						Host: {initial.hostName}. Published by {initial.author.displayName}. The host cannot
-						change.
+						Host: {initial.host.displayName}. Published by {initial.author.displayName}. The host
+						cannot change.
 					</p>
 				{/if}
 				<Field.Field data-invalid={issues('title').length > 0 || undefined}>
