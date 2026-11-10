@@ -36,7 +36,7 @@ export type EventSaveResult =
 export type EventAuthoringOptions = {
 	groups: { id: string; name: string }[];
 	tags: { id: string; name: string }[];
-	locations: { id: string; label: string }[];
+	locations: { id: string; label: string; latitude: number | null; longitude: number | null }[];
 };
 export type ManagedEvent = EventFormValues & {
 	id: string;
@@ -50,7 +50,7 @@ export function formatCampusInput(date: Date): string {
 	return toCalendarDateTime(fromDate(date, campusTimeZone)).toString().slice(0, 16);
 }
 
-function parseCampusInput(value: unknown): Date | null {
+export function parseCampusInput(value: unknown): Date | null {
 	if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return null;
 	try {
 		// Reject skipped and repeated clock times rather than silently shifting an Event.

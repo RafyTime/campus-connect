@@ -37,7 +37,12 @@ export async function getEventAuthoringOptions(
 			)
 			.orderBy(asc(tag.name)),
 		db
-			.select({ id: location.id, label: location.label })
+			.select({
+				id: location.id,
+				label: location.label,
+				latitude: location.latitude,
+				longitude: location.longitude
+			})
 			.from(location)
 			.where(
 				inArray(

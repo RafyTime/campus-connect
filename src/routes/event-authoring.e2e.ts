@@ -301,9 +301,17 @@ test('address searches are explicit and selected coordinates survive publication
 	await address.fill('Bonn browser');
 	await expect(page.getByRole('option', { name: 'Bonn test address' })).toHaveCount(0);
 	await page.getByRole('button', { name: 'Search', exact: true }).click();
-	await expect(page.getByRole('main').getByRole('status')).toContainText('Select a result');
-	await page.getByLabel('Location', { exact: true }).selectOption({ label: 'Bonn test address' });
+	await page.getByRole('button', { name: /^Bonn test address/ }).click();
+	await expect(page.getByLabel('Location', { exact: true })).toHaveValue(/^geocode:/);
+	await expect(page.getByRole('region', { name: 'Location map' })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Open in Google Maps' })).toHaveAttribute(
+		'href',
+		/google\.com\/maps/
+	);
 	await page.getByRole('button', { name: 'Publish Event' }).click();
+	await expect(
+		page.getByRole('heading', { name: 'Address search publication', level: 1 })
+	).toBeVisible();
 	await expect(page.getByText('Bonn test address', { exact: true })).toBeVisible();
 	await page.reload();
 	await expect(page.getByText('Bonn test address', { exact: true })).toBeVisible();
@@ -313,9 +321,23 @@ test('address searches are explicit and selected coordinates survive publication
 	await page.waitForTimeout(1100);
 	await page.getByLabel('Search for an address').fill('failure browser');
 	await page.getByRole('button', { name: 'Search', exact: true }).click();
-	await expect(page.getByRole('main').getByRole('status')).toContainText(/unavailable/);
-	await page.getByLabel('Location', { exact: true }).selectOption('manual');
+	await expect(page.locator('#address-search-status')).toContainText(/unavailable/);
+	await page.getByRole('button', { name: 'Use a plain-text Location' }).click();
 	await page.getByLabel('Location label').fill('Courtyard');
 	await page.getByRole('button', { name: 'Publish Event' }).click();
 	await expect(page.getByText('Courtyard', { exact: true })).toBeVisible();
+});
+
+test('desktop authoring previews the Event as it will appear in Discover', async ({ page }) => {
+	await page.setViewportSize({ width: 1280, height: 900 });
+	await register(page);
+	await page.goto('/create');
+	const preview = page.getByRole('complementary', { name: 'Discover preview' });
+	await expect(preview).toContainText('Your Event title');
+	await fillEvent(page, 'Preview picnic');
+	await expect(preview).toContainText('Preview picnic');
+	await expect(preview).toContainText('Campus Library');
+	await expect(preview).toContainText('12 places remaining');
+	await page.setViewportSize({ width: 390, height: 844 });
+	await expect(preview).toBeHidden();
 });
