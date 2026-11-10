@@ -46,6 +46,7 @@ export type ManagedEvent = EventFormValues & {
 	author: { id: string; displayName: string };
 	status: PublicEventSummary['status'];
 	participationLocked: boolean;
+	registrationCount: number;
 	location: { label: string; latitude: number | null; longitude: number | null };
 };
 

@@ -362,6 +362,8 @@ export async function getEventForManagement(
 		event: {
 			id: row.id,
 			participationLocked: row.participations.length > 0,
+			registrationCount: row.participations.filter((record) => record.kind === 'registration')
+				.length,
 			hostGroupId: row.post.groupId ?? '',
 			host: postHost(row.post),
 			author: { id: row.post.authorId, displayName: row.post.author.name },

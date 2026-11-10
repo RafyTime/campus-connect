@@ -188,6 +188,7 @@
 			};
 		const tagIds = form.fields.tagIds.value() ?? defaults.tagIds;
 		const manualLocation = form.fields.manualLocation.value() ?? defaults.manualLocation;
+		const capacity = Number(form.fields.capacity.value() ?? defaults.capacity) || null;
 		return {
 			id: initial?.id ?? 'preview',
 			title: (form.fields.title.value() ?? defaults.title).trim() || 'Your Event title',
@@ -204,7 +205,7 @@
 			responseMode,
 			capacityState: capacityStateLabel(
 				responseMode,
-				Number(form.fields.capacity.value() ?? defaults.capacity) || null
+				capacity === null ? null : capacity - (initial?.registrationCount ?? 0)
 			),
 			status: 'scheduled'
 		};
