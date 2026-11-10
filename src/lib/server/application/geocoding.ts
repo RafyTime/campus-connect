@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import type { Database } from '#lib/server/db/index.js';
 import type { Clock } from '#lib/server/clock.js';
@@ -14,6 +15,13 @@ export const defaultGeocodingScope = {
 export type GeocodingScope = typeof defaultGeocodingScope;
 export type GeocodingProvider = (query: string, scope: GeocodingScope) => Promise<unknown>;
 
+/** Cache entry key; result ids embed it so a selection reads only its own entry. */
+export function geocodingCacheKey(scope: GeocodingScope, normalizedQuery: string) {
+	return createHash('sha256')
+		.update(JSON.stringify([scope, normalizedQuery]))
+		.digest('hex');
+}
+
 export async function searchLocations(
 	db: Database,
 	clock: Clock,
@@ -26,7 +34,7 @@ export async function searchLocations(
 	if (typeof input !== 'string') return { ok: false, reason: 'invalid' };
 	const query = input.normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('de');
 	if (query.length < 3 || query.length > 200) return { ok: false, reason: 'invalid' };
-	const key = JSON.stringify([scope, query]);
+	const key = geocodingCacheKey(scope, query);
 	try {
 		// Reserve the global request slot atomically, then release the database
 		// before external I/O so provider failures cannot block Event publication.
@@ -80,7 +88,7 @@ export async function searchLocations(
 				)
 					continue;
 				results.push({
-					id: 'geocode:' + crypto.randomUUID(),
+					id: `geocode:${key}:${results.length}`,
 					label: item.display_name.trim(),
 					latitude,
 					longitude
@@ -109,6 +117,12 @@ export async function searchLocations(
 }
 
 export async function findGeocodingSelection(db: Pick<Database, 'select'>, id: string) {
-	const caches = await db.select().from(geocodingCache);
-	return caches.flatMap((cache) => cache.results).find((result) => result.id === id);
+	const key = /^geocode:([0-9a-f]{64}):\d+$/.exec(id)?.[1];
+	if (!key) return undefined;
+	const [cache] = await db
+		.select()
+		.from(geocodingCache)
+		.where(eq(geocodingCache.key, key))
+		.limit(1);
+	return cache?.results.find((result) => result.id === id);
 }

@@ -160,7 +160,7 @@ it('supports idempotent deterministic cache fixtures without provider traffic', 
 			throw new Error('Cache must avoid provider');
 		}
 	);
-	expect(result).toMatchObject({ ok: true, results: [{ id: 'geocode:bonn-fixture' }] });
+	expect(result).toMatchObject({ ok: true, results: [{ label: 'Bonn fixture address' }] });
 });
 
 it('does not hold the database while a provider is unavailable and limits concurrent searches globally', async () => {
