@@ -27,7 +27,13 @@ The existing built-application Playwright boundary is the agreed seam. All fixtu
 
 Focused offline/recovery tests, 16 personal/Group authoring journeys and the initial two-build update journey passed. The publication test confirms that a committed Event whose response is lost is offered for review without a second publication. A Tags-only update journey covers the custom-control dirty-tracking fix. The complete quality result and final review outcomes are recorded below.
 
-## Delivery still required
+## Physical-device delivery confirmation, 2026-11-12
+
+Leo reported that all requested installed-app offline/recovery and upgrade checks passed on Pixel 7 Pro with Chrome and an iPhone with Safari. The iPhone model is uncertain, possibly iPhone 15. The report covers offline notices and retained form text, fallback/Retry, reconnection without automatic submission or reload, dismissing an update without losing edits, and explicit refresh with discard confirmation and no reinstall.
+
+OS/browser versions, candidate A/B revisions and the candidate URL were not supplied. These are user-reported results, not independently observed device tests. Ticket 02 is completed on this behavioral confirmation; the earlier pending-delivery notes below describe the state before this report.
+
+## Earlier delivery requirements
 
 Physical Android Chrome and iPhone Safari offline/recovery and existing-installation upgrades remain unverified and are not waived. Local Chromium tabs do not establish those installed-device results.
 

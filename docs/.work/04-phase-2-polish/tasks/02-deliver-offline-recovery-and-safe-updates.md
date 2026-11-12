@@ -4,7 +4,7 @@
 
 **Blocked by:** [01: Prototype and deliver mobile installation and standalone use](01-deliver-mobile-installation-and-standalone-use.md)
 
-**Status:** ready
+**Status:** completed
 
 **Category:** enhancement
 
@@ -16,7 +16,7 @@
 - [x] When connectivity prevents application use, a useful offline fallback explains the state and offers a working retry path.
 - [x] Event data and actions remain online. Offline attempts never imply confirmed registration or successful Participation changes, and no mutation queue, push notifications or offline maps are added.
 - [x] An available release exposes a clear refresh action without forcing a reload while a User fills out a form.
-- [ ] An existing installation can receive the new release without reinstalling; declining or postponing refresh does not itself interrupt the active form.
+- [x] An existing installation can receive the new release without reinstalling; declining or postponing refresh does not itself interrupt the active form.
 - [x] Browser-level verification exercises offline/reconnection behavior and an update between two candidate builds, including update availability during form entry.
 - [x] The complete repository quality command passes and update/offline evidence is recorded without retaining credentials or private application payloads.
 
@@ -28,9 +28,11 @@
 
 ## Project delivery
 
-- [ ] Using isolated candidate builds, verify offline recovery and upgrading an existing installed application on the targeted mobile platforms. Record the versions, device/browser, results and any explicitly waived gap.
+- [x] Using isolated candidate builds, verify offline recovery and upgrading an existing installed application on the targeted mobile platforms. Record the versions, device/browser, results and any explicitly waived gap.
 
 ## Comments
+
+2026-11-12 physical-device confirmation: Leo reported all requested offline/recovery and installed-update checks passed on Pixel 7 Pro with Chrome and an iPhone with Safari. The iPhone may be a 15; its model is uncertain. The checks covered retained text and offline notices, fallback/Retry, reconnection without automatic submission/reload, update dismissal preserving form text, and explicit refresh with discard confirmation and no reinstall. This user-reported result completes the remaining behavioral delivery requirement. OS/browser versions, candidate revisions and the candidate URL were not supplied; this record does not establish those details or independently verify the test environment. No additional deployment or live-data operation was performed to record this confirmation.
 
 2026-11-07 CI correction: Reproduced the intermittent interest-failure journey locally. Its simulated 500 handler intercepted zero commands while the UI confirmed a real successful interest change. Ordinary browser journeys now block service workers to isolate their request mocks; real offline-fallback and upgrade coverage explicitly enables workers. The test asserts one intercepted command and reports the actual interest-region text. All 60 targeted repetitions and complete `CI=1 vp run quality` passed: 183 unit/integration tests, 137 browser journeys, three upgrade journeys and production build. Remote CI confirmation is pending this correction's push. No application behavior changed in this CI correction.
 
