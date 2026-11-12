@@ -28,7 +28,7 @@
 					imageAttribution={event.host.imageAttribution}
 					initials={event.host.initials}
 				/>
-				<div class="min-w-0">
+				<div class="w-0 flex-1">
 					<p class="truncate font-medium">{event.host.displayName}</p>
 					<p class="truncate text-muted-foreground">
 						<span class="font-medium text-foreground">Location</span>
