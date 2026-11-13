@@ -1,5 +1,7 @@
 # Code quality and coverage audit
 
+The [organization and navigability extension](organization-audit.md) records the second audit, agreed goals, alternatives and complete file disposition. It supplements the findings below; it does not authorize implementation.
+
 Date: 2026-11-12. Reviewed revision: `ede45a0`. Scope: ticket 03, source and test inspection only. No application tests were rerun, so this report makes no fresh suite-pass or measured-performance claim. No product code, database, preview channel or production system was changed.
 
 ## Findings
