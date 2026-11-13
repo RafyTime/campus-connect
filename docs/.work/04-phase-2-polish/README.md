@@ -8,17 +8,23 @@ Read each ticket's `Status` for current progress. A `ready` ticket may still hav
 
 ## Tickets
 
-- [00: Prototype and deliver theme preferences and matching maps](tasks/00-deliver-theme-preferences-and-maps.md) — blocked by: none.
-- [01: Prototype and deliver mobile installation and standalone use](tasks/01-deliver-mobile-installation-and-standalone-use.md) — blocked by: none.
-- [02: Prototype and deliver offline recovery and safe updates](tasks/02-deliver-offline-recovery-and-safe-updates.md) — blocked by: 01.
-- [03: Audit code quality and existing test coverage](tasks/03-audit-code-quality-and-test-coverage.md) — blocked by: none.
-- [04: Make routine seeding safe and separate public test fixtures](tasks/04-preserve-data-during-routine-seeding.md) — blocked by: none.
-- [05: Review architecture and select bounded cleanup](tasks/05-review-architecture-and-select-cleanup.md) — blocked by: 03.
-- [06: Prototype and deliver clearer plans and navigation](tasks/06-deliver-clearer-plans-and-navigation.md) — blocked by: none.
-- [07: Implement the selected bounded cleanup](tasks/07-implement-selected-cleanup.md) — blocked by: 05.
-- [08: Agree the final campus demonstration catalog](tasks/08-agree-campus-demonstration-catalog.md) — blocked by: none.
-- [09: Deliver the agreed dataset and explicit refresh operation](tasks/09-deliver-campus-dataset-and-explicit-refresh.md) — blocked by: 04, 08.
-- [10: Verify integrated polish and prepare release handoff](tasks/10-verify-polish-and-prepare-release-handoff.md) — blocked by: 00, 02, 06, 07, 09; original Phase 2 18.
+- [00: Prototype and deliver theme preferences and matching maps](tasks/00-deliver-theme-preferences-and-maps.md), blocked by: none.
+- [01: Prototype and deliver mobile installation and standalone use](tasks/01-deliver-mobile-installation-and-standalone-use.md), blocked by: none.
+- [02: Prototype and deliver offline recovery and safe updates](tasks/02-deliver-offline-recovery-and-safe-updates.md), blocked by: 01.
+- [03: Audit code quality and existing test coverage](tasks/03-audit-code-quality-and-test-coverage.md), blocked by: none.
+- [04: Make routine seeding safe and separate public test fixtures](tasks/04-preserve-data-during-routine-seeding.md), blocked by: none.
+- [05: Review architecture and select bounded cleanup](tasks/05-review-architecture-and-select-cleanup.md), blocked by: 03.
+- [06: Prototype and deliver clearer plans and navigation](tasks/06-deliver-clearer-plans-and-navigation.md), blocked by: none.
+- [07: Consolidate browser journeys under e2e](tasks/07-implement-selected-cleanup.md), blocked by: 05.
+- [08: Agree the final campus demonstration catalog](tasks/08-agree-campus-demonstration-catalog.md), blocked by: none.
+- [09: Deliver the agreed dataset and explicit refresh operation](tasks/09-deliver-campus-dataset-and-explicit-refresh.md), blocked by: 04, 08.
+- [10: Verify integrated polish and prepare release handoff](tasks/10-verify-polish-and-prepare-release-handoff.md), blocked by: 00, 02, 06, 07, 09, 11, 12, 13, 14; original Phase 2 18.
+- [11: Organize library code by module ownership](tasks/11-organize-library-modules.md), blocked by 07.
+- [12: Remove confirmed starter code and obsolete Group tests](tasks/12-remove-confirmed-stale-code.md), blocked by 11.
+- [13: Refresh the codebase navigation guide](tasks/13-refresh-codebase-navigation-docs.md), blocked by 12.
+- [14: Preserve Event form input when retrying a failed map](tasks/14-preserve-event-drafts-on-map-retry.md), blocked by none.
+
+The [2026-11-13 cleanup decision](cleanup-decision.md) records ticket 05's accepted scope and explicit deferrals. Ticket 07 is E2E relocation only; 11-14 are separately reviewable slices. The default next task remains 04. Reconcile any seed changes from 04 before applying the earlier file map.
 
 ## Release connection
 

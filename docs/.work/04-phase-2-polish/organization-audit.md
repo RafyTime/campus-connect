@@ -1,6 +1,6 @@
 # Organization and navigability audit
 
-Date: 2026-11-13. Inspected source revision: `fee222a`. Supplement to [ticket 03 audit](audit.md), following the completed design interview. Status: revised after Opus review, awaiting scope selection. No source moves, deletions, application test runs or production operations were performed.
+Date: 2026-11-13. Inspected source revision: `fee222a`. Supplement to [ticket 03 audit](audit.md), following the completed design interview. Status: revised after Opus review; selected scope is recorded in the [cleanup decision](cleanup-decision.md). No source moves, deletions, application test runs or production operations were performed.
 
 ## Agreed output and constraints
 
@@ -153,7 +153,7 @@ Suggested independently reviewable implementation units:
 
 Run the repository quality gate for source restructuring: formatting/lint, Svelte/TS including worker, unit/operation tests, built browser journeys, two-build update journeys and production build. Use the existing isolated disposable setup, not a daily preview or live DB. Check renamed test discovery explicitly and verify client imports cannot pull a module's server implementation into browser code. Do not write tests asserting paths, private controller state or arbitrary file counts.
 
-This proposal supplies the organization input for ticket 05; it does not mark that ticket completed or select ticket 07's implementation scope. An eventual restructuring ticket should have this mapping, preservation requirements and verification as its scope. The earlier bounded cleanup candidates and map Retry behavior risk remain separate. No ADR is added while server placement is still a proposal. If the reviewed choice is accepted, assess whether the lasting server/import trade-off warrants an ADR; do not put technical folder names in the domain glossary.
+This audit supplies the organization input for ticket 05. The later [cleanup decision](cleanup-decision.md) records accepted scope, ticket 07's bounded implementation and tickets 11-14. The earlier bounded cleanup candidates remain explicitly deferred, and the map Retry behavior risk has its own bug ticket. No technical folder names belong in the domain glossary. The accepted reversible organization does not require a new ADR; retain existing initialization and Group-name policies.
 
 ## Review status
 
@@ -164,4 +164,4 @@ Opus completed its read-only challenge against `fee222a` and the first draft. It
 - Record the two unused Group helpers, three helper-only cases and the redundant rollback case. The earlier blanket rationale for retaining Group operation-conflict tests did not hold for helpers with no product callers.
 - Flatten browser journeys directly under `e2e/`; `support/` and `updates/` still have specific purposes. Refresh the domain-doc layout sketch as well as README.
 
-No material review objection remains unaddressed in the proposal. This is parent reconciliation, not a second Opus approval of the revised documents. Server placement and implementation scope still require selection through ticket 05. The low-priority clock-helper test and the email non-disclosure rule remain explicitly investigatory; no deletion is authorized by the audit itself.
+No material review objection remains unaddressed in the proposal. This is parent reconciliation, not a second Opus approval of the revised documents. Leo subsequently accepted the recommended scope through ticket 05; see the cleanup decision. The low-priority clock-helper test and the email non-disclosure rule remain explicitly investigatory; no deletion is authorized by the audit itself.

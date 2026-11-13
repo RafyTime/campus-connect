@@ -1,6 +1,6 @@
-# 07: Implement the selected bounded cleanup
+# 07: Consolidate browser journeys under e2e
 
-**What to build:** Implement the reviewed cleanup selected by ticket 05 while preserving the working application behavior and public testing boundaries. Deliver a verifiable improvement rather than a blanket codebase rewrite.
+**What to build:** Move cross-feature Playwright journeys out of application routes into root e2e/, keeping their behavior and disposable-data setup intact.
 
 **Blocked by:** [05: Review architecture and select bounded cleanup](05-review-architecture-and-select-cleanup.md)
 
@@ -8,23 +8,22 @@
 
 **Category:** enhancement
 
-**Spec:** [Campus Connect Phase 2 polish](../spec.md)
+**Spec:** [Accepted cleanup scope](../cleanup-decision.md)
 
 ## Acceptance criteria
 
-- [ ] The implementation follows the selected scope and benefit recorded by ticket 05; unrelated findings are not bundled into it.
-- [ ] Any UI/UX effect has a reviewed prototype before implementation, and any genuine newly discovered prerequisite is recorded explicitly.
-- [ ] Existing discovery, authentication, Group, publication, Participation, capacity and retained-history behavior remains intact except for separately agreed feature changes.
-- [ ] Lazy runtime database/authentication initialization and Unicode Group-name uniqueness remain preserved.
-- [ ] Existing behavioral tests continue to exercise the relevant public boundaries without adding casting wrappers, speculative interfaces or implementation-detail tests.
-- [ ] The complete repository quality command passes and a concise result record explains the achieved benefit and its validation.
-- [ ] If ticket 05 selected no worthwhile cleanup, this ticket is explicitly resolved as wontfix with that reason; it is not silently marked implemented.
+- [ ] All route-level *.e2e.ts files move directly to e2e/; event-form.testing.ts moves to e2e/support/ with imports updated.
+- [ ] The ordinary Playwright config explicitly discovers these journeys without discovering e2e/updates/pwa.spec.ts; the separate two-build update config retains its own discovery.
+- [ ] Existing journey assertions, service-worker policies, temporary database setup and test-account tools are preserved.
+- [ ] Unit and operation tests remain colocated; no product routes, URLs or behavior change.
+- [ ] Test discovery is checked for omissions or duplicates; the complete existing quality command passes on disposable local data.
+- [ ] Documentation and current references affected by this move are updated, without rewriting historical test results.
 
 ## Implementation tasks
 
-- [ ] Apply the selected bounded change and keep explanatory comments in sync.
-- [ ] Run focused behavior verification and the full quality command, then record the result.
+- [ ] Follow the E2E entries in the [file map](../organization-file-map.md), and update configuration, helper imports and relevant source references.
+- [ ] Record discovery comparison and quality results. Do not add tests of file locations.
 
 ## Comments
 
-Ticket 05 is the architecture/design prerequisite. A wider set of changes must be split into additional reviewed slices; those become prerequisites of the final handoff if accepted into this polish scope.
+2026-11-13: Ticket 05 selected this as ticket 07's bounded implementation. Other cleanup is split into tickets 11-14. No deployment, production data changes, push or PR is authorized by this ticket.
