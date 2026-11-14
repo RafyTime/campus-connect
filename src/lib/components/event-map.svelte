@@ -22,6 +22,7 @@
 	}
 
 	$effect(() => {
+		// Read `attempt` so Retry re-runs this effect.
 		void attempt;
 		const appearance = mode.current;
 		if (!appearance) return;
