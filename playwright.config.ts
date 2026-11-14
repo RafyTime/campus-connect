@@ -28,7 +28,7 @@ export default defineConfig({
 	webServer: [
 		{ command: 'bun scripts/testing/geocoding-provider.ts', port: 4197 },
 		{
-			command: `vp run db:migrate && bun src/lib/server/seed/cli.ts && bun src/lib/server/testing/seed-accounts/cli.ts && ${serverCommand}`,
+			command: `vp run db:migrate && bun src/lib/server/seed/cli.ts && bun src/lib/server/testing/adversarial-fixtures/cli.ts && bun src/lib/server/testing/seed-accounts/cli.ts && ${serverCommand}`,
 			url: publicOrigin,
 			timeout: 300_000,
 			env: {

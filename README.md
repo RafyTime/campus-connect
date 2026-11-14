@@ -100,11 +100,13 @@ Vite+ tooling settings live in `vite.config.ts`. Svelte type checking still uses
 ```sh
 vp run db:generate # generate migration after schema change
 vp run db:migrate  # apply committed migrations to database
-vp run db:seed     # idempotent seed of Tags, Locations, and public personal Events
+vp run db:seed     # routine setup: create missing demonstration records, keep existing ones
 vp run db:studio   # visually inspect local database
 ```
 
-The committed migrations create Better Auth's `user`, `session`, `account`, and `verification` tables plus the public personal Event records (`post`, `event`, `tag`, `event_tag`, and `location`). Seed uses stable identifiers and can be re-run safely.
+The committed migrations create Better Auth's `user`, `session`, `account`, and `verification` tables plus the public personal Event records (`post`, `event`, `tag`, `event_tag`, and `location`). The seed is routine setup. It creates demonstration records that are missing by stable identifier and leaves existing ones untouched: manual edits, Event dates, Group subscriptions and Participation survive a re-run. A seeded Event's demonstration Participation and a seeded Group's memberships are created only together with that Event or Group. Routine seeding never refreshes dates or resets demonstration state; that needs a separate, deliberate operation.
+
+Failure and security examples (a deliberately missing image and literal HTML/script text) are not part of the demonstration. The browser tests add them to their disposable database with `src/lib/server/testing/adversarial-fixtures/cli.ts`, which deliberately overwrites its records. Never run it, or other `testing/` commands, against a real database.
 
 If `vp run db:migrate` reports that a table already exists, this SQLite file was created before tracked migrations (for example by an earlier `db:push`). Delete or rename `local.db` and run `vp run db:migrate` again. Local SQLite is disposable; tests do not use this file.
 

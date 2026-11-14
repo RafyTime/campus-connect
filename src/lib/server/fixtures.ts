@@ -60,12 +60,26 @@ export type PublicPersonalEventFixture = {
 	responseMode?: ResponseMode;
 	capacity?: number | null;
 	status?: EventStatus;
+	/** Users with interest or registration, matching the response mode. */
+	participants?: AuthorFixture[];
 };
 
 export type PublicGroupEventFixture = PublicPersonalEventFixture & {
 	groupId: string;
 	author: AuthorFixture;
 };
+
+/**
+ * `reset` (the default for disposable test fixtures) overwrites existing records with fixture values;
+ * it replaces Group memberships but only adds fixture Participation, keeping other Participation.
+ * `preserve` (routine public seeding) only creates missing records and leaves existing ones untouched.
+ */
+export type ExistingRecords = 'reset' | 'preserve';
+
+export type FixtureOptions = { existing?: ExistingRecords };
+
+/** Statement-level access shared by the database and an open transaction. */
+type FixtureWriter = Omit<Database, 'withTransaction'>;
 
 const defaultAuthor: AuthorFixture = {
 	id: 'user-fixture-author',
@@ -82,57 +96,81 @@ const defaultTags: TagFixture[] = [{ id: 'tag-fixture-social', name: 'Social' }]
 
 const defaultDescription = 'A campus Event for students and teachers at IU Campus Bad Honnef.';
 
-export async function insertUser(db: Database, clock: Clock, fixture: AuthorFixture) {
-	const now = clock.now();
-
-	await db
-		.insert(user)
-		.values({
-			id: fixture.id,
-			name: fixture.name,
-			email: fixture.email,
-			image: fixture.image ?? null
-		})
-		.onConflictDoUpdate({
-			target: user.id,
-			set: {
-				name: fixture.name,
-				email: fixture.email,
-				image: fixture.image ?? null,
-				updatedAt: now
-			}
-		});
+export async function insertUser(
+	db: FixtureWriter,
+	clock: Clock,
+	fixture: AuthorFixture,
+	{ existing = 'reset' }: FixtureOptions = {}
+) {
+	const values = {
+		name: fixture.name,
+		email: fixture.email,
+		image: fixture.image ?? null
+	};
+	const insert = db.insert(user).values({ id: fixture.id, ...values });
+	await (existing === 'preserve'
+		? insert.onConflictDoNothing({ target: user.id })
+		: insert.onConflictDoUpdate({
+				target: user.id,
+				set: { ...values, updatedAt: clock.now() }
+			}));
 }
 
-export async function insertTag(db: Database, fixture: TagFixture) {
-	await db
-		.insert(tag)
-		.values(fixture)
-		.onConflictDoUpdate({ target: tag.id, set: { name: fixture.name } });
+export async function insertTag(
+	db: FixtureWriter,
+	fixture: TagFixture,
+	{ existing = 'reset' }: FixtureOptions = {}
+) {
+	const insert = db.insert(tag).values(fixture);
+	await (existing === 'preserve'
+		? insert.onConflictDoNothing({ target: tag.id })
+		: insert.onConflictDoUpdate({ target: tag.id, set: { name: fixture.name } }));
 }
 
-export async function insertLocation(db: Database, fixture: LocationFixture) {
+export async function insertLocation(
+	db: FixtureWriter,
+	fixture: LocationFixture,
+	{ existing = 'reset' }: FixtureOptions = {}
+) {
 	const values = {
 		label: fixture.label,
 		latitude: fixture.latitude ?? null,
 		longitude: fixture.longitude ?? null
 	};
-	await db
-		.insert(location)
-		.values({ id: fixture.id, ...values })
-		.onConflictDoUpdate({ target: location.id, set: values });
+	const insert = db.insert(location).values({ id: fixture.id, ...values });
+	await (existing === 'preserve'
+		? insert.onConflictDoNothing({ target: location.id })
+		: insert.onConflictDoUpdate({ target: location.id, set: values }));
 }
 
-export async function insertGroup(db: Database, clock: Clock, fixture: GroupFixture) {
+/** Memberships belong to the Group fixture: `preserve` establishes them only with a new Group. */
+export async function insertGroup(
+	db: Database,
+	clock: Clock,
+	fixture: GroupFixture,
+	options: FixtureOptions = {}
+) {
+	// One transaction keeps a Group and its memberships together if setup stops partway.
+	await db.withTransaction((tx) => writeGroup(tx, clock, fixture, options));
+}
+
+async function writeGroup(
+	db: FixtureWriter,
+	clock: Clock,
+	fixture: GroupFixture,
+	options: FixtureOptions
+) {
+	if (options.existing === 'preserve' && (await groupExists(db, fixture.id))) return;
+
 	const now = clock.now();
 	const subscribers = fixture.subscribers ?? [];
 
-	await insertUser(db, clock, fixture.owner);
+	await insertUser(db, clock, fixture.owner, options);
 	if (fixture.representative) {
-		await insertUser(db, clock, fixture.representative);
+		await insertUser(db, clock, fixture.representative, options);
 	}
 	for (const subscriber of subscribers) {
-		await insertUser(db, clock, subscriber);
+		await insertUser(db, clock, subscriber, options);
 	}
 
 	await db
@@ -189,24 +227,40 @@ export async function insertGroup(db: Database, clock: Clock, fixture: GroupFixt
 export async function insertPublicPersonalEvent(
 	db: Database,
 	clock: Clock,
-	fixture: PublicPersonalEventFixture
+	fixture: PublicPersonalEventFixture,
+	options?: FixtureOptions
 ) {
-	await insertPublicEvent(db, clock, fixture);
+	await insertPublicEvent(db, clock, fixture, options);
 }
 
 export async function insertPublicGroupEvent(
 	db: Database,
 	clock: Clock,
-	fixture: PublicGroupEventFixture
+	fixture: PublicGroupEventFixture,
+	options?: FixtureOptions
 ) {
-	await insertPublicEvent(db, clock, fixture);
+	await insertPublicEvent(db, clock, fixture, options);
 }
 
 async function insertPublicEvent(
 	db: Database,
 	clock: Clock,
-	fixture: PublicPersonalEventFixture & { groupId?: string }
+	fixture: PublicPersonalEventFixture & { groupId?: string },
+	options: FixtureOptions = {}
 ) {
+	// One transaction keeps an Event, its Tags and Participation together if setup stops partway.
+	await db.withTransaction((tx) => writePublicEvent(tx, clock, fixture, options));
+}
+
+async function writePublicEvent(
+	db: FixtureWriter,
+	clock: Clock,
+	fixture: PublicPersonalEventFixture & { groupId?: string },
+	options: FixtureOptions
+) {
+	// Preserving an existing Event also preserves its Participation, schedule and content.
+	if (options.existing === 'preserve' && (await eventExists(db, fixture.id))) return;
+
 	const now = clock.now();
 	const author = fixture.author ?? defaultAuthor;
 	const eventLocation = fixture.location ?? defaultLocation;
@@ -218,12 +272,12 @@ async function insertPublicEvent(
 	const postId = `post-${fixture.id}`;
 	const groupId = fixture.groupId ?? null;
 
-	await insertUser(db, clock, author);
+	await insertUser(db, clock, author, options);
 
-	await insertLocation(db, eventLocation);
+	await insertLocation(db, eventLocation, options);
 
 	for (const tagValue of tags) {
-		await insertTag(db, tagValue);
+		await insertTag(db, tagValue, options);
 	}
 
 	await db
@@ -285,20 +339,40 @@ async function insertPublicEvent(
 			}))
 		);
 	}
-}
 
-/** Seed existing Participation, including retained history, without duplicating the relationship. */
-export async function insertParticipation(
-	db: Database,
-	clock: Clock,
-	fixture: {
-		userId: string;
-		eventId: string;
-		kind: 'interest' | 'registration';
+	const participants = fixture.participants ?? [];
+	if (participants.length === 0) return;
+	if (responseMode === 'announcement') {
+		throw new Error(`Announcement Event fixture ${fixture.id} cannot have participants`);
 	}
-) {
+	for (const participant of participants) {
+		await insertUser(db, clock, participant, options);
+	}
 	await db
 		.insert(participation)
-		.values({ ...fixture, createdAt: clock.now() })
+		.values(
+			participants.map((participant) => ({
+				userId: participant.id,
+				eventId: fixture.id,
+				kind: responseMode,
+				createdAt: now
+			}))
+		)
 		.onConflictDoNothing();
+}
+
+async function eventExists(db: FixtureWriter, eventId: string) {
+	const stored = await db.query.event.findFirst({
+		where: eq(event.id, eventId),
+		columns: { id: true }
+	});
+	return stored !== undefined;
+}
+
+async function groupExists(db: FixtureWriter, groupId: string) {
+	const stored = await db.query.group.findFirst({
+		where: eq(group.id, groupId),
+		columns: { id: true }
+	});
+	return stored !== undefined;
 }
