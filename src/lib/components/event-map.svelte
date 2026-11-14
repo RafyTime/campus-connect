@@ -6,8 +6,23 @@
 		$props();
 	let element: HTMLDivElement;
 	let phase = $state<'loading' | 'ready' | 'error'>('loading');
+	// Retry rebuilds the map in place; a page reload would discard unsaved Event form input.
+	let attempt = $state(0);
+	// Vite never re-inserts a stylesheet link it already added, even one that failed to load.
+	let failedStylesheets: HTMLLinkElement[] = [];
+	function retry() {
+		for (const link of failedStylesheets) link.replaceWith(link.cloneNode());
+		failedStylesheets = [];
+		attempt++;
+	}
+	// Link load errors do not bubble, so they are only observable while capturing.
+	function noteFailedStylesheet(event: Event) {
+		if (event.target instanceof HTMLLinkElement && event.target.rel === 'stylesheet')
+			failedStylesheets.push(event.target);
+	}
 
 	$effect(() => {
+		void attempt;
 		const appearance = mode.current;
 		if (!appearance) return;
 		const location = { label, latitude, longitude };
@@ -15,6 +30,7 @@
 		let disposed = false;
 		let cleanup: (() => void) | undefined;
 		phase = 'loading';
+		document.addEventListener('error', noteFailedStylesheet, true);
 		const timeout = setTimeout(() => {
 			if (!disposed) phase = 'error';
 		}, 12_000);
@@ -39,6 +55,7 @@
 			.catch(fail);
 		return () => {
 			disposed = true;
+			document.removeEventListener('error', noteFailedStylesheet, true);
 			clearTimeout(timeout);
 			cleanup?.();
 		};
@@ -68,9 +85,7 @@
 			<p role="status">
 				The map is unavailable. You can still use the Location label above and all Event details.
 			</p>
-			<Button variant="outline" class="min-h-11 self-start" onclick={() => window.location.reload()}
-				>Retry map</Button
-			>
+			<Button variant="outline" class="min-h-11 self-start" onclick={retry}>Retry map</Button>
 		{/if}
 	</div>
 </section>
