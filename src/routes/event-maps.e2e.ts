@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import type { StyleSpecification } from 'maplibre-gl';
+import { chooseOption } from './event-form.testing';
 
 // Resolve the deployed asset to exercise script failure without depending on a build hash.
 function mapAssets() {
@@ -211,7 +212,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 }
 
 for (const failure of ['tiles', 'style', 'script', 'stylesheet', 'worker', 'timeout'] as const) {
-	test(`${failure} failure preserves Event content and Participation, and reload recovers`, async ({
+	test(`${failure} failure preserves Event content and Participation, and Retry recovers in place`, async ({
 		page
 	}) => {
 		const assets = mapAssets();
@@ -255,11 +256,80 @@ for (const failure of ['tiles', 'style', 'script', 'stylesheet', 'worker', 'time
 		await page.getByRole('button', { name: 'Express interest', exact: true }).click();
 		await expect(page.getByRole('dialog', { name: 'Sign in to continue' })).toBeVisible();
 		await page.keyboard.press('Escape');
+		if (failure === 'stylesheet') {
+			// A Retry that fails again must stay explicit and retryable, not show an unstyled map.
+			await page.getByRole('button', { name: 'Retry map' }).click();
+			await expect.poll(() => intercepted).toBeGreaterThan(1);
+			await expect(
+				page.getByRole('region', { name: 'Location map' }).getByRole('status')
+			).toContainText('The map is unavailable');
+			await expect(page.getByRole('button', { name: 'Retry map' })).toBeVisible();
+		}
 		await page.unroute(pattern);
 		await serveMap(page);
+		let navigations = 0;
+		page.on('framenavigated', (frame) => {
+			if (frame === page.mainFrame()) navigations++;
+		});
 		await page.getByRole('button', { name: 'Retry map' }).click();
 		await expect(page.locator('.leaflet-marker-icon')).toBeVisible();
 		await expect(page.getByText('Loading map…', { exact: true })).toHaveCount(0);
 		await expect(page.getByRole('button', { name: 'Retry map' })).toHaveCount(0);
+		// Leaflet's stylesheet positions panes; an unstyled map renders as stacked static blocks.
+		await expect(page.locator('.leaflet-map-pane')).toHaveCSS('position', 'absolute');
+		expect(navigations).toBe(0);
 	});
 }
+
+test('retrying a failed map keeps the Event draft without reloading or submitting', async ({
+	page
+}) => {
+	await page.goto('/register');
+	await page.getByLabel('Display name').fill('Map Retry Creator');
+	await page.getByLabel('Email').fill(`map.retry.${crypto.randomUUID()}@example.com`);
+	await page.getByLabel('Password').fill('campus-connect');
+	await page.getByRole('button', { name: 'Create account' }).click();
+	await expect(page).toHaveURL('/');
+	await serveMap(page);
+	const tiles = 'https://tiles.openfreemap.org/test-tiles/**';
+	await page.route(tiles, (route) => route.abort());
+	await page.goto('/create');
+	await page.getByLabel('Title', { exact: true }).fill('Draft survives map retry');
+	await page
+		.getByLabel('Description', { exact: true })
+		.fill('A draft that must outlive a failed map.');
+	await page.getByLabel('Start', { exact: true }).fill('2030-09-02T18:00');
+	await page.getByLabel('End', { exact: true }).fill('2030-09-02T20:00');
+	await page.getByRole('checkbox', { name: 'Tech', exact: true }).check();
+	await chooseOption(page, 'Response mode', 'Registration');
+	await page.getByLabel('Capacity', { exact: true }).fill('12');
+	await chooseOption(page, 'Campus place', 'Campus Library');
+	const map = page.getByRole('region', { name: 'Location map' });
+	await expect(map.getByRole('status')).toContainText('The map is unavailable');
+	let navigations = 0;
+	let mutations = 0;
+	page.on('framenavigated', (frame) => {
+		if (frame === page.mainFrame()) navigations++;
+	});
+	page.on('request', (request) => {
+		if (request.method() === 'POST') mutations++;
+	});
+	await page.unroute(tiles);
+	await map.getByRole('button', { name: 'Retry map' }).click();
+	await expect(map.getByRole('img', { name: 'Campus Library' })).toBeVisible();
+	await expect(map.getByText('Loading map…', { exact: true })).toHaveCount(0);
+	await expect(map.getByRole('button', { name: 'Retry map' })).toHaveCount(0);
+	expect(navigations).toBe(0);
+	expect(mutations).toBe(0);
+	await expect(page).toHaveURL('/create');
+	await expect(page.getByLabel('Title', { exact: true })).toHaveValue('Draft survives map retry');
+	await expect(page.getByLabel('Description', { exact: true })).toHaveValue(
+		'A draft that must outlive a failed map.'
+	);
+	await expect(page.getByLabel('Start', { exact: true })).toHaveValue('2030-09-02T18:00');
+	await expect(page.getByLabel('End', { exact: true })).toHaveValue('2030-09-02T20:00');
+	await expect(page.getByRole('checkbox', { name: 'Tech', exact: true })).toBeChecked();
+	await expect(page.getByLabel('Response mode', { exact: true })).toHaveText('Registration');
+	await expect(page.getByLabel('Capacity', { exact: true })).toHaveValue('12');
+	await expect(page.getByLabel('Campus place', { exact: true })).toHaveText('Campus Library');
+});

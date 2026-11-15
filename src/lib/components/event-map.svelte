@@ -6,8 +6,36 @@
 		$props();
 	let element: HTMLDivElement;
 	let phase = $state<'loading' | 'ready' | 'error'>('loading');
+	// Retry rebuilds the map in place; a page reload would discard unsaved Event form input.
+	let attempt = $state(0);
+	// Vite never re-inserts a stylesheet link it already added, even one that failed to load.
+	let failedStylesheets: HTMLLinkElement[] = [];
+	// The next attempt succeeds only once every re-requested stylesheet has loaded.
+	let stylesheetsReloaded: Promise<unknown> = Promise.resolve();
+	function retry() {
+		stylesheetsReloaded = Promise.all(failedStylesheets.map(requestAgain));
+		failedStylesheets = [];
+		attempt++;
+	}
+	function requestAgain(failed: HTMLLinkElement) {
+		const link = document.createElement('link');
+		for (const { name, value } of failed.attributes) link.setAttribute(name, value);
+		const loaded = new Promise((resolve, reject) => {
+			link.addEventListener('load', resolve);
+			link.addEventListener('error', () => reject(new Error(`Stylesheet ${link.href} failed`)));
+		});
+		failed.replaceWith(link);
+		return loaded;
+	}
+	// Link load errors do not bubble, so they are only observable while capturing.
+	function noteFailedStylesheet(event: Event) {
+		if (event.target instanceof HTMLLinkElement && event.target.rel === 'stylesheet')
+			failedStylesheets.push(event.target);
+	}
 
 	$effect(() => {
+		// Read `attempt` so Retry re-runs this effect.
+		void attempt;
 		const appearance = mode.current;
 		if (!appearance) return;
 		const location = { label, latitude, longitude };
@@ -15,6 +43,7 @@
 		let disposed = false;
 		let cleanup: (() => void) | undefined;
 		phase = 'loading';
+		document.addEventListener('error', noteFailedStylesheet, true);
 		const timeout = setTimeout(() => {
 			if (!disposed) phase = 'error';
 		}, 12_000);
@@ -22,8 +51,8 @@
 			clearTimeout(timeout);
 			if (!disposed) phase = 'error';
 		};
-		void import('./event-map.js')
-			.then(({ createEventMap }) => {
+		void Promise.all([import('./event-map.js'), stylesheetsReloaded])
+			.then(([{ createEventMap }]) => {
 				if (disposed) return;
 				cleanup = createEventMap(
 					container,
@@ -39,6 +68,7 @@
 			.catch(fail);
 		return () => {
 			disposed = true;
+			document.removeEventListener('error', noteFailedStylesheet, true);
 			clearTimeout(timeout);
 			cleanup?.();
 		};
@@ -68,9 +98,7 @@
 			<p role="status">
 				The map is unavailable. You can still use the Location label above and all Event details.
 			</p>
-			<Button variant="outline" class="min-h-11 self-start" onclick={() => window.location.reload()}
-				>Retry map</Button
-			>
+			<Button variant="outline" class="min-h-11 self-start" onclick={retry}>Retry map</Button>
 		{/if}
 	</div>
 </section>
