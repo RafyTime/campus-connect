@@ -256,6 +256,15 @@ for (const failure of ['tiles', 'style', 'script', 'stylesheet', 'worker', 'time
 		await page.getByRole('button', { name: 'Express interest', exact: true }).click();
 		await expect(page.getByRole('dialog', { name: 'Sign in to continue' })).toBeVisible();
 		await page.keyboard.press('Escape');
+		if (failure === 'stylesheet') {
+			// A Retry that fails again must stay explicit and retryable, not show an unstyled map.
+			await page.getByRole('button', { name: 'Retry map' }).click();
+			await expect.poll(() => intercepted).toBeGreaterThan(1);
+			await expect(
+				page.getByRole('region', { name: 'Location map' }).getByRole('status')
+			).toContainText('The map is unavailable');
+			await expect(page.getByRole('button', { name: 'Retry map' })).toBeVisible();
+		}
 		await page.unroute(pattern);
 		await serveMap(page);
 		let navigations = 0;

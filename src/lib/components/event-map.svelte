@@ -10,10 +10,22 @@
 	let attempt = $state(0);
 	// Vite never re-inserts a stylesheet link it already added, even one that failed to load.
 	let failedStylesheets: HTMLLinkElement[] = [];
+	// The next attempt succeeds only once every re-requested stylesheet has loaded.
+	let stylesheetsReloaded: Promise<unknown> = Promise.resolve();
 	function retry() {
-		for (const link of failedStylesheets) link.replaceWith(link.cloneNode());
+		stylesheetsReloaded = Promise.all(failedStylesheets.map(requestAgain));
 		failedStylesheets = [];
 		attempt++;
+	}
+	function requestAgain(failed: HTMLLinkElement) {
+		const link = document.createElement('link');
+		for (const { name, value } of failed.attributes) link.setAttribute(name, value);
+		const loaded = new Promise((resolve, reject) => {
+			link.addEventListener('load', resolve);
+			link.addEventListener('error', () => reject(new Error(`Stylesheet ${link.href} failed`)));
+		});
+		failed.replaceWith(link);
+		return loaded;
 	}
 	// Link load errors do not bubble, so they are only observable while capturing.
 	function noteFailedStylesheet(event: Event) {
@@ -39,8 +51,8 @@
 			clearTimeout(timeout);
 			if (!disposed) phase = 'error';
 		};
-		void import('./event-map.js')
-			.then(({ createEventMap }) => {
+		void Promise.all([import('./event-map.js'), stylesheetsReloaded])
+			.then(([{ createEventMap }]) => {
 				if (disposed) return;
 				cleanup = createEventMap(
 					container,
